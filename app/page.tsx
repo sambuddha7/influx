@@ -1,12 +1,15 @@
 import Image from "next/image";
-import { ThreeDCardDemo } from "@/components/test";
+
 import { HeroHighlightDemo } from "@/components/heroinflux";
+import { HeroScrollDemo } from "@/components/scroll";
 
 export default function Home() {
   return (
     <div>
 
+        <HeroScrollDemo />
         <HeroHighlightDemo />
+
     </div>
   );
 }
