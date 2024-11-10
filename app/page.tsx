@@ -1,14 +1,21 @@
 import Image from "next/image";
 
-import { HeroHighlightDemo } from "@/components/heroinflux";
-import { HeroScrollDemo } from "@/components/scroll";
+import { BackgroundLinesDemo } from "@/components/hero";
+import { InfiniteMovingCardss } from "@/components/Testimonials";
+import { StickyScrollRevealDemo } from "@/components/StickyScroll";
+import { TextGenerateEffectDemo } from "@/components/TextGen";
+import { HeroHighlightDemo } from "@/components/Heading";
 
 export default function Home() {
   return (
     <div>
 
-        <HeroScrollDemo />
+        <BackgroundLinesDemo />
+        <InfiniteMovingCardss />
         <HeroHighlightDemo />
+        <StickyScrollRevealDemo />
+
+
 
     </div>
   );
