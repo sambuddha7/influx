@@ -24,11 +24,11 @@ export default function ThemeSwitch() {
   )
 
   if (resolvedTheme === 'dark') {
-    return <button><FiSun className="mr-2 text-lg" onClick={() => setTheme('light')} /></button>
+    return <button><FiSun className="mr-2 text-xl" onClick={() => setTheme('light')} /></button>
   }
 
   if (resolvedTheme === 'light') {
-    return <button><FiMoon className="mr-2 text-lg" onClick={() => setTheme('dark')} /></button>
+    return <button><FiMoon className="mr-2 text-xl" onClick={() => setTheme('dark')} /></button>
   }
 
 }

@@ -36,7 +36,7 @@ const content = [
 export function StickyScrollRevealDemo() {
   return (
 
-    <div className="p-10">
+    <div className="p-10 bg-inherit">
       <StickyScroll content={content} />
     </div>
 
