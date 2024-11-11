@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import { Providers } from "./providers";
+import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Influx - Digital Marketing for Reddit",
   description: "",
@@ -22,6 +23,7 @@ export default function RootLayout({
           <a className="btn btn-ghost text-xl">daisyUI</a>
         </div> */}
         {children}
+        <Footer />
         </Providers>
       </body>
     </html>
