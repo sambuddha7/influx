@@ -11,11 +11,15 @@ export const StickyScroll = ({
   content: {
     title: string;
     description: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     content?: React.ReactNode | any;
   }[];
   contentClassName?: string;
 }) => {
   const [activeCard, setActiveCard] = React.useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const ref = useRef<any>(null);
   const { scrollYProgress } = useScroll({
     // uncomment line 22 and comment line 23 if you DONT want the overflow container and want to have it change on the entire page scroll

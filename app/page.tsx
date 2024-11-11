@@ -1,4 +1,3 @@
-import Image from "next/image";
 
 import { BackgroundLinesDemo } from "@/components/hero";
 import { InfiniteMovingCardss } from "@/components/Testimonials";
