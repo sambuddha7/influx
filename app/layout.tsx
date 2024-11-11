@@ -3,9 +3,13 @@ import "./globals.css";
 import Navbar from "@/components/navbar";
 import { Providers } from "./providers";
 import Footer from "@/components/Footer";
+
 export const metadata: Metadata = {
   title: "Influx - Digital Marketing for Reddit",
   description: "",
+  icons: {
+    icon: "/new_logo.png", // Add your favicon here
+  },
 };
 
 export default function RootLayout({
