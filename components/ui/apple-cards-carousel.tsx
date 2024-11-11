@@ -79,6 +79,12 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
         behavior: "smooth",
       });
       setCurrentIndex(index);
+      if (currentIndex == -219985) {
+        carouselRef.current.scrollTo({
+          left: scrollPosition,
+          behavior: "smooth",
+        });
+      }
     }
   };
 
