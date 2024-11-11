@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Image, { ImageProps } from "next/image";
+
 import { useOutsideClick } from "@/hooks/use-outside-click";
 
 interface CarouselProps {
@@ -28,19 +29,19 @@ type Card = {
   content: React.ReactNode;
 };
 
-export const CarouselContext = createContext<{
-  onCardClose: (index: number) => void;
-  currentIndex: number;
-}>({
-  onCardClose: () => {},
-  currentIndex: 0,
-});
+// export const CarouselContext = createContext<{
+//   onCardClose: (index: number) => void;
+//   currentIndex: number;
+// }>({
+//   onCardClose: () => {},
+//   currentIndex: 0,
+// });
 
 export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
   const carouselRef = React.useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     if (carouselRef.current) {
@@ -78,13 +79,7 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
         left: scrollPosition,
         behavior: "smooth",
       });
-      setCurrentIndex(index);
-      if (currentIndex == -219985) {
-        carouselRef.current.scrollTo({
-          left: scrollPosition,
-          behavior: "smooth",
-        });
-      }
+      // setCurrentIndex(index);
     }
   };
 
@@ -93,9 +88,9 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
   };
 
   return (
-    <CarouselContext.Provider
-      value={{ onCardClose: handleCardClose, currentIndex }}
-    >
+    // <CarouselContext.Provider
+    //   value={{ onCardClose: handleCardClose, currentIndex }}
+    // >
       <div className="relative w-full">
         <div
           className="flex w-full overflow-x-scroll overscroll-x-auto py-10 md:py-20 scroll-smooth [scrollbar-width:none]"
@@ -155,7 +150,7 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
           </button>
         </div>
       </div>
-    </CarouselContext.Provider>
+    // </CarouselContext.Provider>
   );
 };
 
@@ -170,7 +165,7 @@ export const Card = ({
 }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { onCardClose, currentIndex } = useContext(CarouselContext);
+  // const { onCardClose, currentIndex } = useContext(CarouselContext);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -197,7 +192,7 @@ export const Card = ({
 
   const handleClose = () => {
     setOpen(false);
-    onCardClose(index);
+    // onCardClose(index);
   };
 
   return (
