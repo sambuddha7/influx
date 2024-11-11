@@ -3,8 +3,6 @@ import React, {
   useEffect,
   useRef,
   useState,
-  createContext,
-  useContext,
 } from "react";
 import {
   IconArrowNarrowLeft,
@@ -64,18 +62,6 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
     }
   };
 
-  const handleCardClose = (index: number) => {
-    if (carouselRef.current) {
-      const cardWidth = isMobile() ? 230 : 384; // (md:w-96)
-      const gap = isMobile() ? 4 : 8;
-      const scrollPosition = (cardWidth + gap) * (index + 1);
-      carouselRef.current.scrollTo({
-        left: scrollPosition,
-        behavior: "smooth",
-      });
-
-    }
-  };
 
   const isMobile = () => {
     return window && window.innerWidth < 768;
@@ -148,7 +134,7 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
 
 export const Card = ({
   card,
-  index,
+
   layout = false,
 }: {
   card: Card;
