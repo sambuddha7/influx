@@ -4,6 +4,7 @@ import Navbar from "@/components/navbar";
 import { Providers } from "./providers";
 import Footer from "@/components/Footer";
 
+
 export const metadata: Metadata = {
   title: "Influx - Digital Marketing for Reddit",
   description: "",
