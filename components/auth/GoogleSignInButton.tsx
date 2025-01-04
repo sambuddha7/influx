@@ -17,7 +17,7 @@ export default function GoogleSignInButton() {
       // Set the token in a cookie
         document.cookie = `firebase-token=${token}; path=/`;
         
-        router.replace('/changelog');
+        router.replace('/onboarding');
       }
     } catch (error) {
       console.error('Google sign in error:', error);

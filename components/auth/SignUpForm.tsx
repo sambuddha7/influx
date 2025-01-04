@@ -15,7 +15,7 @@ export default function SignUpForm() {
     e.preventDefault();
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push('/changelog');
+      router.push('/onboarding');
     } catch (err) {
       setError('Failed to create account. Email might be in use.');
     }

@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // If no token and trying to access protected route, redirect to login
-  if (!token && (path.startsWith('/changelog') || path.startsWith('/dashboard'))) {
+  if (!token && (path.startsWith('/changelog') || path.startsWith('/dashboard') || path.startsWith('/onboarding'))) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }
@@ -27,7 +27,9 @@ export const config = {
   matcher: [
     '/changelog/:path*',
     '/dashboard/:path*',
+    '/onboarding/:path*',
     '/login',
     '/signup'
   ]
 };
+

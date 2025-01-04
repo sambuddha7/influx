@@ -15,7 +15,7 @@ export default function LoginForm() {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/changelog');
+      router.push('/onboarding');
     } catch (err) {
       setError('Failed to login. Please check your credentials.');
     }
