@@ -28,10 +28,10 @@ export default function GoogleSignInButton() {
   return (
     <button
       onClick={signInWithGoogle}
-      className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50"
+      className="w-full flex items-center justify-center gap-2 dark:bg-zinc-900 bg-white border dark:border-gray-800 border-gray-300 text-gray-700 dark:text-white px-4 py-2 rounded-md"
     >
       <img 
-        src="https://www.google.com/favicon.ico" 
+        src="https://cdn4.iconfinder.com/data/icons/new-google-logo-2015/400/new-google-favicon-512.png" 
         alt="Google logo" 
         className="w-4 h-4"
       />

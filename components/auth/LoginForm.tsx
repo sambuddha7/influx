@@ -46,7 +46,7 @@ export default function LoginForm() {
       {error && <p className="text-red-500 text-sm">{error}</p>}
       <button
         type="submit"
-        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+        className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600"
       >
         Sign In
       </button>

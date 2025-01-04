@@ -6,8 +6,8 @@ import Link from 'next/link';
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+    <div className="min-h-screen flex items-center justify-center dark:bg-inherit">
+      <div className="max-w-md w-full space-y-8 p-8 dark:bg-black bg-white rounded-lg shadow">
         <h2 className="text-3xl font-bold text-center">Create an account</h2>
         <SignUpForm />
         <div className="relative my-4">
@@ -15,7 +15,7 @@ export default function SignUpPage() {
             <div className="w-full border-t border-gray-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            <span className="px-2 dark:bg-black bg-white text-gray-500">Or continue with</span>
           </div>
         </div>
         <GoogleSignInButton />

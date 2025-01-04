@@ -46,7 +46,7 @@ export default function SignUpForm() {
       {error && <p className="text-red-500 text-sm">{error}</p>}
       <button
         type="submit"
-        className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600"
+        className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600"
       >
         Create Account
       </button>
