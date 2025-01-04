@@ -43,7 +43,7 @@ const Navbar = () => {
             <Link href="/login" className="btn btn-ghost">
               Sign In
             </Link>
-            <Link href="/signup" className="btn btn-primary">
+            <Link href="/signup" className="btn btn-error">
               Sign Up
             </Link>
           </>
