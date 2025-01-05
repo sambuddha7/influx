@@ -32,12 +32,17 @@ const Navbar = () => {
       </div>
       <div className="flex-none gap-2">
         {user ? (
+          <>
+          <Link href="/dashboard" className="btn btn-error">
+            Dashboard
+        </Link>
           <button
             onClick={handleLogout}
             className="btn btn-outline btn-error"
           >
             Log Out
           </button>
+          </>
         ) : (
           <>
             <Link href="/login" className="btn btn-ghost">
