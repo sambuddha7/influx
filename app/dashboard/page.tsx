@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect} from 'react';
-
-
+import { useState, useEffect } from 'react';
+import Loading from '@/components/Loading';
 interface RedditPost {
   id: string;
   subreddit: string;
@@ -12,40 +11,16 @@ interface RedditPost {
 }
 
 export default function Dashboard() {
-    
-
-  // const [posts, setPosts] = useState<RedditPost[]>([
-  //   {
-  //     id: '1',
-  //     subreddit: 'r/programming',
-  //     title: 'How to learn React in 2024?',
-  //     content: 'I\'m a beginner programmer looking to learn React. What resources would you recommend?',
-  //     suggestedReply: 'I would recommend starting with the official React documentation and then moving on to practical projects. freeCodeCamp also has great resources for beginners.'
-  //   },
-  //   {
-  //     id: '2',
-  //     subreddit: 'r/webdev',
-  //     title: 'Best practices for CSS organization',
-  //     content: 'Looking for advice on how to organize CSS in large projects.',
-  //     suggestedReply: 'Consider using CSS modules or a utility-first framework like Tailwind CSS. This helps maintain scalability and prevents naming conflicts.'
-  //   },
-  //   {
-  //       id: '3',
-  //       subreddit: 'r/webdev',
-  //       title: 'Best practices for CSS organization',
-  //       content: 'Looking for advice on how to organize CSS in large projects.',
-  //       suggestedReply: 'Consider using CSS modules or a utility-first framework like Tailwind CSS. This helps maintain scalability and prevents naming conflicts.'
-  //     },
-  // ]);
-
   const [posts, setPosts] = useState<RedditPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // Track loading state
+  const [isEditing, setIsEditing] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const response = await fetch('http://localhost:8000/posts/');
-        // time feature here when to fetch
         const data = await response.json();
-        
+
         // Transform the 2D array into the RedditPost format
         const formattedPosts = data.map((post: string[]) => ({
           id: post[0],
@@ -54,17 +29,17 @@ export default function Dashboard() {
           content: post[3],
           suggestedReply: post[4]
         }));
-        
+
         setPosts(formattedPosts);
+        setIsLoading(false); // Set loading to false after data is fetched
       } catch (error) {
         console.error('Error fetching posts:', error);
+        setIsLoading(false); // Set loading to false in case of error as well
       }
     };
 
     fetchPosts();
   }, []);
-
-  const [isEditing, setIsEditing] = useState<string | null>(null);
 
   const handleEdit = (id: string) => {
     setIsEditing(id);
@@ -77,11 +52,15 @@ export default function Dashboard() {
     setIsEditing(null);
   };
 
+  // Loading screen
+  if (isLoading || !posts) {
+    return <div>
+      <Loading />
+    </div>
+  }
+
   return (
-    
-
-
-    <div className="container mx-auto p-6 space-y-6  ">
+    <div className="container mx-auto p-6 space-y-6">
       {posts.map((post) => (
         <div key={post.id} className="card bg-base-100 dark:bg-black bg-white shadow-xl border border-gray-200 dark:border-gray-700">
           <div className="card-body">
