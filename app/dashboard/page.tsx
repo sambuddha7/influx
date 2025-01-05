@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import Loading from '@/components/Loading';
 import Sidebar from '@/components/Sidebar';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { db, auth } from '@/lib/firebase';
+import { doc, setDoc, getDoc} from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 interface RedditPost {
   id: string;
@@ -13,9 +17,40 @@ interface RedditPost {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
+
   const [posts, setPosts] = useState<RedditPost[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Track loading state
   const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [user, loading] = useAuthState(auth);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      if (!user) return;
+
+      try {
+        const docRef = doc(db, 'onboarding', user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          // User already exists, redirect to the dashboard
+          router.push('/onboarding');
+        } else {
+          setIsLoading(false); // Allow onboarding to render
+        }
+      } catch (error) {
+        console.error('Error checking user in Firestore:', error);
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      checkUser();
+    } else if (!loading) {
+      // If user is not logged in, redirect to login or show appropriate message
+      router.push('/login'); 
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     const fetchPosts = async () => {
