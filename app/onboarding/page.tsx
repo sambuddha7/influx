@@ -114,7 +114,7 @@ export default function OnboardingForm() {
 
   if (isLoading || loading) {
     return <div>
-      <Loading />
+      <Loading loadingMessage="Fetching posts, please wait..."/>
     </div>
   }
   
