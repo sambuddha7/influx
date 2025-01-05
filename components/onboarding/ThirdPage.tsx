@@ -1,9 +1,22 @@
 // components/onboarding/ThirdPage.tsx
+import { useState } from 'react';
 interface ThirdPageProps {
   onComplete: () => void;
 }
 
 export function ThirdPage({ onComplete }: ThirdPageProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleComplete = async () => {
+    setIsLoading(true);
+    try {
+      await onComplete();
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="space-y-6 text-center">
       <h2 className="text-2xl font-bold">Almost There!</h2>

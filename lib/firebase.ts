@@ -1,10 +1,11 @@
-// import { initializeApp, getApp, getApps } from 'firebase/app';
+
 import { initializeApp} from 'firebase/app';
-
-import { getAuth } from 'firebase/auth';
-
+import { getAuth} from 'firebase/auth';
 import { GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
 export const googleProvider = new GoogleAuthProvider();
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -18,7 +19,7 @@ const firebaseConfig = {
 
 // const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { auth };
+export { auth, db };

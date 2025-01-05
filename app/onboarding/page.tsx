@@ -8,10 +8,15 @@ import { FirstPage } from '@/components/onboarding/FirstPage';
 import { SecondPage } from '@/components/onboarding/SecondPage';
 import { ThirdPage } from '@/components/onboarding/ThirdPage';
 import { ProgressBar } from '@/components/onboarding/ProgressBar';
+import { doc, setDoc } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 export default function OnboardingForm() {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [user] = useAuthState(auth);
+
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     companyWebsite: '',
@@ -26,6 +31,39 @@ export default function OnboardingForm() {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+
+  const saveToFirestore = async () => {
+    if (!user) {
+      console.log('No user is authenticated. Aborting save.');
+      return;
+    }
+    
+    try {
+      console.log('Preparing to save the following data to Firestore:', {
+        ...formData,
+        userId: user.uid,
+        email: user.email,
+      });
+  
+      // Create a document with the user's UID as the document ID
+      await setDoc(doc(db, 'onboarding', user.uid), {
+        ...formData,
+        userId: user.uid,
+        email: user.email,
+        createdAt: new Date().toISOString(),
+      });
+  
+      console.log('Data successfully saved to Firestore for user:', user.uid);
+    } catch (error) {
+      console.error('Error saving to Firestore:', error);
+      alert('Error saving your information. Please try again.');
+    }
+  };
+  const handleComplete = async () => {
+    await saveToFirestore();
+    router.push('/dashboard');
   };
 
   const isFirstPageValid = () => {
@@ -64,7 +102,8 @@ export default function OnboardingForm() {
         )}
         {page === 3 && (
           <ThirdPage
-            onComplete={() => router.push('/dashboard')}
+            // onComplete={() => router.push('/dashboard')}
+            onComplete={handleComplete}
           />
         )}
       </div>
