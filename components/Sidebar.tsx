@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Home, FileText, Users, Settings, Bell, Menu, BookOpen } from 'lucide-react';
 
@@ -45,9 +46,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
           <NavItem
-            href="/onboarding"
+            href="/userinput"
             icon={<Users size={20} />}
-            text="Onboarding"
+            text="AI Setup"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />

@@ -40,7 +40,7 @@ const FormField: React.FC<FormFieldProps> = ({
   disabled = false,
   isTextArea = false 
 }) => (
-  <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+  <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
     <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
       <Icon className="w-4 h-4 mr-2 text-gray-500" />
       {label}
