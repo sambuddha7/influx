@@ -20,7 +20,7 @@ export default function LoginPage() {
         </div>
         <GoogleSignInButton />
         <p className="text-center mt-4">
-          Don't have an account?{' '}
+          Don&#39;t have an account?{' '}
           <Link href="/signup" className="text-blue-500 hover:text-blue-600">
             Sign up
           </Link>
