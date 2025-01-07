@@ -143,7 +143,8 @@ export default function OnboardingForm() {
     countryRegion: '',
     companyDescription: '',
     product: '',
-    targetAudience: ''
+    targetAudience: '',
+    keywords: ''
   });
 
   useEffect(() => {
@@ -275,42 +276,49 @@ export default function OnboardingForm() {
               </div>
             )}
 
-            {page === 2 && (
-              <div className="space-y-6">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                  Additional Information
-                </h2>
-                <div className="space-y-4">
-                  <FormInput
-                    label="Product/Service Focus"
-                    name="product"
-                    value={formData.product}
-                    onChange={handleInputChange}
-                  />
-                  <FormTextArea
-                    label="Target Audience"
-                    name="targetAudience"
-                    value={formData.targetAudience}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="flex gap-4">
-                  <Button
-                    onClick={() => setPage(3)}
-                    className="w-1/2 border border-gray-300 hover:bg-gray-100 
-                             dark:border-zinc-700 dark:hover:bg-zinc-800"
-                  >
-                    Skip
-                  </Button>
-                  <Button
-                    onClick={() => setPage(3)}
-                    className="w-1/2 bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    Next Step
-                  </Button>
-                </div>
-              </div>
-            )}
+{page === 2 && (
+  <div className="space-y-6">
+    <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+      Additional Information
+    </h2>
+    <div className="space-y-4">
+      <FormInput
+        label="Product/Service Focus"
+        name="product"
+        value={formData.product}
+        onChange={handleInputChange}
+      />
+      <FormTextArea
+        label="Target Audience"
+        name="targetAudience"
+        value={formData.targetAudience}
+        onChange={handleInputChange}
+      />
+      {/* New input for Keywords */}
+      <FormInput
+        label="Keywords (comma-separated)"
+        name="keywords"
+        value={formData.keywords}
+        onChange={handleInputChange}
+      />
+    </div>
+    <div className="flex gap-4">
+      <Button
+        onClick={() => setPage(3)}
+        className="w-1/2 border border-gray-300 hover:bg-gray-100 
+                 dark:border-zinc-700 dark:hover:bg-zinc-800"
+      >
+        Skip
+      </Button>
+      <Button
+        onClick={() => setPage(3)}
+        className="w-1/2 bg-orange-500 hover:bg-orange-600 text-white"
+      >
+        Next Step
+      </Button>
+    </div>
+  </div>
+)}
 
             {page === 3 && (
               <div className="space-y-6 text-center">

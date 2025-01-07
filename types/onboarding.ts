@@ -1,4 +1,3 @@
-// types/onboarding.ts
 export interface FormData {
   companyName: string;
   companyWebsite: string;
@@ -6,6 +5,7 @@ export interface FormData {
   companyDescription: string;
   product: string;
   targetAudience: string;
+  keywords: string; 
 }
 
 // Optional: Add validation types

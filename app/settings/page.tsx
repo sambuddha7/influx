@@ -6,8 +6,7 @@ import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import Sidebar from '@/components/Sidebar';
 import Loading from '@/components/Loading';
-import { Building2, Globe, FileText, MapPin, Package, Users, Mail, Save, LucideIcon } from 'lucide-react';
-
+import { Building2, Globe, FileText, MapPin, Package, Users, Mail, Save, Tag, LucideIcon } from 'lucide-react'; // Added Tag icon
 
 interface UserData {
   companyDescription: string;
@@ -17,6 +16,7 @@ interface UserData {
   email: string;
   product: string;
   targetAudience: string;
+  keywords: string; // Added keywords field
 }
 
 interface FormFieldProps {
@@ -109,7 +109,7 @@ const Settings: React.FC = () => {
       const userRef = doc(db, 'onboarding', user.uid);
       await setDoc(userRef, userData, { merge: true });
 
-      alert('User information updated successfully!');
+      // alert('User information updated successfully!');
     } catch (error) {
       console.error('Error updating user data:', error);
     } finally {
@@ -196,6 +196,14 @@ const Settings: React.FC = () => {
               value={userData.targetAudience}
               onChange={handleInputChange}
               icon={Users}
+            />
+
+            <FormField
+              label="Keywords"
+              name="keywords"
+              value={userData.keywords}
+              onChange={handleInputChange}
+              icon={Tag}
             />
 
             <FormField

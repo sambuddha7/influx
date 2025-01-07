@@ -7,6 +7,8 @@ import { HeroHighlightDemo } from "@/components/Heading";
 import { TypewriterEffectSmoothDemo } from "@/components/ContactUs";
 
 import { AppleCardsCarouselDemo } from "@/components/Test";
+import Footer from "@/components/Footer";
+
 export default function Home() {
   return (
     <div>
@@ -29,7 +31,8 @@ export default function Home() {
             <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
             <TypewriterEffectSmoothDemo />
             </div>
-        
+            <Footer />
+
 
 
 

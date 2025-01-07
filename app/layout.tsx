@@ -35,7 +35,6 @@ export default function RootLayout({
           <a className="btn btn-ghost text-xl">daisyUI</a>
         </div> */}
         {children}
-        <Footer />
         </Providers>
       </body>
     </html>
