@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
   const [isCollapsed, setIsCollapsed] = React.useState<boolean>(false);
 
   return (
-    <div className="p-4 h-screen">
+    <div className="sticky p-4 h-screen top-0">
       <div className={`dark:bg-black bg-white transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} h-full rounded-3xl border dark:border-gray-700 border-gray-200 shadow-lg`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-4 border-b dark:border-gray-700 border-gray-200`}>

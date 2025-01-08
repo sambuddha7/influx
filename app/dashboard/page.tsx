@@ -53,9 +53,10 @@ export default function Dashboard() {
   }, [user, loading, router]);
 
   useEffect(() => {
+    if (!user) return;
     const fetchPosts = async () => {
       try {
-        const response = await fetch('http://localhost:8000/posts/');
+        const response = await fetch(`http://localhost:8000/relevant_posts?userid=${user.uid}`);
         const data = await response.json();
 
         // Transform the 2D array into the RedditPost format
@@ -75,8 +76,10 @@ export default function Dashboard() {
       }
     };
 
-    fetchPosts();
-  }, []);
+    if (user) {
+      fetchPosts();
+    }
+  }, [user]);
 
   const handleEdit = (id: string) => {
     setIsEditing(id);
@@ -97,8 +100,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex">
+    <div className="flex ">
       {/* Sidebar */}
+
       <Sidebar />
 
       {/* Main Content Area */}
