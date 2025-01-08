@@ -23,6 +23,7 @@ export default function Dashboard() {
 
   const [posts, setPosts] = useState<RedditPost[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Track loading state
+  const [isLoading2, setIsLoading2] = useState(true); // Track loading state
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [user, loading] = useAuthState(auth);
 
@@ -71,10 +72,10 @@ export default function Dashboard() {
         }));
 
         setPosts(formattedPosts);
-        setIsLoading(false); // Set loading to false after data is fetched
+        setIsLoading2(false); // Set loading to false after data is fetched
       } catch (error) {
         console.error('Error fetching posts:', error);
-        setIsLoading(false); // Set loading to false in case of error as well
+        setIsLoading2(false); // Set loading to false in case of error as well
       }
     };
 
@@ -95,9 +96,13 @@ export default function Dashboard() {
   };
 
   // Loading screen
-  if (isLoading || !posts) {
-    return <div>
-      <Loading />
+  if (isLoading || !posts || isLoading2) {
+    return <div className='flex'>
+      <Sidebar />
+      <div className="flex-1 p-6 space-y-6">
+        <Loading />
+      </div>
+      
     </div>
   }
 
