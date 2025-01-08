@@ -7,6 +7,8 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { db, auth } from '@/lib/firebase';
 import { doc, setDoc, getDoc} from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+
 
 interface RedditPost {
   id: string;
@@ -114,7 +116,10 @@ export default function Dashboard() {
               <div className="mb-4">
                 <div className="text-sm text-blue-500 dark:text-blue-400">{post.subreddit}</div>
                 <h2 className="card-title dark:text-white">{post.title}</h2>
-                <p className="mt-2 dark:text-gray-300">{post.content}</p>
+                {/* <p className="mt-2 dark:text-gray-300">{post.content}</p> */}
+                <ReactMarkdown className="mt-2 dark:text-gray-300">
+                  {post.content}
+                </ReactMarkdown>
               </div>
               
               {/* Suggested Reply Section */}
