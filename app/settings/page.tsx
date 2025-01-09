@@ -6,7 +6,7 @@ import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import Sidebar from '@/components/Sidebar';
 import Loading from '@/components/Loading';
-import { Building2, Globe, FileText, MapPin, Package, Users, Mail, Save, Tag, LucideIcon } from 'lucide-react'; // Added Tag icon
+import { Building2, Globe, FileText, MapPin, Package, Users, Mail, Save, Tag, LucideIcon } from 'lucide-react';
 
 interface UserData {
   companyDescription: string;
@@ -16,7 +16,7 @@ interface UserData {
   email: string;
   product: string;
   targetAudience: string;
-  keywords: string; // Added keywords field
+  keywords: string;
 }
 
 interface FormFieldProps {
@@ -72,6 +72,7 @@ const Settings: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -108,8 +109,12 @@ const Settings: React.FC = () => {
     try {
       const userRef = doc(db, 'onboarding', user.uid);
       await setDoc(userRef, userData, { merge: true });
-
-      // alert('User information updated successfully!');
+      setShowAlert(true);
+      
+      // Hide alert after 3 seconds
+      setTimeout(() => {
+        setShowAlert(false);
+      }, 3000);
     } catch (error) {
       console.error('Error updating user data:', error);
     } finally {
@@ -128,6 +133,18 @@ const Settings: React.FC = () => {
       <Sidebar />
       <div className="flex-1 p-8">
         <div className="max-w-3xl mx-auto">
+          {showAlert && (
+            <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
+
+            <div className="alert alert-success mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Settings updated successfully!</span>
+            </div>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
             <button

@@ -10,6 +10,8 @@ const UserInputPage = () => {
   const [user] = useAuthState(auth);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAlert, setShowAlert] = useState(false);
+
   const [formData, setFormData] = useState({
     postAs: '',
     sampleReply: '',
@@ -26,6 +28,7 @@ const UserInputPage = () => {
 
       try {
         const userDoc = doc(collection(db, 'ai-training'), user.uid);
+        
         const docSnap = await getDoc(userDoc);
 
         if (docSnap.exists()) {
@@ -61,7 +64,11 @@ const UserInputPage = () => {
       if (user) {
         const userDoc = doc(collection(db, 'ai-training'), user.uid);
         await setDoc(userDoc, formData);
-        alert('Data saved successfully!');
+        setShowAlert(true);
+        setTimeout(() => {
+          setShowAlert(false);
+        }, 3000);
+        // alert('Data saved successfully!');
       } else {
         alert('No user is signed in.');
       }
@@ -173,6 +180,16 @@ const UserInputPage = () => {
               </div>
             </div>
           </div>
+          {showAlert && (
+            <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
+              <div className="alert alert-success shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-white">AI configuration saved successfully!</span>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
