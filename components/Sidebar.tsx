@@ -1,7 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Users, Settings, Bell, Menu, BookOpen, LogOut } from 'lucide-react';
+import { Home, FileText, Users, Settings, Bell, Menu, BookOpen, LogOut, ChartNoAxesCombined } from 'lucide-react';
+
 import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
@@ -65,6 +66,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             href="/userinput"
             icon={<Users size={20} />}
             text="AI Setup"
+            isCollapsed={isCollapsed}
+            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
+          />
+          <NavItem
+            href="/roi"
+            icon={<ChartNoAxesCombined size={20} />}
+            text="Analytics"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />

@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { MessageSquare, ThumbsUp, Reply, Clock } from 'lucide-react';
 import { ResponsiveLine } from '@nivo/line';
+import Loading from '@/components/Loading';
+import Sidebar from '@/components/Sidebar';
+
 
 interface Metrics {
   total_comments: number;
@@ -44,8 +47,11 @@ export default function MetricsPage() {
 
   if (!metrics) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+      <div className='flex'>
+        <Sidebar />
+        <div className="flex-1 p-6 space-y-6">
+          <Loading />
+        </div>
       </div>
     );
   }
@@ -62,9 +68,14 @@ export default function MetricsPage() {
   ];
 
   return (
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-1 p-8">
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Dashboard Metrics</h1>
+      <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-orange-200">
+              Analytics
+        </h1>
         <div className="text-sm text-gray-500 flex items-center gap-2">
           <Clock className="h-4 w-4" />
           Last updated: {new Date(metrics.fetched_at).toLocaleString()}
@@ -160,6 +171,8 @@ export default function MetricsPage() {
           />
         </div>
       </div>
+    </div>
+    </main>
     </div>
   );
 }
