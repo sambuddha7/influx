@@ -10,6 +10,10 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { collection, addDoc, deleteDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
+import { ArrowUpRight } from "lucide-react"; // Import the icon
+import { formatDistanceToNow } from 'date-fns';
+
+
 
 
 interface RedditPost {
@@ -18,6 +22,8 @@ interface RedditPost {
   title: string;
   content: string;
   suggestedReply: string;
+  url: string;
+  date_created: string;
 }
 
 export default function Dashboard() {
@@ -102,8 +108,9 @@ export default function Dashboard() {
             title: doc.data().title,
             content: doc.data().content,
             suggestedReply: doc.data().suggestedReply,
+            url: doc.data().url,
+            date_created: doc.data().date_created,
           }));
-  
           setAllPosts(firestorePosts);
           setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
           setIsLoading2(false);
@@ -117,9 +124,10 @@ export default function Dashboard() {
             subreddit: post[1],
             title: post[2],
             content: post[3],
-            suggestedReply: post[4]
+            suggestedReply: post[4],
+            url: post[5],
+            date_created: post[6],
           }));
-
           setAllPosts(formattedPosts);
           setDisplayedPosts(formattedPosts.slice(0, POSTS_PER_PAGE));
           setIsLoading2(false);
@@ -246,6 +254,19 @@ export default function Dashboard() {
               <div className="mb-4">
                 <div className="text-sm text-blue-500 dark:text-blue-400">{post.subreddit}</div>
                 <h2 className="card-title dark:text-white">{post.title}</h2>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatDistanceToNow(new Date(post.date_created), { addSuffix: true })}
+                </div>
+                <a 
+                  href={`${post.url}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="absolute top-2 right-2 flex items-center text-blue-500 dark:text-blue-400 hover:underline m-2"
+                >
+                  <ArrowUpRight className="w-5 h-5 mr-1" />
+                  <span className="text-sm font-medium">Go to discussion</span>
+                </a>
+
                 <ReactMarkdown className="mt-2 dark:text-gray-300">
                   {post.content}
                 </ReactMarkdown>
@@ -302,6 +323,7 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
+              
             </div>
           </div>
         ))}
