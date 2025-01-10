@@ -133,10 +133,10 @@ export default function MetricsPage() {
               legendPosition: 'middle',
             }}
             pointSize={8}
-            pointColor={({ x }) =>
-              x === 'Score'
-                ? 'rgb(34, 98, 192)' // Blue for Score
-                : 'rgb(242, 153, 74)' // Orange for Comments and Replies
+            pointColor={(point: { x: string }) =>
+            point.x === 'Score'
+              ? 'rgb(34, 98, 192)' // Blue for Score
+              : 'rgb(242, 153, 74)' // Orange for Comments and Replies
             }
             pointBorderWidth={2}
             pointBorderColor={{ from: 'serieColor' }}
