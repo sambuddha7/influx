@@ -8,7 +8,7 @@ import { db, auth } from '@/lib/firebase';
 import { doc, setDoc, getDoc , getDocs} from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, deleteDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
 
 
@@ -31,6 +31,12 @@ export default function Dashboard() {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [user, loading] = useAuthState(auth);
   const [hasMorePosts, setHasMorePosts] = useState(true);
+
+  const [alertt, setAlert] = useState<{ message: string; visible: boolean }>({
+    message: "",
+    visible: false,
+  });
+  
   const POSTS_PER_PAGE = 6;
 
   useEffect(() => {
@@ -91,7 +97,7 @@ export default function Dashboard() {
           console.log('Posts found in Firestore');
           // await fetch(`http://localhost:8000/relevant_posts_weekly?userid=${user.uid}`);
           const firestorePosts = postsSnapshot.docs.map((doc) => ({
-            id: doc.id,
+            id: doc.data().id,
             subreddit: doc.data().subreddit,
             title: doc.data().title,
             content: doc.data().content,
@@ -164,6 +170,61 @@ export default function Dashboard() {
     setIsEditing(null);
   };
 
+  const handleReject = async (postId: string) => {
+    try {
+      if (!user) return;
+  
+      const postDocRef = doc(db, "reddit-posts", user.uid, "posts", postId);
+  
+      // Delete the post from Firestore
+      await deleteDoc(postDocRef);
+  
+      // Remove the post from state
+      setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
+      setAllPosts((posts) => posts.filter((post) => post.id !== postId));
+  
+      console.log(`Post with ID ${postId} rejected and deleted successfully!`);
+      setAlert({ message: "Post rejected succesfully", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    } catch (error) {
+      console.error("Error rejecting post:", error);
+      setAlert({ message: "Error occured while rejecting the post", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    }
+  };
+  
+  const handleApprove = async (postId: string, suggestedReply: string) => {
+    try {
+      const response = await fetch('http://localhost:8000/reply_to_post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          post_id: postId,
+          reply_text: suggestedReply,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error approving reply:', errorData);
+        alert(`Failed to approve reply: ${errorData.detail}`);
+      } else {
+        const data = await response.json();
+        console.log('Reply approved successfully:', data);
+        alert('Reply submitted successfully!');
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      alert('An error occurred while approving the reply.');
+    }
+  };
+
   if (isLoading || isLoading2) {
     return (
       <div className='flex'>
@@ -223,10 +284,20 @@ export default function Dashboard() {
                       Edit
                     </button>
                   )}
-                  <button className="btn btn-outline btn-error">
+                  <button className="btn btn-outline btn-error"
+                   onClick={() => handleReject(post.id)}>
                     Reject
                   </button>
-                  <button className="btn btn-outline btn-success">
+                  {alertt.visible && (
+                    <div className="toast toast-end">
+                      <div className="alert alert-error">
+                        <span>{alertt.message}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <button className="btn btn-outline btn-success"
+                   onClick={() => handleApprove(post.id, post.suggestedReply)}>
                     Approve
                   </button>
                 </div>
