@@ -42,6 +42,10 @@ export default function Dashboard() {
     message: "",
     visible: false,
   });
+  const [greenalertt, setgreenAlert] = useState<{ message: string; visible: boolean }>({
+    message: "",
+    visible: false,
+  });
   
   const POSTS_PER_PAGE = 6;
 
@@ -225,11 +229,18 @@ export default function Dashboard() {
       } else {
         const data = await response.json();
         console.log('Reply approved successfully:', data);
-        alert('Reply submitted successfully!');
+        // alert('Reply submitted successfully!');
+        setgreenAlert({ message: "Reply approved successfully", visible: true });
+        setTimeout(() => {
+          setgreenAlert({ message: "", visible: false });
+        }, 3000);
       }
     } catch (error) {
       console.error('Error submitting reply:', error);
-      alert('An error occurred while approving the reply.');
+      setAlert({ message: "Error occured while approving the post", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
     }
   };
 
@@ -321,6 +332,13 @@ export default function Dashboard() {
                    onClick={() => handleApprove(post.id, post.suggestedReply)}>
                     Approve
                   </button>
+                  {greenalertt.visible && (
+                    <div className="toast toast-end">
+                      <div className="alert alert-success">
+                        <span>{greenalertt.message}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               

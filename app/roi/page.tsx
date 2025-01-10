@@ -84,7 +84,7 @@ export default function MetricsPage() {
 
       {/* Metric Numbers */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">Comments</h3>
             <MessageSquare className="h-4 w-4 text-gray-500" />
@@ -94,7 +94,7 @@ export default function MetricsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">Score</h3>
             <ThumbsUp className="h-4 w-4 text-gray-500" />
@@ -104,7 +104,7 @@ export default function MetricsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">Replies</h3>
             <Reply className="h-4 w-4 text-gray-500" />
@@ -116,7 +116,7 @@ export default function MetricsPage() {
       </div>
 
       {/* Line Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+      <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-lg shadow p-4">
         <div style={{ height: '300px' }}>
           <ResponsiveLine
             data={chartData}
