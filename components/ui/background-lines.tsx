@@ -15,14 +15,17 @@ export const BackgroundLines = ({
   };
 }) => {
   return (
+    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden dark:bg-dot-white/[0.2] bg-dot-black/[0.2]">
+
     <div
-      className={cn(
-        "h-[20rem] md:h-screen w-full bg-white dark:bg-black",
-        className
-      )}
+    className={cn(
+      "h-[20rem] md:h-screen w-full ",
+      className
+    )}
     >
       <SVG svgOptions={svgOptions} />
       {children}
+    </div>
     </div>
   );
 };
@@ -68,27 +71,33 @@ const SVG = ({
   ];
 
   const colors = [
-    "#46A5CA",
-    "#8C2F2F",
-    "#4FAE4D",
-    "#D6590C",
-    "#811010",
-    "#247AFB",
-    "#A534A0",
-    "#A8A438",
-    "#D6590C",
-    "#46A29C",
-    "#670F6D",
-    "#D7C200",
-    "#59BBEB",
-    "#504F1C",
-    "#55BC54",
-    "#4D3568",
-    "#9F39A5",
-    "#363636",
-    "#860909",
-    "#6A286F",
-    "#604483",
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
+    "#FF5700", // International Orange
+    "#FF4500", // Orange Red
+    "#FF8b60", // Crusta (Upvote)
   ];
   return (
     <motion.svg
