@@ -317,25 +317,25 @@ export default function Dashboard() {
                     </button>
                   )}
                   <button className="btn btn-outline btn-error"
-                   onClick={() => handleReject(post.id)}>
+                    onClick={() => handleReject(post.id)}>
                     Reject
                   </button>
                   {alertt.visible && (
                     <div className="toast toast-end">
                       <div className="alert alert-error">
-                        <span>{alertt.message}</span>
+                        <span>{alertt.message.replace(/'/g, '&#39;')}</span>
                       </div>
                     </div>
                   )}
 
                   <button className="btn btn-outline btn-success"
-                   onClick={() => handleApprove(post.id, post.suggestedReply)}>
+                    onClick={() => handleApprove(post.id, post.suggestedReply)}>
                     Approve
                   </button>
                   {greenalertt.visible && (
                     <div className="toast toast-end">
                       <div className="alert alert-success">
-                        <span>{greenalertt.message}</span>
+                        <span>{greenalertt.message.replace(/'/g, '&#39;')}</span>
                       </div>
                     </div>
                   )}

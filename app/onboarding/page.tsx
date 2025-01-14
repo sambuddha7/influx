@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,7 +7,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { FormData } from '@/types/onboarding';
 import Loading from '@/components/Loading';
-import Image from 'next/image';
+import Image from 'next/image'; // Import Image component for optimization
 
 
 // Define interface for ProgressBar props
@@ -54,6 +54,7 @@ const ProgressBar = ({ currentPage, totalPages }: ProgressBarProps) => (
     />
   </div>
 );
+
 const WelcomePage = ({ onNext }: { onNext: () => void }) => (
   <div className="space-y-8 text-center">
     <div className="flex items-center justify-center space-x-4">
@@ -203,10 +204,7 @@ export default function OnboardingForm() {
   };
 
   if (isLoading || loading) {
-    return (
-
-        <Loading/>
-    );
+    return <Loading />;
   }
 
   return (
@@ -276,49 +274,49 @@ export default function OnboardingForm() {
               </div>
             )}
 
-{page === 2 && (
-  <div className="space-y-6">
-    <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-      Additional Information
-    </h2>
-    <div className="space-y-4">
-      <FormInput
-        label="Product/Service Focus"
-        name="product"
-        value={formData.product}
-        onChange={handleInputChange}
-      />
-      <FormTextArea
-        label="Target Audience"
-        name="targetAudience"
-        value={formData.targetAudience}
-        onChange={handleInputChange}
-      />
-      {/* New input for Keywords */}
-      <FormInput
-        label="Keywords (comma-separated)"
-        name="keywords"
-        value={formData.keywords}
-        onChange={handleInputChange}
-      />
-    </div>
-    <div className="flex gap-4">
-      <Button
-        onClick={() => setPage(3)}
-        className="w-1/2 border border-gray-300 hover:bg-gray-100 
-                 dark:border-zinc-700 dark:hover:bg-zinc-800"
-      >
-        Skip
-      </Button>
-      <Button
-        onClick={() => setPage(3)}
-        className="w-1/2 bg-orange-500 hover:bg-orange-600 text-white"
-      >
-        Next Step
-      </Button>
-    </div>
-  </div>
-)}
+            {page === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                  Additional Information
+                </h2>
+                <div className="space-y-4">
+                  <FormInput
+                    label="Product/Service Focus"
+                    name="product"
+                    value={formData.product}
+                    onChange={handleInputChange}
+                  />
+                  <FormTextArea
+                    label="Target Audience"
+                    name="targetAudience"
+                    value={formData.targetAudience}
+                    onChange={handleInputChange}
+                  />
+                  {/* New input for Keywords */}
+                  <FormInput
+                    label="Keywords (comma-separated)"
+                    name="keywords"
+                    value={formData.keywords}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <Button
+                    onClick={() => setPage(3)}
+                    className="w-1/2 border border-gray-300 hover:bg-gray-100 
+                             dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  >
+                    Skip
+                  </Button>
+                  <Button
+                    onClick={() => setPage(3)}
+                    className="w-1/2 bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    Next Step
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {page === 3 && (
               <div className="space-y-6 text-center">
@@ -327,14 +325,16 @@ export default function OnboardingForm() {
                 </h2>
                 <div className="p-4">
                   <div className="overflow-hidden rounded-lg">
-                    <img
+                    <Image
                       src="/out.gif"
                       alt="Onboarding"
+                      width={500} // Specify width and height for optimization
+                      height={500}
                       className="mx-auto rounded-lg shadow-lg"
                     />
                   </div>
                   <p className="mt-6 text-gray-600 dark:text-gray-400">
-                    Don't miss out on the opportunity to personalise your AI to better suit your needs.
+                    Don&apos;t miss out on the opportunity to personalise your AI to better suit your needs.
                   </p>
                 </div>
                 <Button
