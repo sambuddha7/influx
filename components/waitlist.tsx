@@ -55,7 +55,7 @@ export default function WaitlistForm() {
           </li>
           <li className="flex items-center gap-2">
             <CheckCircle2 className="text-green-500 h-5 w-5" />
-            <span>Exclusive updates and announcements</span>
+            <span>Early access to new features</span>
           </li>
         </ul>
       </div>
