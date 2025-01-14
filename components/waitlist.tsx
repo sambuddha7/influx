@@ -39,7 +39,7 @@ export default function WaitlistForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 text-center">
+    <div className="max-w-2xl mx-auto p-6 text-center" >
       <h2 className="text-4xl font-bold mb-4">Join the Waitlist</h2>
 
       <div className="space-y-4 mb-8">
