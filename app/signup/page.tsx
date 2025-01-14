@@ -1,3 +1,16 @@
+import React from 'react'; // Your import (if any)
+
+const SinPage: React.FC = () => {
+  return (
+    <div>
+      {/* You can add a simple message or login form here */}
+      <h1>Login Page</h1>
+    </div>
+  );
+}
+
+export default SinPage;
+
 // // app/signup/page.tsx
 // import SignUpForm from '@/components/auth/SignUpForm';
 // import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
