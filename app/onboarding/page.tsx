@@ -80,7 +80,7 @@ const WelcomePage = ({ onNext }: { onNext: () => void }) => (
       onClick={onNext}
       className="w-full bg-orange-500 hover:bg-orange-600 text-white"
     >
-      Let's Get Started
+      Let&apos;s Get Started
     </Button>
   </div>
 );

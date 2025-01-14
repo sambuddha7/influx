@@ -9,6 +9,7 @@ import {
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
+
 export default function SignUpForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,13 +46,19 @@ export default function SignUpForm() {
       setError('');
       
       // Don't redirect yet - wait for email verification
-    } catch (err: any) {
-      if (err?.code === 'auth/email-already-in-use') {
-        setError('This email is already registered.');
-      } else if (err?.code === 'auth/weak-password') {
-        setError('Password should be at least 6 characters long.');
+    } catch (err: unknown) { // 'err' starts as unknown
+      // Narrow the type using type guards
+      if (typeof err === 'object' && err !== null && 'code' in err) {
+        const errorCode = (err as { code: string }).code; // Explicitly cast err to an object with a 'code' property
+        if (errorCode === 'auth/email-already-in-use') {
+          setError('This email is already registered.');
+        } else if (errorCode === 'auth/weak-password') {
+          setError('Password should be at least 6 characters long.');
+        } else {
+          setError('Failed to create account. Please try again.');
+        }
       } else {
-        setError('Failed to create account. Please try again.');
+        setError('An unknown error occurred.'); // Fallback for non-Firebase errors
       }
     }
   };
@@ -74,12 +81,12 @@ export default function SignUpForm() {
       <div className="text-center space-y-4">
         <h2 className="text-xl font-semibold text-gray-800">Verify Your Email</h2>
         <p className="text-gray-600">
-          We've sent a verification email to <span className="font-medium">{email}</span>.
+          We&apos;ve sent a verification email to <span className="font-medium">{email}</span>.
           Please check your inbox and click the verification link to complete your registration.
         </p>
         <div className="space-y-2">
           <p className="text-sm text-gray-500">
-            Don't see the email? Check your spam folder or{' '}
+            Don&apos;t see the email? Check your spam folder or{' '}
             <button
               onClick={() => {
                 if (auth.currentUser) {
@@ -95,7 +102,7 @@ export default function SignUpForm() {
             onClick={checkVerification}
             className="text-sm text-orange-500 hover:text-orange-600 underline"
           >
-            I've verified my email. Continue to onboarding →
+            I&apos;ve verified my email. Continue to onboarding →
           </button>
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}

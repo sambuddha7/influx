@@ -358,7 +358,7 @@ export default function Dashboard() {
           ) : displayedPosts.length > 0 ? (
             <div className="text-center text-gray-600 dark:text-gray-400">
               <p>End of posts!</p>
-              <p className="text-sm mt-1">We'll notify you when we find new discussions for you.</p>
+              <p className="text-sm mt-1">We&apos;ll notify you when we find new discussions for you.</p>
             </div>
           ) : null}
         </div>
