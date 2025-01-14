@@ -1,7 +1,7 @@
 
 import { BackgroundLinesDemo } from "@/components/hero";
 
-import { StickyScrollRevealDemo } from "@/components/StickyScroll";
+
 import WaitlistComponent  from "@/components/waitlist";
 
 
@@ -9,7 +9,6 @@ import FeaturesSectionDemo from "@/components/features-section-demo-3";
 import FeaturesSectionDemo1 from "@/components/features-section-demo-1";
 import { WobbleCardDemo } from "@/components/why-reddit";
 
-import { AppleCardsCarouselDemo } from "@/components/Test";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -18,17 +17,10 @@ export default function Home() {
         {/* hero section */}
         <BackgroundLinesDemo />
 
-        {/* waitlist */}
 
-        {/* testimonials */}
-        {/* <InfiniteMovingCardss /> */}
-        {/* <AppleCardsCarouselDemo /> */}
-
-        {/* tag line before features */}
-        {/* <HeroHighlightDemo /> */}
 
         {/* features */}
-        {/* <StickyScrollRevealDemo /> */}
+
         <FeaturesSectionDemo />
         <FeaturesSectionDemo1 />
 

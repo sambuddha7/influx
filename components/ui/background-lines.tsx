@@ -15,7 +15,6 @@ export const BackgroundLines = ({
   };
 }) => {
   return (
-    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden dark:bg-dot-white/[0.2] bg-dot-black/[0.2]">
 
     <div
     className={cn(
@@ -25,7 +24,6 @@ export const BackgroundLines = ({
     >
       <SVG svgOptions={svgOptions} />
       {children}
-    </div>
     </div>
   );
 };
