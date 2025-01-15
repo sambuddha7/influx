@@ -21,7 +21,7 @@ export function BackgroundLinesDemo() {
         <span style={{ color: '#FF5700' }}>Reddit</span> Marketing made simple .
       </h1>
       <p className="max-w-xl mx-auto text-sm md:text-lg text-neutral-700 dark:text-neutral-400 text-center">
-      Discover the best posts to engage in and maintain your brand&apos;s authentic voice with every reply—at scale.
+      Discover the best posts to engage in and maintain your brand&apos;s authentic voice with every reply—at scale
       </p>
       <button className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 m-10">
       {/* <a href="#waitlist" className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 mt-4">
