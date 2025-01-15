@@ -1,11 +1,12 @@
 
 const Footer = () => {
+    const currentYear = new Date().getFullYear();
     return (
 <footer className="footer bg-base-200 text-base-content p-10">
   <aside>
     
     <p>
-      influx.io
+    <span>©</span> {currentYear} influx.io
       <br />
       All rights reserved
     </p>
