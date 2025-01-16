@@ -6,7 +6,7 @@ export default function FeaturesSectionDemo1() {
     <div className="py-20 lg:py-40">
       <div className="px-8">
         <h4 className="text-3xl lg:text-5xl lg:leading-tight max-w-5xl mx-auto text-center tracking-tight font-medium text-black dark:text-white">
-          Upcoming Features
+          And many more in the works
         </h4>
 
         <p className="text-sm lg:text-base  max-w-2xl  my-4 mx-auto text-neutral-500 text-center font-normal dark:text-neutral-300">
@@ -36,14 +36,14 @@ export default function FeaturesSectionDemo1() {
 
 const grid = [
   {
-    title: "Human-Centered AI",
+    title: "Human Refined AI",
     description:
-      "Leverage AI to craft authentic, brand-aligned comments that resonate naturally.",
+      "Blend AI efficiency with human refinement to deliver authentic Reddit engagement that resonates with your audience.",
   },
   {
-    title: "Advanced marketing strategies",
+    title: "Automated marketing campaigns",
     description:
-      "Automate posts and AMAs to cover all your Reddit marketing essentials effortlessly.",
+      "Automate advanced marketing campaigns with strategies such as Posts, AMAs and many more.",
   },
   {
     title: "Automated Reddit DMs",
@@ -53,7 +53,7 @@ const grid = [
   {
     title: "Advanced Analytics",
     description:
-      "Track lead rates and customer generation for clear insights into your marketing campaigns.",
+      "Get sentiment analysis and track engagement for clear insights into your marketing campaigns.",
   },
   // {
   //   title: "Audience Targeting",
