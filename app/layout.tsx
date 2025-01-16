@@ -4,6 +4,7 @@ import Navbar from "@/components/navbar";
 import { Providers } from "./providers";
 import Footer from "@/components/Footer";
 
+
 export const metadata: Metadata = {
   title: "Influx - Digital Marketing for Reddit",
   description: "",
@@ -19,6 +20,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link 
+          type="text/css" 
+          rel="stylesheet" 
+          href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" 
+        />
+      </head>
       <body
       >
         <Providers>
@@ -27,7 +35,6 @@ export default function RootLayout({
           <a className="btn btn-ghost text-xl">daisyUI</a>
         </div> */}
         {children}
-        <Footer />
         </Providers>
       </body>
     </html>
