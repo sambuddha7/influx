@@ -1,6 +1,14 @@
 import React from "react";
 import { useId } from "react";
+import { SVGProps } from 'react';
 
+interface GridPatternProps extends SVGProps<SVGSVGElement> {
+  width: number;
+  height: number;
+  x?: number | string; // Allow both string and number
+  y?: number | string; // Allow both string and number
+  squares?: [number, number][]; // Array of tuples or undefined
+}
 export default function FeaturesSectionDemo1() {
   return (
     <div className="py-20 lg:py-40">
@@ -99,7 +107,7 @@ export const Grid = ({
           height={size ?? 20}
           x="-12"
           y="4"
-          squares={p}
+          squares={p as [number, number][]}
           className="absolute inset-0 h-full w-full  mix-blend-overlay dark:fill-white/10 dark:stroke-white/10 stroke-black/10 fill-black/10"
         />
       </div>
@@ -107,7 +115,7 @@ export const Grid = ({
   );
 };
 
-export function GridPattern({ width, height, x, y, squares, ...props }: any) {
+export function GridPattern({ width, height, x, y, squares, ...props }: GridPatternProps) {
   const patternId = useId();
 
   return (
@@ -132,14 +140,14 @@ export function GridPattern({ width, height, x, y, squares, ...props }: any) {
       />
       {squares && (
         <svg x={x} y={y} className="overflow-visible">
-          {squares.map(([x, y]: any) => (
+          {squares.map(([squareX, squareY]) => (
             <rect
               strokeWidth="0"
-              key={`${x}-${y}`}
+              key={`${squareX}-${squareY}`}
               width={width + 1}
               height={height + 1}
-              x={x * width}
-              y={y * height}
+              x={squareX * width}
+              y={squareY * height}
             />
           ))}
         </svg>

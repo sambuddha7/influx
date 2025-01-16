@@ -180,11 +180,11 @@ export const SkeletonTwo = () => {
   //   "/thumbs-down.jpg",
   // ];
   const icons = [
-    <Check />,
-    <X />,
-    <Pencil/>,
-    <Check />,
-    <X />,
+    <Check key="check-1" />,
+    <X key="x-1" />,
+    <Pencil key="pencil-1" />,
+    <Check key="check-2" />,
+    <X key="x-2" />,
   ];
 
   const iconVariants = {

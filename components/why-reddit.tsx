@@ -14,7 +14,7 @@ export function WobbleCardDemo() {
       1.2B Monthly Users
     </h2>
     <p className="mt-4 text-left text-base/6 text-neutral-200">
-      Tap into Reddit's massive global audience for your brand, reaching over a billion monthly users actively seeking authentic content and recommendations.
+      Tap into Reddit&apos;s massive global audience for your brand, reaching over a billion monthly users actively seeking authentic content and recommendations.
     </p>
   </div>
   {/* <Image
@@ -31,7 +31,7 @@ export function WobbleCardDemo() {
     120K+ Active Communities
   </h2>
   <p className="mt-4 max-w-[26rem] text-left text-base/6 text-neutral-200">
-    Target your perfect niche among Reddit's 120K+ communities, where engaged users are already discussing topics relevant to your brand or product.
+    Target your perfect niche among Reddit&apos;s 120K+ communities, where engaged users are already discussing topics relevant to your brand or product.
   </p>
 </WobbleCard>
 
@@ -42,7 +42,7 @@ export function WobbleCardDemo() {
       57M+ Unique Users Not on Other Platforms
     </h2>
     <p className="mt-4 max-w-[26rem] text-left text-base/6 text-neutral-200">
-      Access an untapped marketing goldmine of 57M+ users who can't be reached through traditional social media campaigns, exclusively available on Reddit.
+      Access an untapped marketing goldmine of 57M+ users who can&apos;t be reached through traditional social media campaigns, exclusively available on Reddit.
     </p>
   </div>
   {/* <Image
