@@ -8,7 +8,7 @@ import { db, auth } from '@/lib/firebase';
 import { doc, setDoc, getDoc , getDocs} from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { where,collection, addDoc, deleteDoc } from "firebase/firestore";
+import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
 import { ArrowUpRight } from "lucide-react"; // Import the icon
 import { formatDistanceToNow } from 'date-fns';
@@ -309,6 +309,18 @@ export default function Dashboard() {
       }
 
       const generatedReply = (await response.text()).replace(/^"|"$/g, '');
+
+      //update post
+      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+      const q = query(postsCollectionRef, where("id", "==", postId));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const docToUpdate = querySnapshot.docs[0];
+        await updateDoc(docToUpdate.ref, {
+          suggestedReply: generatedReply
+        });
+      }
 
       // Update displayedPosts 
       setDisplayedPosts(posts =>
