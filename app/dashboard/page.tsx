@@ -8,7 +8,7 @@ import { db, auth } from '@/lib/firebase';
 import { doc, setDoc, getDoc , getDocs} from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { collection, addDoc, deleteDoc } from "firebase/firestore";
+import { where,collection, addDoc, deleteDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
 import { ArrowUpRight } from "lucide-react"; // Import the icon
 import { formatDistanceToNow } from 'date-fns';
@@ -188,23 +188,29 @@ export default function Dashboard() {
     try {
       if (!user) return;
   
-      const postDocRef = doc(db, "reddit-posts", user.uid, "posts", postId);
+      // Find the exact document to delete
+      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+      const q = query(postsCollectionRef, where("id", "==", postId));
+      const querySnapshot = await getDocs(q);
   
-      // Delete the post from Firestore
-      await deleteDoc(postDocRef);
+      if (!querySnapshot.empty) {
+        // Delete the specific document
+        const docToDelete = querySnapshot.docs[0];
+        await deleteDoc(docToDelete.ref);
   
-      // Remove the post from state
-      setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
-      setAllPosts((posts) => posts.filter((post) => post.id !== postId));
+        // Remove the post from state
+        setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
+        setAllPosts((posts) => posts.filter((post) => post.id !== postId));
   
-      console.log(`Post with ID ${postId} rejected and deleted successfully!`);
-      setAlert({ message: "Post rejected succesfully", visible: true });
-      setTimeout(() => {
-        setAlert({ message: "", visible: false });
-      }, 3000);
+        console.log(`Post with ID ${postId} rejected and deleted successfully!`);
+        setAlert({ message: "Post rejected successfully", visible: true });
+        setTimeout(() => {
+          setAlert({ message: "", visible: false });
+        }, 3000);
+      }
     } catch (error) {
       console.error("Error rejecting post:", error);
-      setAlert({ message: "Error occured while rejecting the post", visible: true });
+      setAlert({ message: "Error occurred while rejecting the post", visible: true });
       setTimeout(() => {
         setAlert({ message: "", visible: false });
       }, 3000);
@@ -229,13 +235,41 @@ export default function Dashboard() {
         console.error('Error approving reply:', errorData);
         alert(`Failed to approve reply: ${errorData.detail}`);
       } else {
-        const data = await response.json();
-        console.log('Reply approved successfully:', data);
-        // alert('Reply submitted successfully!');
-        setgreenAlert({ message: "Reply approved successfully", visible: true });
-        setTimeout(() => {
-          setgreenAlert({ message: "", visible: false });
-        }, 3000);
+        // Find the post to be archived
+        const postToArchive = allPosts.find(post => post.id === postId);
+        
+
+        if (postToArchive && user) {
+          // Save to archived-posts collection
+          const postDocRef1 = collection(db, "archived-posts", user.uid, "posts");        
+
+          const postWithcomment = {
+            ...postToArchive,
+            suggestedReply: suggestedReply,
+            archivedAt: new Date().toISOString()
+          };
+          await addDoc(postDocRef1, postWithcomment);
+       
+          // Remove the post from the current collection
+          const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+          const q = query(postsCollectionRef, where("id", "==", postId));
+          const querySnapshot = await getDocs(q);
+      
+          if (!querySnapshot.empty) {
+            // Delete the specific document
+            const docToDelete = querySnapshot.docs[0];
+            await deleteDoc(docToDelete.ref);
+      
+            // Remove the post from state
+            setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
+            setAllPosts((posts) => posts.filter((post) => post.id !== postId));
+      
+            setgreenAlert({ message: "Reply approved successfully", visible: true });
+            setTimeout(() => {
+              setgreenAlert({ message: "", visible: false });
+            }, 3000);
+          }
+        }
       }
     } catch (error) {
       console.error('Error submitting reply:', error);
@@ -273,7 +307,7 @@ export default function Dashboard() {
         throw new Error('Failed to generate reply');
       }
 
-      const generatedReply = await response.text(); 
+      const generatedReply = (await response.text()).replace(/^"|"$/g, '');
 
       // Update displayedPosts 
       setDisplayedPosts(posts =>
@@ -346,7 +380,7 @@ export default function Dashboard() {
                     {isGenerating === post.id ? 'Generating...' : 'Generate'}
                   </button>
                 </div>
-                <textarea 
+                {/* <textarea 
                   className="w-full p-2 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
                   value={post.suggestedReply}
                   onChange={(e) => {
@@ -359,7 +393,22 @@ export default function Dashboard() {
                   }}
                   rows={3}
                   readOnly={isEditing !== post.id}
-                />
+                /> */}
+                {isEditing === post.id ? (
+                    <textarea 
+                      className="w-full p-2 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+                      value={post.suggestedReply}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        setDisplayedPosts(posts =>
+                          posts.map(p => p.id === post.id ? { ...p, suggestedReply: newValue } : p)
+                        );
+                      }}
+                      rows={3}
+                    />
+                  ) : (
+                    <ReactMarkdown>{post.suggestedReply}</ReactMarkdown>
+                  )}
                 
                 <div className="flex gap-2 mt-4">
                     {/* <button 
