@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Users, Settings, Bell, Menu, BookOpen, LogOut, ChartNoAxesCombined } from 'lucide-react';
+import { Home, FileText, Users, Settings, Archive, Menu, BookOpen, LogOut, ChartNoAxesCombined } from 'lucide-react';
 
 import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -84,9 +84,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
           <NavItem
-            href="/notifications"
-            icon={<Bell size={20} />}
-            text="Notifications"
+            href="/archive"
+            icon={<Archive size={20} />}
+            text="Archive"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />

@@ -70,6 +70,7 @@ export default function Dashboard() {
     };
 
     if (user) {
+      console.log("user exists")
       checkUser();
     } else if (!loading) {
       router.push('/login');
