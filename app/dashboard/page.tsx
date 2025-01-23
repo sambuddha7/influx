@@ -37,7 +37,8 @@ export default function Dashboard() {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [user, loading] = useAuthState(auth);
   const [hasMorePosts, setHasMorePosts] = useState(true);
-
+  //change
+  const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [alertt, setAlert] = useState<{ message: string; visible: boolean }>({
     message: "",
     visible: false,
@@ -182,6 +183,7 @@ export default function Dashboard() {
     setIsEditing(null);
   };
 
+
   const handleReject = async (postId: string) => {
     try {
       if (!user) return;
@@ -244,6 +246,56 @@ export default function Dashboard() {
     }
   };
 
+  //change
+
+  const handleGenerate = async (postId: string) => {
+    try {
+      setIsGenerating(postId);
+      const post = displayedPosts.find(p => p.id === postId);
+      
+      if (!post) return;
+
+      const response = await fetch('http://localhost:8000/reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: post.id,
+          subreddit: post.subreddit,
+          title: post.title,
+          content: post.content,
+          suggested_reply: post.suggestedReply
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate reply');
+      }
+
+      const generatedReply = await response.text(); 
+
+      // Update displayedPosts 
+      setDisplayedPosts(posts =>
+        posts.map(p => p.id === postId ? { ...p, suggestedReply: generatedReply } : p)
+      );
+      
+      setgreenAlert({ message: "New reply generated successfully", visible: true });
+      setTimeout(() => {
+        setgreenAlert({ message: "", visible: false });
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error generating reply:', error);
+      setAlert({ message: "Error occurred while generating new reply", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    } finally {
+      setIsGenerating(null);
+    }
+  };
+
   if (isLoading || isLoading2) {
     return (
       <div className='flex'>
@@ -284,7 +336,16 @@ export default function Dashboard() {
               </div>
               
               <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2 dark:text-white">Suggested Reply</h3>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold dark:text-white">Suggested Reply</h3>
+                  <button 
+                    className="btn btn-outline btn-primary btn-sm"
+                    onClick={() => handleGenerate(post.id)}
+                    disabled={isGenerating === post.id}
+                  >
+                    {isGenerating === post.id ? 'Generating...' : 'Generate'}
+                  </button>
+                </div>
                 <textarea 
                   className="w-full p-2 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
                   value={post.suggestedReply}
@@ -301,6 +362,13 @@ export default function Dashboard() {
                 />
                 
                 <div className="flex gap-2 mt-4">
+                    {/* <button 
+                      className="btn btn-outline btn-primary"
+                      onClick={() => handleGenerate(post.id)}
+                      disabled={isGenerating === post.id}
+                    >
+                      {isGenerating === post.id ? 'Generating...' : 'Generate'}
+                    </button> */}
                   {isEditing === post.id ? (
                     <button 
                       className="btn btn-outline btn-info"
