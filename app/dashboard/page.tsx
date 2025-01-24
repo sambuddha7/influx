@@ -284,6 +284,7 @@ export default function Dashboard() {
   //change
 
   const handleGenerate = async (postId: string) => {
+    if (!user) return;
     try {
       setIsGenerating(postId);
       const post = displayedPosts.find(p => p.id === postId);

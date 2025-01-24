@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
 export default function SignUpForm() {
@@ -12,18 +13,29 @@ export default function SignUpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     try {
+      const waitlistRef = collection(db, 'approved-waitlist');
+      const q = query(waitlistRef, where('email', '==', email.toLowerCase().trim()));
+      const querySnapshot = await getDocs(q);
+
+
+      if (querySnapshot.empty) {
+        setError('This email is not on the waitlist. Request access first.');
+        return;
+      }
+
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      
       if (result.user) {
         const token = await result.user.getIdToken();
-      
-      // Set the token in a cookie
         document.cookie = `firebase-token=${token}; path=/`;
-        
         router.replace('/onboarding');
       }
     } catch (err) {
-      setError('Failed to create account. Email might be in use.');
+      console.error('Full error:', err);    
+      setError('Account creation failed. Please try again.');
     }
   };
 
