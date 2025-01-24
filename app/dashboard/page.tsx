@@ -291,7 +291,7 @@ export default function Dashboard() {
       
       if (!post) return;
 
-      const response = await fetch('http://localhost:8000/reply', {
+      const response = await fetch(`http://localhost:8000/reply?userid=${user.uid}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
