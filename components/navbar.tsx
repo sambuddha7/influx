@@ -31,7 +31,7 @@ const Navbar = () => {
         <Link href="/" className="btn btn-ghost text-3xl">Influx</Link>
       </div>
       <div className="flex-none gap-2">
-        {user ? (
+        {/* {user ? (
           <></>
         ) : (
           <>
@@ -42,7 +42,7 @@ const Navbar = () => {
               Sign Up
             </Link>
           </>
-        )}
+        )} */}
         <button className="btn btn-square btn-ghost">
           <ThemeSwitch />
         </button>
