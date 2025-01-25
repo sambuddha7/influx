@@ -90,7 +90,7 @@ export default function ArchivePage() {
             suggestedReply: doc.data().suggestedReply,
             url: doc.data().url,
             date_created: doc.data().date_created,
-            ate_archived: doc.data().date_archived || new Date(),
+            date_archived: doc.data().date_archived || new Date(),
           }));
           setArchivedPosts(firestorePosts);
           setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
