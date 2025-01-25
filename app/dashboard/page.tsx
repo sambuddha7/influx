@@ -49,6 +49,8 @@ export default function Dashboard() {
   });
   
   const POSTS_PER_PAGE = 6;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
   useEffect(() => {
     const checkUser = async () => {
@@ -122,7 +124,7 @@ export default function Dashboard() {
           setIsLoading2(false);
           setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
         } else {
-          const response = await fetch(`http://localhost:8000/relevant_posts?userid=${user.uid}`);
+          const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
           const data = await response.json();
 
           const formattedPosts = data.map((post: string[]) => ({
@@ -220,7 +222,7 @@ export default function Dashboard() {
   
   const handleApprove = async (postId: string, suggestedReply: string) => {
     try {
-      const response = await fetch('http://localhost:8000/reply_to_post', {
+      const response = await fetch(`${apiUrl}/reply_to_post`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -291,7 +293,7 @@ export default function Dashboard() {
       
       if (!post) return;
 
-      const response = await fetch(`http://localhost:8000/reply?userid=${user.uid}`, {
+      const response = await fetch(`${apiUrl}/reply?userid=${user.uid}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
