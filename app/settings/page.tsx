@@ -16,7 +16,8 @@ interface UserData {
   email: string;
   product: string;
   targetAudience: string;
-  keywords: string;
+  primaryKeywords: string;
+  secondaryKeywords: string;
 }
 
 interface FormFieldProps {
@@ -199,26 +200,21 @@ const Settings: React.FC = () => {
               icon={MapPin}
             />
 
-            <FormField
-              label="Product"
-              name="product"
-              value={userData.product}
-              onChange={handleInputChange}
-              icon={Package}
-            />
+            
+
+            
 
             <FormField
-              label="Target Audience"
-              name="targetAudience"
-              value={userData.targetAudience}
+              label="Primary Keywords"
+              name="primaryKeywords"
+              value={userData.primaryKeywords}
               onChange={handleInputChange}
-              icon={Users}
+              icon={Tag}
             />
-
             <FormField
-              label="Keywords"
-              name="keywords"
-              value={userData.keywords}
+              label="Secondary Keywords"
+              name="secondaryKeywords"
+              value={userData.secondaryKeywords}
               onChange={handleInputChange}
               icon={Tag}
             />
