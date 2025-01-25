@@ -14,8 +14,15 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/onboarding');
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      if (result.user) {
+        const token = await result.user.getIdToken();
+      
+      // Set the token in a cookie
+        document.cookie = `firebase-token=${token}; path=/`;
+        router.push('/dashboard');
+      }
+      
     } catch (err) {
       setError('Failed to login. Please check your credentials.');
     }
