@@ -166,11 +166,14 @@ export default function OnboardingForm() {
     };
 
     if (user) {
+      console.log('User logged in');
       checkUser();
     } else if (!loading) {
+      console.log('User not logged in');
       router.push('/login');
     }
   }, [user, loading, router]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

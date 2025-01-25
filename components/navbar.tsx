@@ -31,18 +31,18 @@ const Navbar = () => {
         <Link href="/" className="btn btn-ghost text-3xl">Influx</Link>
       </div>
       <div className="flex-none gap-2">
-        {user ? (
+        {/* {user ? (
           <></>
         ) : (
           <>
-            {/* <Link href="/login" className="btn btn-ghost">
+            <Link href="/login" className="btn btn-ghost">
               Sign In
             </Link>
             <Link href="/signup" className="btn btn-error">
               Sign Up
-            </Link> */}
+            </Link>
           </>
-        )}
+        )} */}
         <button className="btn btn-square btn-ghost">
           <ThemeSwitch />
         </button>
