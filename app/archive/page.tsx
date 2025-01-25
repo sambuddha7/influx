@@ -12,6 +12,8 @@ import { collection, addDoc, deleteDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
 import { ArrowUpRight } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
+import { DocumentSnapshot } from 'firebase/firestore';
+
 
 interface ArchivedPost {
   id: string;
@@ -80,7 +82,7 @@ export default function ArchivePage() {
         if (!postsSnapshot.empty) {
           console.log('Posts found in Firestore');
           // await fetch(`http://localhost:8000/relevant_posts_weekly?userid=${user.uid}`);
-          const firestorePosts = postsSnapshot.docs.map((doc) => ({
+          const firestorePosts = postsSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
             id: doc.data().id,
             subreddit: doc.data().subreddit,
             title: doc.data().title,
@@ -88,6 +90,7 @@ export default function ArchivePage() {
             suggestedReply: doc.data().suggestedReply,
             url: doc.data().url,
             date_created: doc.data().date_created,
+            ate_archived: doc.data().date_archived || new Date(),
           }));
           setArchivedPosts(firestorePosts);
           setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));

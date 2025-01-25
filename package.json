@@ -41,6 +41,7 @@
     "three-globe": "^2.34.4"
   },
   "devDependencies": {
+    "@types/firebase": "^2.4.32",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
