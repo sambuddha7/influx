@@ -9,6 +9,34 @@ import { FormData } from '@/types/onboarding';
 import Loading from '@/components/Loading';
 import Image from 'next/image'; // Import Image component for optimization
 
+const StarOutline = ({ className, onClick }: { className?: string, onClick?: () => void }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={`w-4 h-4 ${className}`}
+    onClick={onClick}
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+const StarFilled = ({ className, onClick }: { className?: string, onClick?: () => void }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={`w-4 h-4 ${className}`}
+    onClick={onClick}
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
 
 // Define interface for ProgressBar props
 interface ProgressBarProps {
@@ -138,6 +166,79 @@ export default function OnboardingForm() {
   const [page, setPage] = useState(0);
   const [user, loading] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(true);
+  const [primaryKeywords, setPrimaryKeywords] = useState<string[]>([]);
+  const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState('');
+
+  const addKeyword = () => {
+    const trimmedKeyword = keywordInput.trim();
+    if (trimmedKeyword && 
+        !primaryKeywords.includes(trimmedKeyword) && 
+        !secondaryKeywords.includes(trimmedKeyword)) {
+      setSecondaryKeywords([...secondaryKeywords, trimmedKeyword]);
+      setKeywordInput('');
+    }
+  };
+  const toggleFavorite = (keyword: string) => {
+    if (primaryKeywords.includes(keyword)) {
+      // Remove from primary, add to secondary
+      setPrimaryKeywords(primaryKeywords.filter(k => k !== keyword));
+      setSecondaryKeywords([...secondaryKeywords, keyword]);
+    } else if (secondaryKeywords.includes(keyword)) {
+      // Remove from secondary, add to primary
+      setSecondaryKeywords(secondaryKeywords.filter(k => k !== keyword));
+      setPrimaryKeywords([...primaryKeywords, keyword]);
+    }
+  };
+
+  const removeKeyword = (keyword: string) => {
+    setPrimaryKeywords(primaryKeywords.filter(k => k !== keyword));
+    setSecondaryKeywords(secondaryKeywords.filter(k => k !== keyword));
+  };
+
+  const KeywordChip = ({ keyword, isPrimary }: { keyword: string, isPrimary: boolean }) => (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex items-center bg-orange-100 dark:bg-orange-800 
+                 px-3 py-1 rounded-full text-sm"
+    >
+      <button 
+        onClick={() => toggleFavorite(keyword)} 
+        className="mr-2 focus:outline-none"
+      >
+        {isPrimary ? (
+          <StarFilled className="text-yellow-500" />
+        ) : (
+          <StarOutline className="text-gray-500" />
+        )}
+      </button>
+      {keyword}
+      <button
+        onClick={() => removeKeyword(keyword)}
+        className="ml-2 text-orange-500 hover:text-orange-700"
+      >
+        x
+      </button>
+    </motion.div>
+  );
+
+  const handleKeywordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKeywordInput(e.target.value);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      addKeyword();
+    }
+  };
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      primaryKeywords: primaryKeywords.join(','),
+      secondaryKeywords: secondaryKeywords.join(',')
+    }));
+  }, [primaryKeywords, secondaryKeywords]);
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     companyWebsite: '',
@@ -280,44 +381,78 @@ export default function OnboardingForm() {
             {page === 2 && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                  Additional Information
+                  Add Keywords
                 </h2>
+                <p className="text-sm text-gray-700 dark:text-gray-300 
+                    bg-gray-50 dark:bg-zinc-800 
+                    p-3 rounded-lg">
+                  Keywords help our AI find the most relevant content for you:
+                  <br />
+                  <br />
+                  • Primary Keywords: Core themes prioritized in search results
+                  <br />
+                  • Secondary Keywords: Provide additional context and nuance
+                </p>
                 <div className="space-y-4">
-                  <FormInput
-                    label="Product/Service Focus"
-                    name="product"
-                    value={formData.product}
-                    onChange={handleInputChange}
-                  />
-                  <FormTextArea
-                    label="Target Audience"
-                    name="targetAudience"
-                    value={formData.targetAudience}
-                    onChange={handleInputChange}
-                  />
-                  {/* New input for Keywords */}
-                  <FormInput
-                    label="Keywords (comma-separated)"
-                    name="keywords"
-                    value={formData.keywords}
-                    onChange={handleInputChange}
-                  />
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={keywordInput}
+                      onChange={(e) => setKeywordInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
+                      placeholder="Enter a keyword"
+                      className="flex-grow px-4 py-2 border rounded-lg"
+                    />
+                    <Button
+                      onClick={addKeyword}
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  
+                  {/* Primary Keywords Section */}
+                  {primaryKeywords.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-sm font-medium text-gray-600 mb-2">Primary Keywords</p>
+                      <div className="flex flex-wrap gap-2">
+                        {primaryKeywords.map(keyword => (
+                          <KeywordChip key={keyword} keyword={keyword} isPrimary={true} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Secondary Keywords Section */}
+                  {secondaryKeywords.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-sm font-medium text-gray-600 mb-2">Secondary Keywords</p>
+                      <div className="flex flex-wrap gap-2">
+                        {secondaryKeywords.map(keyword => (
+                          <KeywordChip key={keyword} keyword={keyword} isPrimary={false} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Validation message */}
+                  {primaryKeywords.length === 0 && secondaryKeywords.length === 0 && (
+                    <p className="text-red-500 text-sm text-center">
+                      Please add at least one keyword to continue
+                    </p>
+                  )}
                 </div>
-                <div className="flex gap-4">
-                  <Button
-                    onClick={() => setPage(3)}
-                    className="w-1/2 border border-gray-300 hover:bg-gray-100 
-                             dark:border-zinc-700 dark:hover:bg-zinc-800"
-                  >
-                    Skip
-                  </Button>
-                  <Button
-                    onClick={() => setPage(3)}
-                    className="w-1/2 bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    Next Step
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => (primaryKeywords.length > 0 || secondaryKeywords.length > 0) && setPage(3)}
+                  className={`w-full ${
+                    primaryKeywords.length > 0 || secondaryKeywords.length > 0
+                      ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  disabled={primaryKeywords.length === 0 && secondaryKeywords.length === 0}
+                >
+                  Continue
+                </Button>
               </div>
             )}
 
