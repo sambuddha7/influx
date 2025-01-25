@@ -49,7 +49,7 @@ export default function Dashboard() {
   });
   
   const POSTS_PER_PAGE = 6;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl = process.env.API_URL;
 
 
   useEffect(() => {
