@@ -18,10 +18,12 @@ export default function MetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState<string>('');
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/metrics`);
+        const response = await fetch(`${apiUrl}/metrics`);
         if (!response.ok) {
           throw new Error('Failed to fetch metrics');
         }
