@@ -8,7 +8,9 @@ import { db, auth } from '@/lib/firebase';
 import { FormData } from '@/types/onboarding';
 import Loading from '@/components/Loading';
 import Image from 'next/image'; // Import Image component for optimization
-
+interface KeywordRequest {
+  description: string;
+}
 const StarOutline = ({ className, onClick }: { className?: string, onClick?: () => void }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
@@ -169,7 +171,52 @@ export default function OnboardingForm() {
   const [primaryKeywords, setPrimaryKeywords] = useState<string[]>([]);
   const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
+  const [keywordSuggestions, setKeywordSuggestions] = useState<string[]>([]);
 
+  const fetchKeywordSuggestions = async () => {
+    try {
+      const requestBody: KeywordRequest = {
+        description: formData.companyDescription
+      };
+      // const response = await fetch("http://localhost:8000/keywords", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json"
+      //   },
+      //   body: JSON.stringify({
+      //     description: encodeURIComponent(formData.companyDescription)
+      //   })
+      // });
+      
+      // const test = await response.json();
+      // console.log(test);
+      const response = await fetch(`http://127.0.0.1:8000/keywords?description=${encodeURIComponent(formData.companyDescription)}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch keywords');
+        setKeywordSuggestions([]);
+      }
+
+      const keywords = await response.json();
+
+
+      // const keywords = 'AI, Machine Learning, Data Science, Python, JavaScript, React, Next.js, Tailwind CSS, Firebase, Google Cloud Platform, AWS, Azure';
+      
+      setKeywordSuggestions(keywords.split(',').map((k : string) => k.trim()));
+    } catch (error) {
+      console.error('Error fetching keyword suggestions:', error);
+      setKeywordSuggestions([]);
+    }
+  };
+  useEffect(() => {
+    if (page === 2) {
+      fetchKeywordSuggestions();
+    }
+  }, [page]);
   const addKeyword = () => {
     const trimmedKeyword = keywordInput.trim();
     if (trimmedKeyword && 
@@ -434,7 +481,29 @@ export default function OnboardingForm() {
                       </div>
                     </div>
                   )}
-
+                  {keywordSuggestions.length > 0 && (
+  <div className="space-y-2">
+    <p className="text-sm font-medium text-gray-600">Suggested Keywords</p>
+    <div className="flex flex-wrap gap-2">
+      {keywordSuggestions.map((suggestion) => (
+        <motion.button
+          key={suggestion}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="px-3 py-1 text-sm bg-gray-100 dark:bg-zinc-800 
+                    rounded-full hover:bg-orange-100 dark:hover:bg-orange-800
+                    transition-colors duration-200"
+          onClick={() => {
+            setKeywordInput(suggestion);
+            addKeyword();
+          }}
+        >
+          {suggestion}
+        </motion.button>
+      ))}
+    </div>
+  </div>
+)}
                   {/* Validation message */}
                   {primaryKeywords.length === 0 && secondaryKeywords.length === 0 && (
                     <p className="text-red-500 text-sm text-center">
