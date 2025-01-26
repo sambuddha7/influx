@@ -3,13 +3,13 @@ import "./globals.css";
 import Navbar from "@/components/navbar";
 import { Providers } from "./providers";
 import Footer from "@/components/Footer";
-
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 export const metadata: Metadata = {
   title: "Influx - Digital Marketing for Reddit",
   description: "",
   icons: {
-    icon: "/new_logo.png", // Add your favicon here
+    icon: "/new_logo.png",
   },
 };
 
@@ -27,14 +27,11 @@ export default function RootLayout({
           href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" 
         />
       </head>
-      <body
-      >
+      <body>
         <Providers>
-        <Navbar />
-        {/* <div className="navbar bg-base-100">
-          <a className="btn btn-ghost text-xl">daisyUI</a>
-        </div> */}
-        {children}
+          <Navbar />
+          {children}
+          <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />
         </Providers>
       </body>
     </html>
