@@ -4,13 +4,16 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import Script from 'next/script';
+import React, { Suspense } from 'react';
 
-export function GoogleAnalytics({ GA_MEASUREMENT_ID }: { GA_MEASUREMENT_ID: string }) {
+function GoogleAnalyticsContent({ GA_MEASUREMENT_ID }: { GA_MEASUREMENT_ID: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const url = pathname + searchParams.toString();
+    if (!GA_MEASUREMENT_ID || typeof window === 'undefined') return;
+
+    const url = pathname + (searchParams ? `?${searchParams.toString()}` : '');
     window.gtag('config', GA_MEASUREMENT_ID, {
       page_path: url,
     });
@@ -35,5 +38,13 @@ export function GoogleAnalytics({ GA_MEASUREMENT_ID }: { GA_MEASUREMENT_ID: stri
         }}
       />
     </>
+  );
+}
+
+export function GoogleAnalytics({ GA_MEASUREMENT_ID }: { GA_MEASUREMENT_ID: string }) {
+  return (
+    <Suspense fallback={<div>Loading analytics...</div>}>
+      <GoogleAnalyticsContent GA_MEASUREMENT_ID={GA_MEASUREMENT_ID} />
+    </Suspense>
   );
 }

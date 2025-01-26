@@ -88,7 +88,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">Comments</h3>
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-600">Comments</h3>
             <MessageSquare className="h-4 w-4 text-gray-500" />
           </div>
           <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -122,7 +122,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         <div style={{ height: '300px' }}>
           <ResponsiveLine
             data={chartData}
-            margin={{ top: 30, right: 30, bottom: 50, left: 40 }}
+            margin={{ top: 30, right: 30, bottom: 50, left: 50 }}
             xScale={{ type: 'point' }}
             yScale={{
               type: 'linear',
@@ -148,8 +148,8 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
             pointSize={8}
             pointColor={(point: { x: string }) =>
             point.x === 'Score'
-              ? 'rgb(34, 98, 192)' // Blue for Score
-              : 'rgb(242, 153, 74)' // Orange for Comments and Replies
+            ? 'rgb(135, 206, 250)' // Lighter blue (light sky blue)
+            : 'rgb(255, 179, 71)'  // Brighter orange
             }
             pointBorderWidth={2}
             pointBorderColor={{ from: 'serieColor' }}
@@ -169,6 +169,15 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
                   stroke: '#E5E7EB', // Light gray grid lines
                 },
               },
+              tooltip: {
+                container: {
+                  background: 'white',
+                  color: 'black',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  borderRadius: '4px',
+                  padding: '9px',
+                }
+              }
             }}
           />
         </div>
