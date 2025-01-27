@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
       <div className="flex h-screen flex-col md:flex-row md:overflow-hidden dark:bg-dot-white/[0.2] bg-dot-black/[0.2]">
@@ -11,6 +13,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex-grow p-6 md:overflow-y-auto md:p-12">
               {children}
           </div>
+          <Link 
+        href="/feedback"
+        className="fixed bottom-4 right-4 px-4 py-2 
+                 bg-orange-500 hover:bg-orange-600
+                 text-white text-sm font-medium rounded-full
+                 shadow-lg hover:shadow-xl
+                 transition-all duration-200 ease-in-out
+                 dark:bg-orange-600 dark:hover:bg-orange-700"
+      >
+        Feedback
+      </Link>
       </div>
   );
 }

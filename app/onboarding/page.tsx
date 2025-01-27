@@ -279,7 +279,6 @@ export default function OnboardingForm() {
       addKeyword();
     }
   };
-
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
@@ -294,7 +293,9 @@ export default function OnboardingForm() {
     companyDescription: '',
     product: '',
     targetAudience: '',
-    keywords: ''
+    keywords: '',
+    trialStartDate: new Date().toISOString(),
+    trialStatus: 'active'
   });
 
   useEffect(() => {
@@ -336,6 +337,8 @@ export default function OnboardingForm() {
         userId: user.uid,
         email: user.email,
         createdAt: new Date().toISOString(),
+        trialStartDate: new Date().toISOString(),
+        trialStatus: 'active'
       });
     } catch (error) {
       console.error('Error saving:', error);
