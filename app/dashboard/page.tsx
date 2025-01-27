@@ -222,7 +222,7 @@ export default function Dashboard() {
   
   const handleApprove = async (postId: string, suggestedReply: string) => {
     try {
-      const response = await fetch(`${apiUrl}/reply_to_post`, {
+      const response = await fetch(`${apiUrl}/reply_to_post?userid=${user.uid}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -5,6 +5,9 @@ import { MessageSquare, ThumbsUp, Reply, Clock } from 'lucide-react';
 import { ResponsiveLine } from '@nivo/line';
 import Loading from '@/components/Loading';
 import Sidebar from '@/components/Sidebar';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { db, auth } from '@/lib/firebase';
+
 
 
 interface Metrics {
@@ -17,13 +20,22 @@ interface Metrics {
 export default function MetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState<string>('');
+  const [user, loading] = useAuthState(auth);
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     const fetchMetrics = async () => {
+      if (loading) return;
+
+      if (!user) {
+      setError('User not authenticated');
+      return;
+    }
+      
       try {
-        const response = await fetch(`${apiUrl}/metrics`);
+        const response = await fetch(`${apiUrl}/metrics?userid=${user.uid}`);
         if (!response.ok) {
           throw new Error('Failed to fetch metrics');
         }
@@ -37,7 +49,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     fetchMetrics();
     const interval = setInterval(fetchMetrics, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user, loading]);
 
   if (error) {
     return (

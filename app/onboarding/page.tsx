@@ -279,6 +279,7 @@ export default function OnboardingForm() {
       addKeyword();
     }
   };
+
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
