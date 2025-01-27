@@ -1,6 +1,6 @@
 'use client';
 import { signInWithPopup } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -14,6 +14,18 @@ export default function GoogleSignInButton() {
       const result = await signInWithPopup(auth, googleProvider);
       
       if (result.user) {
+        const userDocRef = doc(db, 'track-replies', result.user.uid);
+        const userDocSnapshot = await getDoc(userDocRef);
+
+        // Check if the document already exists
+        if (!userDocSnapshot.exists()) {
+          await setDoc(userDocRef, {
+            user_id: result.user.uid,
+            replies: [], // Initialize with an empty array
+            created_at: new Date().toISOString()
+          });
+        }
+
         const email = result.user.email;
         if (!email) {
           setError('No email associated with Google account');

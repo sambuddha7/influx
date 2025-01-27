@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc,doc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -29,10 +29,20 @@ export default function SignUpForm() {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       
       if (result.user) {
+        // Initialize the user's document in the `track-replies` collection
+        const userDocRef = doc(db, 'track-replies', result.user.uid);
+        await setDoc(userDocRef, {
+          user_id: result.user.uid,
+          replies: [], // Initialize with an empty array
+          created_at: new Date().toISOString()
+        });
+    
+        // Set a Firebase auth token in cookies for further requests
         const token = await result.user.getIdToken();
         document.cookie = `firebase-token=${token}; path=/`;
         router.replace('/onboarding');
       }
+    
     } catch (err) {
       console.error('Full error:', err);    
       setError('Account creation failed. Please try again.');
