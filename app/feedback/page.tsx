@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
@@ -28,24 +28,26 @@ const UserFeedbackPage = () => {
 
   const handleSave = async () => {
     if (!user) {
-      alert('Please sign in to submit feedback.');
+      alert("Please sign in to submit feedback.");
       return;
     }
-
+  
     setIsSaving(true);
+  
     try {
-      const userFeedbackDoc = doc(collection(db, 'user-feedback'), user.uid);
-      await setDoc(userFeedbackDoc, {
+      // Add a new document to the 'user-feedback' collection
+      await addDoc(collection(db, "user-feedback"), {
         ...feedbackData,
         timestamp: new Date(),
-        userEmail: user.email
+        userEmail: user.email,
       });
-
+  
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
     } catch (error) {
-      console.error('Error saving feedback: ', error);
-      alert('Failed to submit feedback.');
+      // Log the full error to the console for debugging
+      console.error("Error saving feedback:", error);
+      alert(`Failed to submit feedback`);
     } finally {
       setIsSaving(false);
     }

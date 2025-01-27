@@ -10,10 +10,26 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
-import { ArrowUpRight } from "lucide-react"; // Import the icon
+import { ArrowUpRight , Pencil, Save, Check} from "lucide-react"; // Import the icon
 import { formatDistanceToNow } from 'date-fns';
 
 
+const CrossIcon = () => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="14" 
+    height="14" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
 
 
 interface RedditPost {
@@ -388,29 +404,34 @@ export default function Dashboard() {
               
               <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold dark:text-white">Suggested Reply</h3>
+                  <h3 className="font-semibold dark:text-white">Generate or add reply</h3>
+                  
                   <button 
-                    className="btn btn-outline btn-primary btn-sm"
+                    className="btn btn-neutral btn-sm"
                     onClick={() => handleGenerate(post.id)}
                     disabled={isGenerating === post.id}
                   >
                     {isGenerating === post.id ? 'Generating...' : 'Generate'}
                   </button>
+                  {/* <button 
+  className="relative px-4 py-2 rounded-md text-sm font-medium
+            bg-black dark:bg-zinc-900
+            text-white
+            border-2 border-transparent
+            before:absolute before:inset-[-2px] before:rounded-md
+            before:bg-gradient-to-r before:from-blue-500 before:via-purple-500 before:to-blue-500
+            before:animate-border-rotate before:-z-10
+            hover:scale-105 
+            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+            transition-all duration-200 ease-in-out"
+  onClick={() => handleGenerate(post.id)}
+  disabled={isGenerating === post.id}
+>
+  <span className="relative">
+    {isGenerating === post.id ? 'Generating...' : 'Generate'}
+  </span>
+</button> */}
                 </div>
-                {/* <textarea 
-                  className="w-full p-2 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-                  value={post.suggestedReply}
-                  onChange={(e) => {
-                    if (isEditing === post.id) {
-                      const newValue = e.target.value;
-                      setDisplayedPosts(posts =>
-                        posts.map(p => p.id === post.id ? { ...p, suggestedReply: newValue } : p)
-                      );
-                    }
-                  }}
-                  rows={3}
-                  readOnly={isEditing !== post.id}
-                /> */}
                 {isEditing === post.id ? (
                     <textarea 
                       className="w-full p-2 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
@@ -428,31 +449,35 @@ export default function Dashboard() {
                   )}
                 
                 <div className="flex gap-2 mt-4">
-                    {/* <button 
-                      className="btn btn-outline btn-primary"
-                      onClick={() => handleGenerate(post.id)}
-                      disabled={isGenerating === post.id}
-                    >
-                      {isGenerating === post.id ? 'Generating...' : 'Generate'}
-                    </button> */}
+
                   {isEditing === post.id ? (
                     <button 
-                      className="btn btn-outline btn-info"
+                      className="btn btn-neutral"
                       onClick={() => handleSave(post.id, post.suggestedReply)}
                     >
-                      Save
+                      Save <Save className="h-4 w-4" />
                     </button>
                   ) : (
                     <button 
-                      className="btn btn-outline btn-info"
+                      className="btn btn-neutral"
                       onClick={() => handleEdit(post.id)}
                     >
-                      Edit
+                      Edit <Pencil className="h-4 w-4" />
                     </button>
                   )}
-                  <button className="btn btn-outline btn-error"
-                    onClick={() => handleReject(post.id)}>
-                    Reject
+                  
+                  <button
+                    onClick={() => handleReject(post.id)}
+                    className="absolute -top-2 -left-2 w-6 h-6 
+                              bg-white dark:bg-zinc-800
+                              hover:bg-gray-100 dark:hover:bg-zinc-700
+                              rounded-full flex items-center justify-center
+                              border border-gray-200 dark:border-zinc-700
+                              shadow-sm transition-colors duration-200
+                              text-gray-500 dark:text-gray-400
+                              hover:text-gray-700 dark:hover:text-gray-200"
+                  >
+                    <CrossIcon />
                   </button>
                   {alertt.visible && (
                     <div className="toast toast-end">
@@ -462,9 +487,9 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <button className="btn btn-outline btn-success"
+                  <button className="btn btn-success"
                     onClick={() => handleApprove(post.id, post.suggestedReply)}>
-                    Approve
+                    Approve comment to post<Check className="h-4 w-4" />
                   </button>
                   {greenalertt.visible && (
                     <div className="toast toast-end">
