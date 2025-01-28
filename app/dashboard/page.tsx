@@ -10,8 +10,10 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
-import { ArrowUpRight , Pencil, Save, Check} from "lucide-react"; // Import the icon
+import { ArrowUpRight , Pencil, Save, Check, Sparkles} from "lucide-react"; // Import the icon
 import { formatDistanceToNow } from 'date-fns';
+
+
 
 
 const CrossIcon = () => (
@@ -406,31 +408,25 @@ export default function Dashboard() {
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold dark:text-white">Generate or add reply</h3>
                   
-                  <button 
-                    className="btn btn-neutral btn-sm"
+                  <button
+  className="relative p-[1px] rounded-lg overflow-hidden bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 disabled:opacity-50"
+
+
                     onClick={() => handleGenerate(post.id)}
                     disabled={isGenerating === post.id}
                   >
-                    {isGenerating === post.id ? 'Generating...' : 'Generate'}
+                      <div className="relative bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white px-4 py-2 rounded-[8px] flex items-center gap-1">
+
+                    {isGenerating === post.id ? (
+                      <span>Generating...</span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                      <Sparkles className="h-4 w-4" />
+                      Generate
+                    </span>
+                    )}
+                    </div>
                   </button>
-                  {/* <button 
-  className="relative px-4 py-2 rounded-md text-sm font-medium
-            bg-black dark:bg-zinc-900
-            text-white
-            border-2 border-transparent
-            before:absolute before:inset-[-2px] before:rounded-md
-            before:bg-gradient-to-r before:from-blue-500 before:via-purple-500 before:to-blue-500
-            before:animate-border-rotate before:-z-10
-            hover:scale-105 
-            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-            transition-all duration-200 ease-in-out"
-  onClick={() => handleGenerate(post.id)}
-  disabled={isGenerating === post.id}
->
-  <span className="relative">
-    {isGenerating === post.id ? 'Generating...' : 'Generate'}
-  </span>
-</button> */}
                 </div>
                 {isEditing === post.id ? (
                     <textarea 
