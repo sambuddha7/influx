@@ -172,6 +172,8 @@ export default function OnboardingForm() {
   const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordSuggestions, setKeywordSuggestions] = useState<string[]>([]);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
   const fetchKeywordSuggestions = async () => {
     try {
@@ -190,7 +192,8 @@ export default function OnboardingForm() {
       
       // const test = await response.json();
       // console.log(test);
-      const response = await fetch(`http://127.0.0.1:8000/keywords?description=${encodeURIComponent(formData.companyDescription)}`, {
+
+      const response = await fetch(`${apiUrl}/keywords?description=${encodeURIComponent(formData.companyDescription)}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
