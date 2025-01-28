@@ -447,6 +447,20 @@ export default function OnboardingForm() {
                   <br />
                   • Secondary Keywords: Provide additional context and nuance
                 </p>
+                <figure className="flex flex-col items-center gap-2 my-4">
+                
+                <Image
+                  src="/keywords.gif" 
+                  alt="How to add primary keywords" 
+                  className="rounded-lg shadow-md"
+                  width={500}
+                  height={300}
+                />
+                <figcaption className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                  Add Primary Keywords by favoriting them
+                </figcaption>
+                
+              </figure>
                 <div className="space-y-4">
                   <div className="flex space-x-2">
                     <input
