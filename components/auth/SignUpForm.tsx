@@ -16,6 +16,7 @@ export default function SignUpForm() {
     setError('');
 
     try {
+      // Check waitlist
       const waitlistRef = collection(db, 'approved-waitlist');
       const q = query(waitlistRef, where('email', '==', email.toLowerCase().trim()));
       const querySnapshot = await getDocs(q);
@@ -25,6 +26,8 @@ export default function SignUpForm() {
         setError('This email is not on the waitlist. Request access first.');
         return;
       }
+
+
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
       
@@ -36,7 +39,15 @@ export default function SignUpForm() {
           replies: [], // Initialize with an empty array
           created_at: new Date().toISOString()
         });
-    
+        
+        const accountDetailsRef = doc(db, 'account-details', result.user.uid);
+        await setDoc(accountDetailsRef, {
+          dateAccountCreated: new Date().toISOString(),
+          accountStatus: 'active', 
+          userId: result.user.uid,
+          email: result.user.email
+        });
+
         // Set a Firebase auth token in cookies for further requests
         const token = await result.user.getIdToken();
         document.cookie = `firebase-token=${token}; path=/`;

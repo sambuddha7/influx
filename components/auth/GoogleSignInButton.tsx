@@ -16,13 +16,23 @@ export default function GoogleSignInButton() {
       if (result.user) {
         const userDocRef = doc(db, 'track-replies', result.user.uid);
         const userDocSnapshot = await getDoc(userDocRef);
-
+        const accountDetailsRef = doc(db, 'account-details', result.user.uid);
+        const accountDetailsSnapshot = await getDoc(accountDetailsRef)
+        
         // Check if the document already exists
         if (!userDocSnapshot.exists()) {
           await setDoc(userDocRef, {
             user_id: result.user.uid,
             replies: [], // Initialize with an empty array
             created_at: new Date().toISOString()
+          });
+        }
+        if (!accountDetailsSnapshot.exists()) {
+          await setDoc(accountDetailsRef, {
+            dateAccountCreated: new Date().toISOString(),
+            accountStatus: 'active', 
+            userId: result.user.uid,
+            email: result.user.email
           });
         }
 
