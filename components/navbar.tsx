@@ -12,15 +12,7 @@ const Navbar = () => {
   const [user] = useAuthState(auth);
   const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      document.cookie = 'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  
 
   return (
     <div className="navbar bg-base-100 shadow-sm sticky top-0 z-50 bg-inherit">
@@ -31,7 +23,7 @@ const Navbar = () => {
         <Link href="/" className="btn btn-ghost text-3xl">Influx</Link>
       </div>
       <div className="flex-none gap-2">
-        {user ? (
+        {/* {user ? (
           <>
             <Link href="/dashboard" className="btn btn-ghost">
               Dashboard
@@ -46,7 +38,7 @@ const Navbar = () => {
               Sign Up
             </Link>
           </>
-        )}
+        )} */}
         <button className="btn btn-square btn-ghost">
           <ThemeSwitch />
         </button>
