@@ -173,6 +173,8 @@ export default function OnboardingForm() {
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordSuggestions, setKeywordSuggestions] = useState<string[]>([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const MAX_KEYWORDS = 5;
+  const totalKeywords = primaryKeywords.length + secondaryKeywords.length;
 
 
   const fetchKeywordSuggestions = async () => {
@@ -224,7 +226,8 @@ export default function OnboardingForm() {
     const trimmedKeyword = keywordInput.trim();
     if (trimmedKeyword && 
         !primaryKeywords.includes(trimmedKeyword) && 
-        !secondaryKeywords.includes(trimmedKeyword)) {
+        !secondaryKeywords.includes(trimmedKeyword) &&
+        totalKeywords < MAX_KEYWORDS) {
       setSecondaryKeywords([...secondaryKeywords, trimmedKeyword]);
       setKeywordInput('');
     }
@@ -444,6 +447,9 @@ export default function OnboardingForm() {
                   • Primary Keywords: Core themes prioritized in search results
                   <br />
                   • Secondary Keywords: Provide additional context and nuance
+                  <br />
+                  <br />
+                  Maximum {MAX_KEYWORDS} keywords allowed ({MAX_KEYWORDS - totalKeywords} remaining)
                 </p>
                 <figure className="flex flex-col items-center gap-2 my-4">
                 
@@ -472,6 +478,7 @@ export default function OnboardingForm() {
                     <Button
                       onClick={addKeyword}
                       className="bg-orange-500 hover:bg-orange-600 text-white"
+                      disabled={totalKeywords >= MAX_KEYWORDS}
                     >
                       Add
                     </Button>
@@ -500,7 +507,7 @@ export default function OnboardingForm() {
                       </div>
                     </div>
                   )}
-                  {keywordSuggestions.length > 0 && (
+                  {keywordSuggestions.length > 0 && totalKeywords < MAX_KEYWORDS && (
   <div className="space-y-2">
     <p className="text-sm font-medium text-gray-600">Suggested Keywords</p>
     <div className="flex flex-wrap gap-2">
@@ -516,6 +523,7 @@ export default function OnboardingForm() {
             setKeywordInput(suggestion);
             addKeyword();
           }}
+          disabled={totalKeywords >= MAX_KEYWORDS}
         >
           {suggestion}
         </motion.button>
@@ -524,9 +532,14 @@ export default function OnboardingForm() {
   </div>
 )}
                   {/* Validation message */}
-                  {primaryKeywords.length === 0 && secondaryKeywords.length === 0 && (
+                  {totalKeywords === 0 && (
                     <p className="text-red-500 text-sm text-center">
                       Please add at least one keyword to continue
+                    </p>
+                  )}
+                  {totalKeywords >= MAX_KEYWORDS && (
+                    <p className="text-orange-500 text-sm text-center">
+                      Maximum number of keywords reached ({MAX_KEYWORDS})
                     </p>
                   )}
                 </div>

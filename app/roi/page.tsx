@@ -90,10 +90,10 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-orange-200">
               Analytics
         </h1>
-        <div className="text-sm text-gray-500 flex items-center gap-2">
+        {/* <div className="text-sm text-gray-500 flex items-center gap-2">
           <Clock className="h-4 w-4" />
           Last updated: {new Date(metrics.fetched_at).toLocaleString()}
-        </div>
+        </div> */}
       </div>
 
       {/* Metric Numbers */}
