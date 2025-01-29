@@ -552,7 +552,7 @@ export default function OnboardingForm() {
                 <div className="p-4">
                   <div className="overflow-hidden rounded-lg">
                     <Image
-                      src="/out.gif"
+                      src="/ai-input-2.png"
                       alt="Onboarding"
                       width={500} // Specify width and height for optimization
                       height={500}

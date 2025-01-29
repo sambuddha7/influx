@@ -129,8 +129,8 @@ const UserInputPage = () => {
                     name="postAs"
                     value={formData.postAs}
                     onChange={handleChange}
-                    placeholder="Enter role or persona"
-                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200"
+                    placeholder="Ex. CEO/Social Media Manager/Satisfied Customer "
+                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 dark:text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200"
                   />
                 </div>
                 
@@ -143,8 +143,8 @@ const UserInputPage = () => {
                     name="sampleReply"
                     value={formData.sampleReply}
                     onChange={handleChange}
-                    placeholder="Enter sample replies for AI to learn from"
-                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 min-h-[200px] resize-y"
+                    placeholder="Ex. 1: At Influx, we help you scale your brand's online presence while you can focus on building your product."
+                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 dark:text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 min-h-[200px] resize-y"
                   />
                 </div>
               </div>
@@ -160,7 +160,7 @@ const UserInputPage = () => {
                     value={formData.painPoints}
                     onChange={handleChange}
                     placeholder="Describe key pain points to address"
-                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 min-h-[120px] resize-y"
+                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 dark:text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 min-h-[120px] resize-y"
                   />
                 </div>
 
@@ -174,7 +174,7 @@ const UserInputPage = () => {
                     value={formData.marketingGoals}
                     onChange={handleChange}
                     placeholder="Define your marketing goals and targets"
-                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 min-h-[120px] resize-y"
+                    className="w-full px-4 py-3 rounded-lg dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 dark:text-slate-200 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 min-h-[120px] resize-y"
                   />
                 </div>
               </div>
