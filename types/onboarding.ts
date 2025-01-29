@@ -6,8 +6,7 @@ export interface FormData {
   product: string;
   targetAudience: string;
   keywords: string; 
-  trialStartDate: string;
-  trialStatus: string;
+
 
 }
 

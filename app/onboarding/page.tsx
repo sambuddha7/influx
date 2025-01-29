@@ -297,8 +297,7 @@ export default function OnboardingForm() {
     product: '',
     targetAudience: '',
     keywords: '',
-    trialStartDate: new Date().toISOString(),
-    trialStatus: 'active'
+
   });
 
   useEffect(() => {
@@ -340,8 +339,7 @@ export default function OnboardingForm() {
         userId: user.uid,
         email: user.email,
         createdAt: new Date().toISOString(),
-        trialStartDate: new Date().toISOString(),
-        trialStatus: 'active'
+
       });
     } catch (error) {
       console.error('Error saving:', error);

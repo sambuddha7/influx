@@ -50,6 +50,7 @@ export default function Dashboard() {
   const [displayedPosts, setDisplayedPosts] = useState<RedditPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoading2, setIsLoading2] = useState(true);
+  const [isApproving, setIsApproving] = useState<string | null>(null);
 
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -80,9 +81,24 @@ export default function Dashboard() {
 
         if (!docSnap.exists()) {
           router.push('/onboarding');
-        } else {
+        } 
+        const accountRef = doc(db, 'account-details', user.uid);
+        const accountSnap = await getDoc(accountRef);
+
+        if (!accountSnap.exists()) {
+          console.error('Account details not found');
           setIsLoading(false);
+          return;
         }
+
+        const accountStatus = accountSnap.data()?.accountStatus;
+        console.log(accountStatus)
+        if (accountStatus === 'inactive') {
+          router.push('/no-access');
+          return;
+        }
+        setIsLoading(false);
+
       } catch (error) {
         console.error('Error checking user in Firestore:', error);
         setIsLoading(false);
@@ -241,6 +257,7 @@ export default function Dashboard() {
   const handleApprove = async (postId: string, suggestedReply: string) => {
     if (!user) return;
     try {
+      setIsApproving(postId);
       const response = await fetch(`${apiUrl}/reply_to_post?userid=${user.uid}`, {
         method: 'POST',
         headers: {
@@ -299,6 +316,8 @@ export default function Dashboard() {
       setTimeout(() => {
         setAlert({ message: "", visible: false });
       }, 3000);
+    } finally {
+      setIsApproving(null); // Reset loading state
     }
   };
 
@@ -483,9 +502,22 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <button className="btn btn-success"
-                    onClick={() => handleApprove(post.id, post.suggestedReply)}>
-                    Approve comment to post<Check className="h-4 w-4" />
+                  <button className={`btn btn-success relative ${isApproving === post.id ? 'opacity-80' : ''}`}
+                    onClick={() => handleApprove(post.id, post.suggestedReply)}
+                    disabled={isApproving === post.id}>
+                      <div className="flex items-center gap-2">
+                        {isApproving === post.id ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Approving...</span>
+                          </>
+                        ) : (
+                          <>
+                            Approve comment to post
+                            <Check className="h-4 w-4" />
+                          </>
+                        )}
+                      </div>
                   </button>
                   {greenalertt.visible && (
                     <div className="toast toast-end">
