@@ -210,7 +210,20 @@ export default function Dashboard() {
     setIsEditing(id);
   };
 
-  const handleSave = (id: string, newReply: string) => {
+  const handleSave = async (id: string, newReply: string) => {
+    if (!user) {
+      return;
+    }
+    const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+    const q = query(postsCollectionRef, where("id", "==", id));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const docToUpdate = querySnapshot.docs[0];
+      await updateDoc(docToUpdate.ref, {
+        suggestedReply: newReply
+      });
+    }
     setDisplayedPosts(posts => 
       posts.map(post => post.id === id ? { ...post, suggestedReply: newReply } : post)
     );
@@ -325,8 +338,26 @@ export default function Dashboard() {
 
   const handleGenerate = async (postId: string) => {
     if (!user) return;
+    const userDocRef = doc(db, 'track-replies', user.uid);
+    const userDocSnapshot = await getDoc(userDocRef);
+    if (userDocSnapshot.exists()) {
+      const userData = userDocSnapshot.data();
+      if (userData.replies_left <= 0) {
+        setAlert({ 
+          message: "Generation limit reached for the trial period", 
+          visible: true 
+        });
+        setTimeout(() => setAlert({ message: "", visible: false }), 3000);
+        return;
+      }
+      const newRepliesLeft = userData.replies_left - 1;
+      await updateDoc(userDocRef, {
+        replies_left: newRepliesLeft
+      });
+    }
     try {
       setIsGenerating(postId);
+
       const post = displayedPosts.find(p => p.id === postId);
       
       if (!post) return;
