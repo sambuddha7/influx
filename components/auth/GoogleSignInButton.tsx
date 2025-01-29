@@ -25,7 +25,7 @@ export default function GoogleSignInButton() {
             user_id: result.user.uid,
             replies: [], // Initialize with an empty array
             created_at: new Date().toISOString(),
-            replies_left: 100
+            replies_left: 2
           });
         }
         if (!accountDetailsSnapshot.exists()) {
