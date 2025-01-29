@@ -211,6 +211,9 @@ export default function Dashboard() {
   };
 
   const handleSave = async (id: string, newReply: string) => {
+    if (!user) {
+      return;
+    }
     const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
     const q = query(postsCollectionRef, where("id", "==", id));
     const querySnapshot = await getDocs(q);
