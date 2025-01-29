@@ -24,7 +24,8 @@ export default function GoogleSignInButton() {
           await setDoc(userDocRef, {
             user_id: result.user.uid,
             replies: [], // Initialize with an empty array
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            replies_left: 100
           });
         }
         if (!accountDetailsSnapshot.exists()) {
