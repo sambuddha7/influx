@@ -143,7 +143,7 @@ export default function Dashboard() {
 
         if (!postsSnapshot.empty) {
           console.log('Posts found in Firestore');
-          // await fetch(`http://localhost:8000/relevant_posts_weekly?userid=${user.uid}`);
+          // await fetch(`${apiUrl}/relevant_posts_weekly?userid=${user.uid}`);
           const firestorePosts = postsSnapshot.docs.map((doc) => ({
             id: doc.data().id,
             subreddit: doc.data().subreddit,
@@ -436,8 +436,10 @@ export default function Dashboard() {
               <div className="mb-4">
                 <div className="text-sm text-blue-500 dark:text-blue-400">{post.subreddit}</div>
                 <h2 className="card-title dark:text-white">{post.title}</h2>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatDistanceToNow(new Date(post.date_created), { addSuffix: true })}
+                <div className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
+                {post.date_created && !isNaN(new Date(post.date_created).getTime())
+    ? formatDistanceToNow(new Date(post.date_created), { addSuffix: true })
+    : 'Invalid Date'}
                 </div>
                 <a 
                   href={`${post.url}`} 
