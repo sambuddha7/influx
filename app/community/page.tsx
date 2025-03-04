@@ -91,9 +91,10 @@ const CommunityPage: React.FC = () => {
         subreddit: post[1],
         title: post[2],
         content: post[3], // 'body' from API
-        url: post[4],
-        date_created: post[5],
-        suggestedReply: '' // Initialize with empty suggested reply
+        suggestedReply: post[4],
+        url: post[5],
+        date_created: post[6],
+         // Initialize with empty suggested reply
       }));
       
       // Update the subreddit section with posts
