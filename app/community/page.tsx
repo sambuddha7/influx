@@ -1,8 +1,20 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, PlusCircle } from 'lucide-react';
 import PostCard from '@/components/PostCard';
 import Sidebar from '@/components/Sidebar';
+import { useRouter } from 'next/navigation';
+import { db, auth } from '@/lib/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { 
+    doc, 
+    setDoc, 
+    updateDoc, 
+    getDoc, 
+    arrayUnion, 
+    arrayRemove 
+  } from 'firebase/firestore';
+
 
 
 // Define types
@@ -24,11 +36,16 @@ interface SubredditSection {
 }
 
 const CommunityPage: React.FC = () => {
+  const router = useRouter();
+  const [user, loading] = useAuthState(auth);
+
   const [subredditInput, setSubredditInput] = useState<string>('');
   const [subredditSections, setSubredditSections] = useState<SubredditSection[]>([]);
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState<string | null>(null);
+  const [suggestedSubreddits, setSuggestedSubreddits] = useState<string[]>([]);
+
   const [alertt, setAlertt] = useState<{ visible: boolean; message: string }>({
     visible: false,
     message: '',
@@ -38,19 +55,68 @@ const CommunityPage: React.FC = () => {
     message: '',
   });
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
+  const fetchSuggestedSubreddits = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`${apiUrl}/get_subreddits?userid=${user.uid}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch suggested subreddits');
+      }
+      const contentType = response.headers.get("content-type");
+    let suggestedSubs;
+    if (contentType && contentType.includes("application/json")) {
+      suggestedSubs = await response.json();
+    } else {
+      suggestedSubs = await response.text();
+    }
+    
+    console.log("Raw suggestedSubs:", suggestedSubs);
+
+    let subredditsArray = [];
+
+    // If the returned value is a string formatted like a set,
+    // remove the curly braces and split by comma.
+    if (typeof suggestedSubs === "string") {
+      let trimmed = suggestedSubs.trim();
+      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+        trimmed = trimmed.substring(1, trimmed.length - 1);
+      }
+      // Split the string on commas, trim whitespace,
+      // and remove any leading/trailing quotes.
+      subredditsArray = trimmed.split(",").map(s => s.trim().replace(/^['"]+|['"]+$/g, ""));
+    } else if (Array.isArray(suggestedSubs)) {
+      subredditsArray = suggestedSubs;
+    } else if (suggestedSubs instanceof Set) {
+      subredditsArray = [...suggestedSubs];
+    } else if (typeof suggestedSubs === "object" && suggestedSubs !== null) {
+      subredditsArray = Object.values(suggestedSubs).map(String);
+    }
+
+    setSuggestedSubreddits(subredditsArray);
+
+    setSuggestedSubreddits(subredditsArray);
+    } catch (error) {
+      console.error('Error fetching suggested subreddits:', error);
+      setSuggestedSubreddits([]);
+    }
+  };
+  const addSuggestedSubreddit = async (subredditName: string) => {
+    // Reuse the existing addSubreddit logic
+    const originalEvent = { key: 'Enter' } as React.KeyboardEvent<HTMLInputElement>;
+    setSubredditInput(subredditName);
+    await addSubreddit(originalEvent);
+  };
   const addSubreddit = async (e: React.KeyboardEvent<HTMLInputElement> | React.MouseEvent) => {
     if ('key' in e && e.key !== 'Enter') return;
     
-    const subredditName = subredditInput.trim();
-    if (!subredditName) return;
-    
-    // Check if subreddit already exists
-    if (subredditSections.some(section => section.name.toLowerCase() === subredditName.toLowerCase())) {
+    // Ensure user is logged in
+    if (!user) {
       setAlertt({
         visible: true,
-        message: `You've already added r/${subredditName}`
+        message: 'Please log in to add subreddits'
       });
       
       setTimeout(() => {
@@ -60,21 +126,73 @@ const CommunityPage: React.FC = () => {
       return;
     }
     
-    // Add new subreddit and fetch posts
-    const newSection: SubredditSection = {
-      name: subredditName,
-      isOpen: false,
-      posts: [],
-      isLoading: true
-    };
+    const subredditName = subredditInput.trim();
+    if (!subredditName) return;
     
-    setSubredditSections(prev => [...prev, newSection]);
-    setSubredditInput('');
-    
-    // Fetch posts for the new subreddit
-    fetchPostsForSubreddit(subredditName);
+    try {
+      // Reference to the user's document
+      const userDocRef = doc(db, 'subreddits', user.uid);
+      
+      // Get the current user document
+      const userDoc = await getDoc(userDocRef);
+      
+      // Check if subreddit already exists
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const existingSubreddits = userData.subreddits || [];
+        
+        if (existingSubreddits.some((sr: string) => 
+          sr.toLowerCase() === subredditName.toLowerCase())) {
+          setAlertt({
+            visible: true,
+            message: `You've already added r/${subredditName}`
+          });
+          
+          setTimeout(() => {
+            setAlertt({ visible: false, message: '' });
+          }, 3000);
+          
+          return;
+        }
+      }
+      
+      // Add subreddit to user's document
+      await setDoc(userDocRef, {
+        subreddits: arrayUnion(subredditName.toLowerCase())
+      }, { merge: true });
+      
+      // Add new subreddit to local state
+      const newSection: SubredditSection = {
+        name: subredditName,
+        isOpen: false,
+        posts: [],
+        isLoading: true
+      };
+      
+      setSubredditSections(prev => [...prev, newSection]);
+      setSubredditInput('');
+      
+      // Fetch posts for the new subreddit
+      fetchPostsForSubreddit(subredditName);
+      
+      // Remove from suggested subreddits if present
+      setSuggestedSubreddits(prev => 
+        prev.filter(sub => sub.toLowerCase() !== subredditName.toLowerCase())
+      );
+      
+    } catch (error) {
+      console.error('Error adding subreddit:', error);
+      setAlertt({
+        visible: true,
+        message: 'Failed to add subreddit'
+      });
+      
+      setTimeout(() => {
+        setAlertt({ visible: false, message: '' });
+      }, 3000);
+    }
   };
-
+  
   const fetchPostsForSubreddit = async (subredditName: string) => {
     try {
       const response = await fetch(`${apiUrl}/subreddit_posts?subreddit=${subredditName}`);
@@ -94,7 +212,6 @@ const CommunityPage: React.FC = () => {
         suggestedReply: post[4],
         url: post[5],
         date_created: post[6],
-         // Initialize with empty suggested reply
       }));
       
       // Update the subreddit section with posts
@@ -139,11 +256,76 @@ const CommunityPage: React.FC = () => {
     );
   };
 
-  const removeSubreddit = (sectionName: string) => {
-    setSubredditSections(prevSections => 
-      prevSections.filter(section => section.name !== sectionName)
-    );
+  const removeSubreddit = async (sectionName: string) => {
+    if (!user) return;
+
+    try {
+      // Reference to the user's document
+      const userDocRef = doc(db, 'subreddits', user.uid);
+      
+      // Remove the subreddit from the user's document
+      await updateDoc(userDocRef, {
+        subreddits: arrayRemove(sectionName.toLowerCase())
+      });
+      
+      // Remove from local state
+      setSubredditSections(prevSections => 
+        prevSections.filter(section => section.name !== sectionName)
+      );
+    } catch (error) {
+      console.error('Error removing subreddit:', error);
+      setAlertt({
+        visible: true,
+        message: 'Failed to remove subreddit'
+      });
+      
+      setTimeout(() => {
+        setAlertt({ visible: false, message: '' });
+      }, 3000);
+    }
   };
+  useEffect(() => {
+    if (user) {
+      fetchSuggestedSubreddits();
+    }
+  }, [user]);
+  useEffect(() => {
+    const loadUserSubreddits = async () => {
+      if (!user) return;
+
+      try {
+        // Reference to the user's document
+        const userDocRef = doc(db, 'subreddits', user.uid);
+        
+        // Get the user document
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const userSubreddits: string[] = userData.subreddits || [];
+          
+          // Convert subreddits to SubredditSection
+          const subredditSections: SubredditSection[] = userSubreddits.map(name => ({
+            name,
+            isOpen: false,
+            posts: [],
+            isLoading: true
+          }));
+          
+          setSubredditSections(subredditSections);
+          
+          // Fetch posts for each subreddit
+          subredditSections.forEach(subreddit => {
+            fetchPostsForSubreddit(subreddit.name);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading user subreddits:', error);
+      }
+    };
+
+    loadUserSubreddits();
+  }, [user]);
 
   // These are placeholder handlers - you would implement the real functionality
   const handleGenerate = (id: string) => {
@@ -237,6 +419,28 @@ const CommunityPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+
+      {/* suggested subreddits */}
+      {suggestedSubreddits.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 dark:text-white">Suggested Subreddits</h2>
+              <div className="flex flex-wrap gap-2">
+                {suggestedSubreddits.map((subreddit) => (
+                  <button
+                    key={subreddit}
+                    onClick={() => addSuggestedSubreddit(subreddit)}
+                    className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-700 
+                               rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 
+                               transition-colors"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    r/{subreddit}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
       
       {/* Subreddit Sections */}
       <div className="space-y-4">
@@ -308,6 +512,7 @@ const CommunityPage: React.FC = () => {
                           };
                           setSubredditSections(updater);
                         }}
+
                       />
                     ))
                   )}
