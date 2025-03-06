@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -58,6 +58,14 @@ const PostCard: React.FC<PostCardProps> = ({
   setDisplayedPosts,
   page = 'dashboard'
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(post.suggestedReply);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // Reset copied state after 2 seconds
+  };
+
   return (
     <div className="card bg-base-100 dark:bg-black bg-white shadow-xl border border-gray-200 dark:border-gray-700">
       <div className="card-body">
@@ -86,7 +94,12 @@ const PostCard: React.FC<PostCardProps> = ({
         
         <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold dark:text-white">Generate or add reply</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold dark:text-white">Generate or add reply</h3>
+              <button onClick={handleCopy} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                {copied ? <Check className="h-5 w-5 text-green-500" /> : <Clipboard className="h-5 w-5" />}
+              </button>
+            </div>
             
             <button
               className="relative p-[1px] rounded-lg overflow-hidden bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 disabled:opacity-50"
@@ -105,6 +118,7 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </button>
           </div>
+
           {isEditing === post.id ? (
             <textarea 
               className="w-full p-2 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
@@ -153,13 +167,6 @@ const PostCard: React.FC<PostCardProps> = ({
                 <CrossIcon />
               </button>
             )}
-            {alertt.visible && (
-              <div className="toast toast-end">
-                <div className="alert alert-error">
-                  <span>{alertt.message.replace(/'/g, '&#39;')}</span>
-                </div>
-              </div>
-            )}
 
             <button 
               className={`btn btn-success relative ${isApproving === post.id ? 'opacity-80' : ''}`}
@@ -180,13 +187,6 @@ const PostCard: React.FC<PostCardProps> = ({
                 )}
               </div>
             </button>
-            {greenalertt.visible && (
-              <div className="toast toast-end">
-                <div className="alert alert-success">
-                  <span>{greenalertt.message.replace(/'/g, '&#39;')}</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

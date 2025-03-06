@@ -267,65 +267,119 @@ export default function Dashboard() {
     }
   };
   
+  // const handleApprove = async (postId: string, suggestedReply: string) => {
+  //   if (!user) return;
+  //   try {
+  //     setIsApproving(postId);
+  //     const response = await fetch(`${apiUrl}/reply_to_post?userid=${user.uid}`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         post_id: postId,
+  //         reply_text: suggestedReply,
+  //       }),
+  //     });
+  
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       console.error('Error approving reply:', errorData);
+  //       alert(`Failed to approve reply: ${errorData.detail}`);
+  //     } else {
+  //       // Find the post to be archived
+  //       const postToArchive = allPosts.find(post => post.id === postId);
+        
+
+  //       if (postToArchive && user) {
+  //         // Save to archived-posts collection
+  //         const postDocRef1 = collection(db, "archived-posts", user.uid, "posts");        
+
+  //         const postWithcomment = {
+  //           ...postToArchive,
+  //           suggestedReply: suggestedReply,
+  //           archivedAt: new Date().toISOString()
+  //         };
+  //         await addDoc(postDocRef1, postWithcomment);
+       
+  //         // Remove the post from the current collection
+  //         const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+  //         const q = query(postsCollectionRef, where("id", "==", postId));
+  //         const querySnapshot = await getDocs(q);
+      
+  //         if (!querySnapshot.empty) {
+  //           // Delete the specific document
+  //           const docToDelete = querySnapshot.docs[0];
+  //           await deleteDoc(docToDelete.ref);
+      
+  //           // Remove the post from state
+  //           setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
+  //           setAllPosts((posts) => posts.filter((post) => post.id !== postId));
+      
+  //           setgreenAlert({ message: "Reply approved successfully", visible: true });
+  //           setTimeout(() => {
+  //             setgreenAlert({ message: "", visible: false });
+  //           }, 3000);
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Error submitting reply:', error);
+  //     setAlert({ message: "Error occured while approving the post", visible: true });
+  //     setTimeout(() => {
+  //       setAlert({ message: "", visible: false });
+  //     }, 3000);
+  //   } finally {
+  //     setIsApproving(null); // Reset loading state
+  //   }
+  // };
   const handleApprove = async (postId: string, suggestedReply: string) => {
     if (!user) return;
     try {
       setIsApproving(postId);
-      const response = await fetch(`${apiUrl}/reply_to_post?userid=${user.uid}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          post_id: postId,
-          reply_text: suggestedReply,
-        }),
-      });
   
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error approving reply:', errorData);
-        alert(`Failed to approve reply: ${errorData.detail}`);
-      } else {
-        // Find the post to be archived
-        const postToArchive = allPosts.find(post => post.id === postId);
-        
-
-        if (postToArchive && user) {
-          // Save to archived-posts collection
-          const postDocRef1 = collection(db, "archived-posts", user.uid, "posts");        
-
-          const postWithcomment = {
-            ...postToArchive,
-            suggestedReply: suggestedReply,
-            archivedAt: new Date().toISOString()
-          };
-          await addDoc(postDocRef1, postWithcomment);
-       
-          // Remove the post from the current collection
-          const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
-          const q = query(postsCollectionRef, where("id", "==", postId));
-          const querySnapshot = await getDocs(q);
-      
-          if (!querySnapshot.empty) {
-            // Delete the specific document
-            const docToDelete = querySnapshot.docs[0];
-            await deleteDoc(docToDelete.ref);
-      
-            // Remove the post from state
-            setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
-            setAllPosts((posts) => posts.filter((post) => post.id !== postId));
-      
-            setgreenAlert({ message: "Reply approved successfully", visible: true });
-            setTimeout(() => {
-              setgreenAlert({ message: "", visible: false });
-            }, 3000);
-          }
+      // Find the post to be approved/archived
+      const postToArchive = allPosts.find(post => post.id === postId);
+  
+      // Instead of doing an API call, redirect to the post's URL
+      if (postToArchive && postToArchive.url) {
+        // Open the post URL in a new tab (you can change '_blank' to '_self' to open in the same tab)
+        window.open(postToArchive.url, '_blank');
+      }
+  
+      // Archive the post as before
+      if (postToArchive && user) {
+        // Save to archived-posts collection
+        const archiveCollectionRef = collection(db, "archived-posts", user.uid, "posts");
+        const postWithComment = {
+          ...postToArchive,
+          suggestedReply: suggestedReply,
+          archivedAt: new Date().toISOString()
+        };
+        await addDoc(archiveCollectionRef, postWithComment);
+  
+        // Remove the post from the current collection
+        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+        const q = query(postsCollectionRef, where("id", "==", postId));
+        const querySnapshot = await getDocs(q);
+    
+        if (!querySnapshot.empty) {
+          const docToDelete = querySnapshot.docs[0];
+          await deleteDoc(docToDelete.ref);
+  
+          // Remove the post from state
+          setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
+          setAllPosts((posts) => posts.filter((post) => post.id !== postId));
+    
+          setgreenAlert({ message: "Post approved and archived successfully", visible: true });
+          setTimeout(() => {
+            setgreenAlert({ message: "", visible: false });
+          }, 3000);
         }
       }
     } catch (error) {
-      console.error('Error submitting reply:', error);
-      setAlert({ message: "Error occured while approving the post", visible: true });
+      console.error('Error approving post:', error);
+      setAlert({ message: "Error occurred while approving the post", visible: true });
       setTimeout(() => {
         setAlert({ message: "", visible: false });
       }, 3000);

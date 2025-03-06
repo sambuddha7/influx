@@ -12,7 +12,13 @@ import {
     updateDoc, 
     getDoc, 
     arrayUnion, 
-    arrayRemove 
+    arrayRemove,
+    collection,
+    addDoc,
+    deleteDoc, 
+    query,
+    getDocs,
+    where
   } from 'firebase/firestore';
 
 
@@ -443,20 +449,68 @@ const CommunityPage: React.FC = () => {
     });
   };
 
-  const handleApprove = (id: string, reply: string) => {
-    setIsApproving(id);
-    // Simulate API call to approve and post the reply
-    setTimeout(() => {
-      setIsApproving(null);
+  const handleApprove = async (id: string, reply: string) => {
+    if (!user) return;
+    try {
+      setIsApproving(id);
+      
+      // Locate the target post from the subreddit sections
+      let targetPost: Post | null = null;
+      for (const section of subredditSections) {
+        const found = section.posts.find(post => post.id === id);
+        if (found) {
+          targetPost = found;
+          break;
+        }
+      }
+      
+      if (!targetPost) {
+        setAlertt({ visible: true, message: 'Post not found' });
+        setTimeout(() => setAlertt({ visible: false, message: '' }), 3000);
+        return;
+      }
+      
+      // Redirect to the post's URL (opens in a new tab)
+      if (targetPost.url) {
+        window.open(targetPost.url, '_blank');
+      }
+      
+      // Archive the post to Firestore
+      const archiveCollectionRef = collection(db, "archived-posts", user.uid, "posts");
+      const postWithComment = {
+        ...targetPost,
+        suggestedReply: reply,
+        archivedAt: new Date().toISOString()
+      };
+      await addDoc(archiveCollectionRef, postWithComment);
+      
+      // Remove the post from local state by filtering it out from each subreddit section
+      setSubredditSections(prevSections =>
+        prevSections.map(section => ({
+          ...section,
+          posts: section.posts.filter(post => post.id !== id)
+        }))
+      );
+      
       setGreenalertt({
         visible: true,
-        message: 'Comment posted successfully!'
+        message: 'Post approved and archived successfully!'
       });
-      
       setTimeout(() => {
         setGreenalertt({ visible: false, message: '' });
       }, 3000);
-    }, 1500);
+    } catch (error) {
+      console.error('Error approving post:', error);
+      setAlertt({
+        visible: true,
+        message: 'Error occurred while approving the post'
+      });
+      setTimeout(() => {
+        setAlertt({ visible: false, message: '' });
+      }, 3000);
+    } finally {
+      setIsApproving(null);
+    }
   };
 
   return (

@@ -55,17 +55,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
 
         {/* Navigation */}
         <nav className="p-4 space-y-2 flex-grow">
-        <NavItem
-            href="/community"
-            icon={<Users size={20} />}
-            text="Community"
-            isCollapsed={isCollapsed}
-            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
-          />
+        
           <NavItem
             href="/dashboard"
             icon={<ArrowUpRight size={20} />}
             text="Leads"
+            isCollapsed={isCollapsed}
+            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
+          />
+          <NavItem
+            href="/community"
+            icon={<Users size={20} />}
+            text="Community"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
