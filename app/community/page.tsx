@@ -472,6 +472,8 @@ const CommunityPage: React.FC = () => {
       
       // Redirect to the post's URL (opens in a new tab)
       if (targetPost.url) {
+        await navigator.clipboard.writeText(reply);
+
         window.open(targetPost.url, '_blank');
       }
       

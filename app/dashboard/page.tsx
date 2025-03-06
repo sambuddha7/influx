@@ -341,15 +341,19 @@ export default function Dashboard() {
       // Find the post to be approved/archived
       const postToArchive = allPosts.find(post => post.id === postId);
   
-      // Instead of doing an API call, redirect to the post's URL
-      if (postToArchive && postToArchive.url) {
-        // Open the post URL in a new tab (you can change '_blank' to '_self' to open in the same tab)
-        window.open(postToArchive.url, '_blank');
+      if (postToArchive && suggestedReply) {
+        // Copy the suggested reply to clipboard
+        await navigator.clipboard.writeText(suggestedReply);
+        setgreenAlert({ message: "Reply copied to clipboard!", visible: true });
+  
+        // Open the post URL in a new tab
+        if (postToArchive.url) {
+          window.open(postToArchive.url, '_blank');
+        }
       }
   
       // Archive the post as before
       if (postToArchive && user) {
-        // Save to archived-posts collection
         const archiveCollectionRef = collection(db, "archived-posts", user.uid, "posts");
         const postWithComment = {
           ...postToArchive,
@@ -370,8 +374,8 @@ export default function Dashboard() {
           // Remove the post from state
           setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
           setAllPosts((posts) => posts.filter((post) => post.id !== postId));
-    
-          setgreenAlert({ message: "Post approved and archived successfully", visible: true });
+  
+          setgreenAlert({ message: "Post approved, reply copied, and archived successfully!", visible: true });
           setTimeout(() => {
             setgreenAlert({ message: "", visible: false });
           }, 3000);
@@ -387,6 +391,7 @@ export default function Dashboard() {
       setIsApproving(null); // Reset loading state
     }
   };
+  
 
   //change
 
