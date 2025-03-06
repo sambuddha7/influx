@@ -1,5 +1,5 @@
 'use client';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
@@ -98,13 +98,48 @@ const Settings: React.FC = () => {
     fetchUserData();
   }, [user]);
 
+  // Function to clear posts from Firestore for the current user
+  const clearPosts = async () => {
+    if (!user) return;
+    try {
+      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+      const postsSnapshot = await getDocs(postsCollectionRef);
+      const deletePromises = postsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      console.log("Posts cleared for user:", user.uid);
+    } catch (error) {
+      console.error("Error clearing posts:", error);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+
+    // If the primary or secondary keywords change, clear posts in Firestore for the user
+    if (name === "primaryKeywords" || name === "secondaryKeywords") {
+      clearPosts();
+    }
+
     setUserData((prev) => (prev ? { ...prev, [name]: value } : prev));
   };
 
   const handleSave = async () => {
     if (!user || !userData) return;
+
+    // Validate combined keywords count
+    const primaryKeywordsArray = userData.primaryKeywords
+      .split(',')
+      .map(keyword => keyword.trim())
+      .filter(keyword => keyword !== '');
+    const secondaryKeywordsArray = userData.secondaryKeywords
+      .split(',')
+      .map(keyword => keyword.trim())
+      .filter(keyword => keyword !== '');
+
+    if (primaryKeywordsArray.length + secondaryKeywordsArray.length > 5) {
+      alert("The combined number of primary and secondary keywords cannot exceed 5.");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -136,13 +171,12 @@ const Settings: React.FC = () => {
         <div className="max-w-3xl mx-auto">
           {showAlert && (
             <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
-
-            <div className="alert alert-success mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Settings updated successfully!</span>
-            </div>
+              <div className="alert alert-success mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Settings updated successfully!</span>
+              </div>
             </div>
           )}
           
@@ -199,10 +233,6 @@ const Settings: React.FC = () => {
               onChange={handleInputChange}
               icon={MapPin}
             />
-
-            
-
-            
 
             <FormField
               label="Primary Keywords"
