@@ -34,6 +34,7 @@ interface PostCardProps {
   handleReject: (id: string) => void;
   handleApprove: (id: string, reply: string) => void;
   setDisplayedPosts: React.Dispatch<React.SetStateAction<Post[]>>;
+  page?: 'dashboard' | 'community';
 }
 
 const CrossIcon: React.FC = () => (
@@ -54,7 +55,8 @@ const PostCard: React.FC<PostCardProps> = ({
   handleSave, 
   handleReject, 
   handleApprove,
-  setDisplayedPosts 
+  setDisplayedPosts,
+  page = 'dashboard'
 }) => {
   return (
     <div className="card bg-base-100 dark:bg-black bg-white shadow-xl border border-gray-200 dark:border-gray-700">
@@ -136,19 +138,21 @@ const PostCard: React.FC<PostCardProps> = ({
               </button>
             )}
             
-            <button
-              onClick={() => handleReject(post.id)}
-              className="absolute -top-2 -left-2 w-6 h-6 
-                        bg-white dark:bg-zinc-800
-                        hover:bg-gray-100 dark:hover:bg-zinc-700
-                        rounded-full flex items-center justify-center
-                        border border-gray-200 dark:border-zinc-700
-                        shadow-sm transition-colors duration-200
-                        text-gray-500 dark:text-gray-400
-                        hover:text-gray-700 dark:hover:text-gray-200"
-            >
-              <CrossIcon />
-            </button>
+            {page === 'dashboard' && (
+              <button
+                onClick={() => handleReject(post.id)}
+                className="absolute -top-2 -left-2 w-6 h-6 
+                          bg-white dark:bg-zinc-800
+                          hover:bg-gray-100 dark:hover:bg-zinc-700
+                          rounded-full flex items-center justify-center
+                          border border-gray-200 dark:border-zinc-700
+                          shadow-sm transition-colors duration-200
+                          text-gray-500 dark:text-gray-400
+                          hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <CrossIcon />
+              </button>
+            )}
             {alertt.visible && (
               <div className="toast toast-end">
                 <div className="alert alert-error">
@@ -170,7 +174,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   </>
                 ) : (
                   <>
-                    Approve comment to post
+                    Approve
                     <Check className="h-4 w-4" />
                   </>
                 )}

@@ -328,21 +328,90 @@ const CommunityPage: React.FC = () => {
   }, [user]);
 
   // These are placeholder handlers - you would implement the real functionality
-  const handleGenerate = (id: string) => {
+  const handleGenerate = async (id: string) => {
+    // Set the generating state to show loading state
     setIsGenerating(id);
-    // Implement your generation logic here
-    setTimeout(() => {
-      setIsGenerating(null);
+    
+    try {
+      // Check if user is logged in
+      if (!user) {
+        throw new Error("You must be logged in to generate replies");
+      }
+      
+      // Find the post that needs a reply
+      let targetPost: Post | null = null;
+      
+      // Find the post across all sections
+      for (const section of subredditSections) {
+        const found = section.posts.find(post => post.id === id);
+        if (found) {
+          targetPost = found;
+          break;
+        }
+      }
+      
+      if (!targetPost) {
+        throw new Error("Post not found");
+      }
+      
+      // Make API call to the community_reply endpoint with the exact RedditPost model structure
+      const response = await fetch(`${apiUrl}/community_reply?userid=${user.uid}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: targetPost.id,
+          subreddit: targetPost.subreddit,
+          title: targetPost.title,
+          content: targetPost.content,
+          suggested_reply: targetPost.suggestedReply || "" // Match the snake_case field name in your model
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to generate reply");
+      }
+      
+      // Parse the response
+      const generatedReply = await response.json();
+      
       // Update the post with the generated reply
       setSubredditSections(prevSections => {
         return prevSections.map(section => {
           const updatedPosts = section.posts.map(post => 
-            post.id === id ? { ...post, suggestedReply: `Generated reply for post ${id}` } : post
+            post.id === id ? { ...post, suggestedReply: generatedReply } : post
           );
           return { ...section, posts: updatedPosts };
         });
       });
-    }, 1500);
+      
+      // Show success message
+      setGreenalertt({
+        visible: true,
+        message: 'Reply generated successfully!'
+      });
+      
+      setTimeout(() => {
+        setGreenalertt({ visible: false, message: '' });
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error generating reply:', error);
+      
+      // Show error message
+      setAlertt({
+        visible: true,
+        message: 'Failed to generate reply. Please try again.'
+      });
+      
+      setTimeout(() => {
+        setAlertt({ visible: false, message: '' });
+      }, 3000);
+    } finally {
+      // Reset generating state
+      setIsGenerating(null);
+    }
   };
 
   const handleEdit = (id: string) => {
@@ -512,6 +581,7 @@ const CommunityPage: React.FC = () => {
                           };
                           setSubredditSections(updater);
                         }}
+                        page="community"
 
                       />
                     ))
