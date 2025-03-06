@@ -22,7 +22,7 @@ import {
   } from 'firebase/firestore';
 
 
-
+  
 // Define types
 interface Post {
   id: string;
@@ -210,7 +210,7 @@ const CommunityPage: React.FC = () => {
       const data = await response.json();
       
       // Transform data to match our Post interface
-      const posts: Post[] = data.map((post: any) => ({
+      const posts: Post[] = data.map((post: string[]) => ({
         id: post[0],
         subreddit: post[1],
         title: post[2],
