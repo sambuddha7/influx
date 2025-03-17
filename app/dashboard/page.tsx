@@ -559,7 +559,9 @@ export default function Dashboard() {
                   onClick={toggleFilterModal}
                   className="text-gray-400 hover:text-orange-500 transition-colors"
                 >
-                  <CrossIcon className="w-5 h-5" />
+                  <span className="w-5 h-5">
+                    <CrossIcon />
+                  </span>
                 </button>
               </div>
               
@@ -594,7 +596,9 @@ export default function Dashboard() {
                           onClick={() => handleRemoveSubreddit(subreddit)} 
                           className="ml-1 text-gray-400 group-hover:text-orange-500 transition-colors"
                         >
-                          <CrossIcon className="w-4 h-4" />
+                          <span className="w-4 h-4">
+                            <CrossIcon />
+                          </span>
                         </button>
                       </div>
                     ))}
