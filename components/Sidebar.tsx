@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Users, Settings, Archive, Menu, BookOpen, LogOut, ChartNoAxesCombined } from 'lucide-react';
+import { Home, FileText, Users, Settings, Archive, Menu, BookOpen, LogOut, ChartNoAxesCombined, ArrowUpRight} from 'lucide-react';
 
 import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -55,10 +55,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
 
         {/* Navigation */}
         <nav className="p-4 space-y-2 flex-grow">
+        
           <NavItem
             href="/dashboard"
-            icon={<Home size={20} />}
-            text="Home"
+            icon={<ArrowUpRight size={20} />}
+            text="Leads"
+            isCollapsed={isCollapsed}
+            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
+          />
+          <NavItem
+            href="/community"
+            icon={<Users size={20} />}
+            text="Community"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
@@ -69,13 +77,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
-          <NavItem
+          {/* <NavItem
             href="/roi"
             icon={<ChartNoAxesCombined size={20} />}
             text="Analytics"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
-          />
+          /> */}
           {/* <NavItem
             href="/tutorial"
             icon={<BookOpen size={20} />}
