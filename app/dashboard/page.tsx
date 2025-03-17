@@ -10,8 +10,9 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
-import { ArrowUpRight , Pencil, Save, Check, Sparkles} from "lucide-react"; // Import the icon
+import { ArrowUpRight , Pencil, Save, Check, Sparkles, Filter} from "lucide-react"; // Import the icon
 import { formatDistanceToNow } from 'date-fns';
+
 
 
 
@@ -67,6 +68,13 @@ export default function Dashboard() {
     visible: false,
   });
   
+  // Subreddit filter states
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [subredditInput, setSubredditInput] = useState('');
+  const [excludedSubreddits, setExcludedSubreddits] = useState<string[]>([]);
+  const [tempExcludedSubreddits, setTempExcludedSubreddits] = useState<string[]>([]);
+  
+
   const POSTS_PER_PAGE = 6;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -126,6 +134,31 @@ export default function Dashboard() {
       console.error("Error saving post to Firestore:", error);
     }
   };
+
+  // Fetch excluded subreddits from Firebase
+  useEffect(() => {
+    const fetchExcludedSubreddits = async () => {
+      if (!user) return;
+      
+      try {
+        const excludedRef = doc(db, "excluded-subreddits", user.uid);
+        const excludedSnap = await getDoc(excludedRef);
+        
+        if (excludedSnap.exists() && excludedSnap.data().subreddits) {
+          const subreddits = excludedSnap.data().subreddits;
+          setExcludedSubreddits(subreddits);
+          setTempExcludedSubreddits(subreddits);
+        }
+      } catch (error) {
+        console.error("Error fetching excluded subreddits:", error);
+      }
+    };
+    
+    if (user) {
+      fetchExcludedSubreddits();
+    }
+  }, [user]);
+
 
   useEffect(() => {
     if (!user) return;
@@ -415,6 +448,85 @@ export default function Dashboard() {
     }
   };
 
+  // Subreddit filter functions
+  const toggleFilterModal = () => {
+    setIsFilterOpen(!isFilterOpen);
+    setTempExcludedSubreddits([...excludedSubreddits]);
+  };
+
+  const handleAddSubreddit = () => {
+    if (subredditInput.trim() !== '' && !tempExcludedSubreddits.includes(subredditInput.trim())) {
+      setTempExcludedSubreddits([...tempExcludedSubreddits, subredditInput.trim()]);
+      setSubredditInput('');
+    }
+  };
+
+  const handleRemoveSubreddit = (subreddit: string) => {
+    setTempExcludedSubreddits(tempExcludedSubreddits.filter(s => s !== subreddit));
+  };
+
+
+  const handleSaveSubreddits = async () => {
+    if (!user) return;
+    
+    try {
+      // Save to Firebase
+      await setDoc(doc(db, "excluded-subreddits", user.uid), {
+        subreddits: tempExcludedSubreddits,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Update local state
+      setExcludedSubreddits(tempExcludedSubreddits);
+      
+      // Show initial message
+      setgreenAlert({ 
+        message: "Subreddit filters saved, refreshing posts...", 
+        visible: true 
+      });
+      
+      // Close modal
+      setIsFilterOpen(false);
+      
+      // Delete all posts from reddit-posts collection
+      try {
+        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+        const postsSnapshot = await getDocs(postsCollectionRef);
+        
+        // Delete all documents in batch
+        const deletePromises = postsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+
+        const userDocRef = doc(db, "reddit-posts", user.uid);
+        await deleteDoc(userDocRef);
+
+        console.log("All posts deleted successfully");
+      
+
+        window.location.href = '/dashboard';
+        
+      } catch (deleteError) {
+        console.error("Error deleting posts:", deleteError);
+        setAlert({ 
+          message: "Error refreshing posts", 
+          visible: true 
+        });
+        setTimeout(() => {
+          setAlert({ message: "", visible: false });
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Error saving subreddit filters:", error);
+      setAlert({ 
+        message: "Error saving subreddit filters", 
+        visible: true 
+      });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    }
+  };
+
   if (isLoading || isLoading2) {
     return (
       <div className='flex'>
@@ -430,6 +542,94 @@ export default function Dashboard() {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 p-6 space-y-6">
+        <div className="flex justify-end mb-4">
+          <button 
+            onClick={toggleFilterModal}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-750 text-gray-200 rounded-lg border border-gray-700 hover:border-orange-600 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
+          >
+            <Filter size={16} className="text-orange-500" />
+            <span>Filter Subreddits</span>
+            {excludedSubreddits.length > 0 && (
+              <span className="flex items-center justify-center h-5 min-w-5 px-1 text-xs font-medium bg-orange-600 text-white rounded-full">
+              {excludedSubreddits.length}
+            </span>
+            )}
+          </button>
+        </div>
+        {/* Subreddit Filter Modal */}
+        {isFilterOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+            <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-lg font-medium text-white">Filter Subreddits</h3>
+                <button 
+                  onClick={toggleFilterModal}
+                  className="text-gray-400 hover:text-orange-500 transition-colors"
+                >
+                  <CrossIcon className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className="text-sm mb-5 text-gray-400">
+                Add subreddits you want to exclude from your feed.
+              </p>
+              
+              <div className="flex gap-2 mb-6">
+                <input
+                  type="text"
+                  placeholder="Enter subreddit name"
+                  className="w-full px-3 py-2 rounded-md bg-gray-800 border-0 text-gray-200 placeholder-gray-500 ring-1 ring-gray-700 focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                  value={subredditInput}
+                  onChange={(e) => setSubredditInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddSubreddit()}
+                />
+                <button 
+                  onClick={handleAddSubreddit}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-500 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                {tempExcludedSubreddits.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {tempExcludedSubreddits.map((subreddit) => (
+                      <div key={subreddit} className="px-3 py-1 rounded-full bg-gray-800 text-gray-200 text-sm flex items-center gap-1 border border-gray-700 group">
+                        r/{subreddit}
+                        <button 
+                          onClick={() => handleRemoveSubreddit(subreddit)} 
+                          className="ml-1 text-gray-400 group-hover:text-orange-500 transition-colors"
+                        >
+                          <CrossIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No subreddits excluded yet.</p>
+                )}
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-3 border-t border-gray-800">
+                <button 
+                  onClick={toggleFilterModal}
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSaveSubreddits}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all"
+                >
+                  Save Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
         {displayedPosts.map((post) => (
           <div key={post.id} className="card bg-base-100 dark:bg-black bg-white shadow-xl border border-gray-200 dark:border-gray-700">
             <div className="card-body">
