@@ -361,6 +361,9 @@ export default function OnboardingForm() {
            formData.countryRegion && 
            formData.companyDescription;
   };
+  const isKeywordsPageValid = () => {
+    return primaryKeywords.length > 0;
+  };
 
   if (isLoading || loading) {
     return <Loading />;
@@ -532,9 +535,15 @@ export default function OnboardingForm() {
   </div>
 )}
                   {/* Validation message */}
+                  
                   {totalKeywords === 0 && (
                     <p className="text-red-500 text-sm text-center">
                       Please add at least one keyword to continue
+                    </p>
+                  )}
+                  {primaryKeywords.length === 0 && totalKeywords != 0 && (
+                    <p className="text-red-500 text-sm text-center">
+                      Please add at least one primary keyword to continue
                     </p>
                   )}
                   {totalKeywords >= MAX_KEYWORDS && (
@@ -544,13 +553,13 @@ export default function OnboardingForm() {
                   )}
                 </div>
                 <Button
-                  onClick={() => (primaryKeywords.length > 0 || secondaryKeywords.length > 0) && setPage(3)}
+                  onClick={() => (isKeywordsPageValid()) && setPage(3)}
                   className={`w-full ${
                     primaryKeywords.length > 0 || secondaryKeywords.length > 0
                       ? 'bg-orange-500 hover:bg-orange-600 text-white'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
-                  disabled={primaryKeywords.length === 0 && secondaryKeywords.length === 0}
+                  disabled={!isKeywordsPageValid()}
                 >
                   Continue
                 </Button>
