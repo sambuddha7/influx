@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard } from 'lucide-react';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -29,6 +29,7 @@ interface PostCardProps {
   alertt: AlertState;
   greenalertt: AlertState;
   handleGenerate: (id: string) => void;
+  handleRegenerateWithFeedback: (id: string, feedback: string) => void; // New prop
   handleEdit: (id: string) => void;
   handleSave: (id: string, reply: string) => void;
   handleReject: (id: string) => void;
@@ -51,6 +52,7 @@ const PostCard: React.FC<PostCardProps> = ({
   alertt, 
   greenalertt,
   handleGenerate, 
+  handleRegenerateWithFeedback, // New prop
   handleEdit, 
   handleSave, 
   handleReject, 
@@ -59,11 +61,33 @@ const PostCard: React.FC<PostCardProps> = ({
   page = 'dashboard'
 }) => {
   const [copied, setCopied] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(post.suggestedReply != "Add your reply here"); // Track if content has been generated
+  const [regenerateModalOpen, setRegenerateModalOpen] = useState(false); // Control modal visibility
+  const [feedbackText, setFeedbackText] = useState(""); // Store user feedback
 
   const handleCopy = () => {
     navigator.clipboard.writeText(post.suggestedReply);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000); // Reset copied state after 2 seconds
+  };
+
+  // Handle click on Generate/Regenerate button
+  const handleGenerateClick = () => {
+    if (!hasGenerated) {
+      // First time generation
+      handleGenerate(post.id);
+      setHasGenerated(true);
+    } else {
+      // Open regeneration modal
+      setRegenerateModalOpen(true);
+    }
+  };
+
+  // Handle regeneration with feedback
+  const handleRegenerateSubmit = () => {
+    handleRegenerateWithFeedback(post.id, feedbackText);
+    setRegenerateModalOpen(false);
+    setFeedbackText("");
   };
 
   return (
@@ -103,7 +127,7 @@ const PostCard: React.FC<PostCardProps> = ({
             
             <button
               className="relative p-[1px] rounded-lg overflow-hidden bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 disabled:opacity-50"
-              onClick={() => handleGenerate(post.id)}
+              onClick={handleGenerateClick}
               disabled={isGenerating === post.id}
             >
               <div className="relative bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white px-4 py-2 rounded-[8px] flex items-center gap-1">
@@ -111,9 +135,14 @@ const PostCard: React.FC<PostCardProps> = ({
                   <span>Generating...</span>
                 ) : (
                   <span className="flex items-center gap-1">
-                    <Sparkles className="h-4 w-4" />
-                    Generate
-                  </span>
+                {hasGenerated ? (
+                  <RefreshCcw className="h-4 w-4" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {hasGenerated ? "Regenerate" : "Generate"}
+              </span>
+
                 )}
               </div>
             </button>
@@ -190,6 +219,46 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Regeneration Modal */}
+      {regenerateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-medium text-white">Improve this response</h3>
+              <button 
+                onClick={() => setRegenerateModalOpen(false)}
+                className="text-gray-400 hover:text-orange-500 transition-colors"
+              >
+                <CrossIcon />
+              </button>
+            </div>
+            
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="What would you like to change about this response?"
+              className="w-full px-3 py-2 rounded-md bg-gray-800 border-0 text-gray-200 placeholder-gray-500 ring-1 ring-gray-700 focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+              rows={4}
+            />
+            
+            <div className="flex justify-end gap-3 mt-4">
+              <button 
+                onClick={() => setRegenerateModalOpen(false)}
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRegenerateSubmit}
+                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all"
+              >
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
