@@ -63,13 +63,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
-          <NavItem
+          {/* <NavItem
             href="/community"
             icon={<Users size={20} />}
             text="Community"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
-          />
+          /> */}
           <NavItem
             href="/userinput"
             icon={<Users size={20} />}

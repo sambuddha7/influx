@@ -361,6 +361,89 @@ export default function Dashboard() {
   
 
   //change
+  // const handleRegenerateWithFeedback = async (postId: string, feedback: string) => {
+  //   console.log("yooo")
+  // };
+  const handleRegenerateWithFeedback = async (postId: string, feedback: string) => {
+    if (!user) return;
+    console.log(feedback)
+    const userDocRef = doc(db, 'track-replies', user.uid);
+    const userDocSnapshot = await getDoc(userDocRef);
+  
+    if (userDocSnapshot.exists()) {
+      const userData = userDocSnapshot.data();
+      if (userData.replies_left <= 0) {
+        setAlert({
+          message: "Generation limit reached for the trial period",
+          visible: true
+        });
+        setTimeout(() => setAlert({ message: "", visible: false }), 3000);
+        return;
+      }
+  
+      const newRepliesLeft = userData.replies_left - 1;
+      await updateDoc(userDocRef, {
+        replies_left: newRepliesLeft
+      });
+    }
+  
+    try {
+      setIsGenerating(postId);
+  
+      const post = displayedPosts.find(p => p.id === postId);
+      if (!post) return;
+  
+      const response = await fetch(`${apiUrl}/regenerate-reply?feedback=${encodeURIComponent(feedback)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: post.id,
+          subreddit: post.subreddit,
+          title: post.title,
+          content: post.content,
+          suggested_reply: post.suggestedReply // use the original reply, not feedback
+        }),
+      });
+      
+  
+      if (!response.ok) {
+        throw new Error('Failed to regenerate reply');
+      }
+  
+      const regeneratedReply = (await response.text()).replace(/^"|"$/g, '');
+  
+      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+      const q = query(postsCollectionRef, where("id", "==", postId));
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        const docToUpdate = querySnapshot.docs[0];
+        await updateDoc(docToUpdate.ref, {
+          suggestedReply: regeneratedReply
+        });
+      }
+  
+      setDisplayedPosts(posts =>
+        posts.map(p => p.id === postId ? { ...p, suggestedReply: regeneratedReply } : p)
+      );
+  
+      setgreenAlert({ message: "Reply regenerated successfully", visible: true });
+      setTimeout(() => {
+        setgreenAlert({ message: "", visible: false });
+      }, 3000);
+  
+    } catch (error) {
+      console.error('Error regenerating reply:', error);
+      setAlert({ message: "Error occurred while regenerating reply", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    } finally {
+      setIsGenerating(null);
+    }
+  };
 
   const handleGenerate = async (postId: string) => {
     if (!user) return;
@@ -639,6 +722,7 @@ export default function Dashboard() {
           handleGenerate={handleGenerate}
           handleEdit={handleEdit}
           handleSave={handleSave}
+          handleRegenerateWithFeedback={handleRegenerateWithFeedback}
           handleReject={handleReject}
           handleApprove={handleApprove}
           setDisplayedPosts={setDisplayedPosts}
