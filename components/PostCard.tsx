@@ -12,6 +12,7 @@ interface Post {
   url: string;
   content: string;
   suggestedReply: string;
+  promotional?: boolean;
 }
 
 // Define the type for alert state
@@ -95,7 +96,14 @@ const PostCard: React.FC<PostCardProps> = ({
       <div className="card-body">
         <div className="mb-4">
           <div className="text-sm text-blue-500 dark:text-blue-400">{post.subreddit}</div>
-          <h2 className="card-title dark:text-white">{post.title}</h2>
+          <h2 className="card-title dark:text-white flex items-center gap-2">
+            {post.title}
+            {post.promotional && (
+              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gradient-to-r from-orange-400 to-orange-600 text-white dark:text-gray-100">
+                Promotional
+              </span>
+            )}
+          </h2>
           <div className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
             {post.date_created && !isNaN(new Date(post.date_created).getTime())
               ? formatDistanceToNow(new Date(post.date_created), { addSuffix: true })
