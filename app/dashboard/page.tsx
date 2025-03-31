@@ -43,6 +43,8 @@ interface RedditPost {
   suggestedReply: string;
   url: string;
   date_created: string;
+  promotional?: boolean; 
+
 }
 
 export default function Dashboard() {
@@ -127,6 +129,7 @@ export default function Dashboard() {
       const postWithTimestamp = {
         ...post,
         createdAt: new Date().toISOString(), // ISO 8601 string for consistent formatting
+        promotional: post.promotional ?? false,
       };
       await addDoc(postsCollectionRef, postWithTimestamp);
       console.log("Post saved successfully!");
@@ -185,6 +188,7 @@ export default function Dashboard() {
             suggestedReply: doc.data().suggestedReply,
             url: doc.data().url,
             date_created: doc.data().date_created,
+            promotional: doc.data().promotional ?? false,
           }));
           setAllPosts(firestorePosts);
           setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
