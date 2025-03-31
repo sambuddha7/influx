@@ -295,7 +295,7 @@ export default function OnboardingForm() {
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     companyWebsite: '',
-    countryRegion: '',
+    // countryRegion: '',
     companyDescription: '',
     product: '',
     targetAudience: '',
@@ -358,7 +358,6 @@ export default function OnboardingForm() {
   const isFirstPageValid = () => {
     return formData.companyName && 
            formData.companyWebsite && 
-           formData.countryRegion && 
            formData.companyDescription;
   };
   const isKeywordsPageValid = () => {
@@ -411,13 +410,13 @@ export default function OnboardingForm() {
                     onChange={handleInputChange}
                     required
                   />
-                  <FormInput
+                  {/* <FormInput
                     label="Country/Region"
                     name="countryRegion"
                     value={formData.countryRegion}
                     onChange={handleInputChange}
                     required
-                  />
+                  /> */}
                   <FormTextArea
                     label="Company Description"
                     name="companyDescription"
