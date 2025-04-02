@@ -12,7 +12,7 @@ interface UserData {
   companyDescription: string;
   companyName: string;
   companyWebsite: string;
-  countryRegion: string;
+
   email: string;
   product: string;
   targetAudience: string;
@@ -226,13 +226,7 @@ const Settings: React.FC = () => {
               isTextArea
             />
 
-            <FormField
-              label="Country/Region"
-              name="countryRegion"
-              value={userData.countryRegion}
-              onChange={handleInputChange}
-              icon={MapPin}
-            />
+
 
             <FormField
               label="Primary Keywords"

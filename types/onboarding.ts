@@ -1,7 +1,6 @@
 export interface FormData {
   companyName: string;
   companyWebsite: string;
-  countryRegion: string;
   companyDescription: string;
   product: string;
   targetAudience: string;
@@ -14,7 +13,6 @@ export interface FormData {
 export interface FormValidation {
   companyName: boolean;
   companyWebsite: boolean;
-  countryRegion: boolean;
   companyDescription: boolean;
 }
 
