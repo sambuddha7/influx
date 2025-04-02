@@ -198,15 +198,21 @@ export default function Dashboard() {
           const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
           const data = await response.json();
 
-          const formattedPosts = data.map((post: string[]) => ({
-            id: post[0],
-            subreddit: post[1],
-            title: post[2],
-            content: post[3],
-            suggestedReply: post[4],
-            url: post[5],
-            date_created: post[6],
-          }));
+          const formattedPosts = data.map((post: string[]) => {
+            const promoScore = parseFloat(post[7]); // assume promo_score is 8th item
+            return {
+              id: post[0],
+              subreddit: post[1],
+              title: post[2],
+              content: post[3],
+              suggestedReply: post[4],
+              url: post[5],
+              date_created: post[6],
+              promotional: promoScore > 0.70,
+              promo_score: promoScore,
+            };
+          });
+          
           setAllPosts(formattedPosts);
           setDisplayedPosts(formattedPosts.slice(0, POSTS_PER_PAGE));
           setIsLoading2(false);
