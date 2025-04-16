@@ -76,7 +76,7 @@ export default function Dashboard() {
 
   //change
   const [showInstructionPopup, setShowInstructionPopup] = useState(false);
-  const [currentApprovedPost, setCurrentApprovedPost] = useState(null);
+  const [currentApprovedPost, setCurrentApprovedPost] = useState<RedditPost | null>(null);
   const [hideInstructionPopup, setHideInstructionPopup] = useState(false);
   const [pendingPosts, setPendingPosts] = useState<{[key: string]: RedditPost}>({});
   const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
