@@ -42,7 +42,7 @@ export default function AboutPage() {
               Founded in 2024, our company emerged from a simple observation: brands struggle to genuinely connect on Reddit, often missing opportunities or coming across as inauthentic.
             </p>
             <p className="text-neutral-700 dark:text-neutral-300 mb-4">
-              After years of helping brands navigate Reddit's unique ecosystem manually, our founding team recognized the need for intelligent automation that preserves the human touch.
+              After years of helping brands navigate Reddit&apos;s unique ecosystem manually, our founding team recognized the need for intelligent automation that preserves the human touch.
             </p>
             <p className="text-neutral-700 dark:text-neutral-300">
               Today, we&apos;re revolutionizing how brands engage on Reddit by combining AI-powered opportunity detection with customizable response generation that maintains each brand&apos;s unique voice.
