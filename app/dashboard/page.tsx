@@ -852,7 +852,7 @@ const handleConfirmation = async (didPost: boolean) => {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
             <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-medium text-white">What's Next?</h3>
+              <h3 className="text-lg font-medium text-white">What&apos;s Next?</h3>
               <button 
                 onClick={() => setShowInstructionPopup(false)}
                 className="text-gray-400 hover:text-orange-500 transition-colors"
@@ -870,10 +870,10 @@ const handleConfirmation = async (didPost: boolean) => {
               
               <div className="p-3 bg-gray-800 rounded-lg text-sm text-gray-300">
                 <ol className="list-decimal list-inside space-y-2">
-                  <li>You'll be directed to the Reddit post</li>
+                  <li>You&apos;ll be directed to the Reddit post</li>
                   <li>Click on the comment field</li>
                   <li>Paste your reply (Ctrl+V or Cmd+V)</li>
-                  <li>Click "Post" to submit your comment</li>
+                  <li>Click &apos;Post&apos; to submit your comment</li>
                 </ol>
               </div>
             </div>
@@ -890,7 +890,7 @@ const handleConfirmation = async (didPost: boolean) => {
                     }
                   }}
                 />
-                <span className="text-sm text-gray-400">Don't show again</span>
+                <span className="text-sm text-gray-400">Don&apos;t show again</span>
               </label>
               
               <button 
@@ -943,7 +943,7 @@ const handleConfirmation = async (didPost: boolean) => {
                     }
                   }}
                 />
-                <label htmlFor="hideConfirmationPopup" className="text-sm text-gray-400">Don't show again</label>
+                <label htmlFor="hideConfirmationPopup" className="text-sm text-gray-400">Don&apos;t show again</label>
               </div>
               
               <div className="flex justify-end gap-3">

@@ -45,7 +45,7 @@ export default function AboutPage() {
               After years of helping brands navigate Reddit's unique ecosystem manually, our founding team recognized the need for intelligent automation that preserves the human touch.
             </p>
             <p className="text-neutral-700 dark:text-neutral-300">
-              Today, we're revolutionizing how brands engage on Reddit by combining AI-powered opportunity detection with customizable response generation that maintains each brand's unique voice.
+              Today, we&apos;re revolutionizing how brands engage on Reddit by combining AI-powered opportunity detection with customizable response generation that maintains each brand&apos;s unique voice.
             </p>
           </div>
           <div className="relative h-64 md:h-80 w-full rounded-xl overflow-hidden">
@@ -114,21 +114,21 @@ export default function AboutPage() {
           <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
             <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white">Community Respect</h3>
             <p className="text-neutral-700 dark:text-neutral-300">
-              We respect Reddit's unique culture and help brands contribute positively to the community without disrupting it.
+              We respect Reddit&apos;s unique culture and help brands contribute positively to the community without disrupting it.
             </p>
           </div>
           
           <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
             <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white">Transparency</h3>
             <p className="text-neutral-700 dark:text-neutral-300">
-              We're open about how our technology works and never encourage brands to mislead or manipulate Reddit users.
+              We&apos;re open about how our technology works and never encourage brands to mislead or manipulate Reddit users.
             </p>
           </div>
           
           <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
             <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white">Continuous Improvement</h3>
             <p className="text-neutral-700 dark:text-neutral-300">
-              We constantly refine our algorithms and processes to deliver better results while adapting to Reddit's evolving ecosystem.
+              We constantly refine our algorithms and processes to deliver better results while adapting to Reddit&apos;s evolving ecosystem.
             </p>
           </div>
         </div>
