@@ -139,7 +139,7 @@ export default function PricingPage() {
                 </button>
                 
                 <div className="border-t border-neutral-200 dark:border-neutral-800 mt-6 pt-6">
-                  <p className="font-medium text-neutral-900 dark:text-white mb-4">What's included:</p>
+                  <p className="font-medium text-neutral-900 dark:text-white mb-4">What&apos;s included:</p>
                   <ul className="space-y-3">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-start">
@@ -185,9 +185,9 @@ export default function PricingPage() {
             </div>
             
             <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
-              <h3 className="text-lg font-bold mb-3 text-neutral-900 dark:text-white">What does "brand voice training" include?</h3>
+              <h3 className="text-lg font-bold mb-3 text-neutral-900 dark:text-white">What does &apos;brand voice training&apos; include?</h3>
               <p className="text-neutral-700 dark:text-neutral-300 text-sm">
-                Our AI learns your brand's unique tone, style, and messaging preferences through examples you provide, ensuring suggested responses authentically represent your brand.
+                Our AI learns your brand&apos;s unique tone, style, and messaging preferences through examples you provide, ensuring suggested responses authentically represent your brand.
               </p>
             </div>
             
@@ -201,7 +201,7 @@ export default function PricingPage() {
             <div className="bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
               <h3 className="text-lg font-bold mb-3 text-neutral-900 dark:text-white">How does post recommendation work?</h3>
               <p className="text-neutral-700 dark:text-neutral-300 text-sm">
-                Our AI analyzes Reddit conversations in real-time to identify posts where your brand's presence would be valuable and well-received, based on relevance and engagement potential.
+                Our AI analyzes Reddit conversations in real-time to identify posts where your brand&apos;s presence would be valuable and well-received, based on relevance and engagement potential.
               </p>
             </div>
           </div>
