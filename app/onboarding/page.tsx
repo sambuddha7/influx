@@ -172,28 +172,28 @@ export default function OnboardingForm() {
   const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordSuggestions, setKeywordSuggestions] = useState<string[]>([]);
+  const [scrapedPages, setScrapedPages] = useState<any[]>([]);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isScraping, setIsScraping] = useState(false);
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const MAX_KEYWORDS = 5;
   const totalKeywords = primaryKeywords.length + secondaryKeywords.length;
 
+  const [formData, setFormData] = useState<FormData>({
+    companyName: '',
+    companyWebsite: '',
+    companyDescription: '',
+    product: '',
+    targetAudience: '',
+    keywords: '',
+  });
 
   const fetchKeywordSuggestions = async () => {
     try {
       const requestBody: KeywordRequest = {
         description: formData.companyDescription
       };
-      // const response = await fetch("http://localhost:8000/keywords", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json"
-      //   },
-      //   body: JSON.stringify({
-      //     description: encodeURIComponent(formData.companyDescription)
-      //   })
-      // });
-      
-      // const test = await response.json();
-      // console.log(test);
 
       const response = await fetch(`${apiUrl}/keywords?description=${encodeURIComponent(formData.companyDescription)}`, {
         method: "POST",
@@ -207,9 +207,6 @@ export default function OnboardingForm() {
       }
 
       const keywords = await response.json();
-
-
-      // const keywords = 'AI, Machine Learning, Data Science, Python, JavaScript, React, Next.js, Tailwind CSS, Firebase, Google Cloud Platform, AWS, Azure';
       
       setKeywordSuggestions(keywords.split(',').map((k : string) => k.trim()));
     } catch (error) {
@@ -217,11 +214,84 @@ export default function OnboardingForm() {
       setKeywordSuggestions([]);
     }
   };
+  
   useEffect(() => {
-    if (page === 2) {
+    if (page === 3) {
       fetchKeywordSuggestions();
     }
   }, [page]);
+
+  const generateCompanyDescription = async () => {
+    if (!scrapedPages || scrapedPages.length === 0) return;
+
+    setIsGeneratingDescription(true);
+    
+    try {
+      // Find home page and about page content from scraped pages
+      const homePage = scrapedPages.find(page => 
+        page.url === formData.companyWebsite || 
+        page.url === formData.companyWebsite + '/' ||
+        page.title?.toLowerCase().includes('home') ||
+        page.url.endsWith('/')
+      );
+      
+      const aboutPage = scrapedPages.find(page => 
+        page.title?.toLowerCase().includes('about') ||
+        page.url.toLowerCase().includes('about')
+      );
+
+      // Combine content from home and about pages
+      let content = '';
+      if (homePage) {
+        content += `Home Page Content: ${homePage.content}\n\n`;
+      }
+      if (aboutPage) {
+        content += `About Page Content: ${aboutPage.content}`;
+      }
+      
+      // If no specific pages found, use the first available page
+      if (!content && scrapedPages[0]) {
+        content = scrapedPages[0].content;
+      }
+      // console.log("content::")
+      // console.log(content)
+      // console.log("Content type:", typeof content);
+
+      // console.log("end::")
+
+      const response = await fetch(`${apiUrl}/company_desc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content, companyName: formData.companyName }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate company description');
+      }
+
+      const generatedDescription = await response.text();
+      
+      setFormData(prev => ({
+        ...prev,
+        companyDescription: generatedDescription
+      }));
+
+    } catch (error) {
+      console.error('Error generating company description:', error);
+      // You could show an error message to the user here
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
+
+  useEffect(() => {
+    if (page === 2 && scrapedPages.length > 0 && !formData.companyDescription) {
+      generateCompanyDescription();
+    }
+  }, [page, scrapedPages]);
+  
   const addKeyword = () => {
     const trimmedKeyword = keywordInput.trim();
     if (trimmedKeyword && 
@@ -232,6 +302,7 @@ export default function OnboardingForm() {
       setKeywordInput('');
     }
   };
+  
   const toggleFavorite = (keyword: string) => {
     if (primaryKeywords.includes(keyword)) {
       // Remove from primary, add to secondary
@@ -285,6 +356,7 @@ export default function OnboardingForm() {
       addKeyword();
     }
   };
+  
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
@@ -292,16 +364,6 @@ export default function OnboardingForm() {
       secondaryKeywords: secondaryKeywords.join(',')
     }));
   }, [primaryKeywords, secondaryKeywords]);
-  const [formData, setFormData] = useState<FormData>({
-    companyName: '',
-    companyWebsite: '',
-    // countryRegion: '',
-    companyDescription: '',
-    product: '',
-    targetAudience: '',
-    keywords: '',
-
-  });
 
   useEffect(() => {
     const checkUser = async () => {
@@ -356,10 +418,13 @@ export default function OnboardingForm() {
   };
 
   const isFirstPageValid = () => {
-    return formData.companyName && 
-           formData.companyWebsite && 
-           formData.companyDescription;
+    return formData.companyName && formData.companyWebsite;
   };
+
+  const isSecondPageValid = () => {
+    return formData.companyDescription.trim().length > 0;
+  };
+
   const isKeywordsPageValid = () => {
     return primaryKeywords.length > 0;
   };
@@ -367,7 +432,27 @@ export default function OnboardingForm() {
   if (isLoading || loading) {
     return <Loading />;
   }
-
+  
+  const handleScrape = async () => {
+    if (!isFirstPageValid()) return;
+    setIsScraping(true);
+    try {
+      const res = await fetch(
+        `${apiUrl}/scrape?base_url=${encodeURIComponent(formData.companyWebsite)}`
+      );
+      if (!res.ok) throw new Error("Scrape failed");
+      const { pages } = await res.json();
+      console.log("scraped pages:", pages);
+      setScrapedPages(pages);     // if you want to store them
+      setPage(2);                 // now move to the next onboarding step
+    } catch (err) {
+      console.error(err);
+      // you could show a toast or inline error message here
+    } finally {
+      setIsScraping(false);
+    }
+  };
+  
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-zinc-950">
       <motion.div 
@@ -376,8 +461,7 @@ export default function OnboardingForm() {
         className="max-w-2xl w-full space-y-8 p-8 rounded-xl shadow-xl 
                    bg-white dark:bg-zinc-900 transition-colors duration-200"
       >
-        {/* <ProgressBar currentPage={page} totalPages={3} /> */}
-        {page > 0 && <ProgressBar currentPage={page} totalPages={4} />}
+        {page > 0 && <ProgressBar currentPage={page} totalPages={3} />}
         <AnimatePresence mode="wait">
           <motion.div
             key={page}
@@ -410,32 +494,68 @@ export default function OnboardingForm() {
                     onChange={handleInputChange}
                     required
                   />
-                  {/* <FormInput
-                    label="Country/Region"
-                    name="countryRegion"
-                    value={formData.countryRegion}
-                    onChange={handleInputChange}
-                    required
-                  /> */}
-                  <FormTextArea
-                    label="Company Description"
-                    name="companyDescription"
-                    value={formData.companyDescription}
-                    onChange={handleInputChange}
-                    required
-                  />
                 </div>
                 <Button
-                  onClick={() => isFirstPageValid() && setPage(2)}
+  onClick={handleScrape}
+  className="w-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center"
+  disabled={!isFirstPageValid() || isScraping}
+>
+  {isScraping ? (
+    <>
+      <span className="loader mr-2 animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+      Scraping company information...
+    </>
+  ) : (
+    "Next Step"
+  )}
+</Button>
+              </div>
+            )}
+
+            {page === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                  Company Description
+                </h2>
+                
+                {isGeneratingDescription ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center space-x-3 p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Generating company description from your website...
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        💡 We&apos;ve automatically generated a description based on your website content. 
+                        Feel free to edit it to better reflect your company.
+                      </p>
+                    </div>
+                    <FormTextArea
+                      label="Tell us about your company"
+                      name="companyDescription"
+                      value={formData.companyDescription.replace(/^"|"$/g, '')}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                )}
+                
+                <Button
+                  onClick={() => isSecondPageValid() && setPage(3)}
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-                  disabled={!isFirstPageValid()}
+                  disabled={!isSecondPageValid() || isGeneratingDescription}
                 >
                   Next Step
                 </Button>
               </div>
             )}
 
-            {page === 2 && (
+            {page === 3 && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
                   Add Keywords
@@ -552,7 +672,7 @@ export default function OnboardingForm() {
                   )}
                 </div>
                 <Button
-                  onClick={() => (isKeywordsPageValid()) && setPage(3)}
+                  onClick={handleComplete}
                   className={`w-full ${
                     primaryKeywords.length > 0 || secondaryKeywords.length > 0
                       ? 'bg-orange-500 hover:bg-orange-600 text-white'
@@ -560,35 +680,7 @@ export default function OnboardingForm() {
                   }`}
                   disabled={!isKeywordsPageValid()}
                 >
-                  Continue
-                </Button>
-              </div>
-            )}
-
-            {page === 3 && (
-              <div className="space-y-6 text-center">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                  Personalise Your AI
-                </h2>
-                <div className="p-4">
-                  <div className="overflow-hidden rounded-lg">
-                    <Image
-                      src="/ai-input-2.png"
-                      alt="Onboarding"
-                      width={500} // Specify width and height for optimization
-                      height={500}
-                      className="mx-auto rounded-lg shadow-lg"
-                    />
-                  </div>
-                  <p className="mt-6 text-gray-600 dark:text-gray-400">
-                    Don&apos;t miss out on the opportunity to personalise your AI to better suit your needs.
-                  </p>
-                </div>
-                <Button
-                  onClick={handleComplete}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-                >
-                  Continue to Dashboard
+                  Complete Setup
                 </Button>
               </div>
             )}
