@@ -11,6 +11,14 @@ import Image from 'next/image'; // Import Image component for optimization
 interface KeywordRequest {
   description: string;
 }
+interface ScrapedPage {
+  url: string;
+  title?: string;
+  content: string;
+  date_published?: string;
+  page_type?: string;
+}
+
 const StarOutline = ({ className, onClick }: { className?: string, onClick?: () => void }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
@@ -172,7 +180,7 @@ export default function OnboardingForm() {
   const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordSuggestions, setKeywordSuggestions] = useState<string[]>([]);
-  const [scrapedPages, setScrapedPages] = useState<any[]>([]);
+  const [scrapedPages, setScrapedPages] = useState<ScrapedPage[]>([]);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isScraping, setIsScraping] = useState(false);
 
