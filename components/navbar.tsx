@@ -15,8 +15,8 @@ const Navbar = () => {
   
 
   return (
-    <div className="navbar bg-base-100 shadow-sm sticky top-0 z-50 bg-inherit">
-      <div className="flex-none">
+<div className="navbar shadow-sm sticky top-0 z-50 bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(0,0,0,0.7)] backdrop-blur-md">
+<div className="flex-none">
         <Image src="/new_logo.png" width={36} height={36} alt="company logo" />
       </div>
       <div className="flex-1">

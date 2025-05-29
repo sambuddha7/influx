@@ -1,6 +1,4 @@
-
-import { BackgroundLinesDemo } from "@/components/hero";
-
+import Hero from "@/components/new_hero";
 
 import WaitlistComponent  from "@/components/waitlist";
 
@@ -15,7 +13,7 @@ export default function Home() {
   return (
     <div>
         {/* hero section */}
-        <BackgroundLinesDemo />
+        <Hero />
 
 
 
