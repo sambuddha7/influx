@@ -1,6 +1,6 @@
 "use client"
 import React from "react";
-import { BackgroundLines } from "@/components/ui/background-lines";
+
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";

@@ -19,16 +19,18 @@ const Hero = () => {
       <div className="absolute inset-0 z-0">
         {/* Dark mode glow */}
         <div className="dark:block hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-2xl animate-pulse" />
           <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-orange-400/10 rounded-full blur-2xl animate-pulse delay-1000" />
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-black/10 to-black/30" />
         </div>
+
         {/* Light mode glow */}
         <div className="dark:hidden block">
-  <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-400/40 rounded-full blur-2xl animate-pulse" />
-  <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-pink-400/40 rounded-full blur-2xl animate-pulse delay-1000" />
-  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-white/50 to-white/70" />
-</div>
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-400/40 rounded-full blur-2xl animate-pulse" />
+            <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-pink-400/40 rounded-full blur-2xl animate-pulse delay-1000" />
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-white/50 to-white/70" />
+        </div>
+
       </div>
 
       {/* Optional grid texture */}
