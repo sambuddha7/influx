@@ -1,6 +1,5 @@
 "use client"
 import React, { useState } from "react";
-import { BackgroundLines } from "@/components/ui/background-lines";
 import { CheckCircle2, HelpCircle } from 'lucide-react';
 import { motion } from "framer-motion";
 
