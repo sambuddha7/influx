@@ -9,7 +9,15 @@ import CommunityInsightsCard from "@/components/community-card";
 import AICampaignsCard from "@/components/campaign-card";
 import AuthenticConversationsCard from "@/components/authenticity-card";
 
-const features = [
+type Feature = {
+  tag: string;
+  title: string;
+  description: string;
+  badges: string[];
+  component: 'CardDemo' | 'CommunityCard' | 'AICampaignsCard' | 'AuthenticConversationsCard';
+};
+
+const features: Feature[] = [
   {
     tag: 'Reddit Engagement',
     title: 'Authentic Conversations at Scale',
@@ -44,7 +52,7 @@ const features = [
   },
 ];
 
-const FeatureItem = ({ feature, index }: { feature: any; index: number }) => {
+const FeatureItem = ({ feature, index }: { feature: Feature; index: number }) => {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.2 });
 
   const renderComponent = () => {
@@ -80,7 +88,7 @@ const FeatureItem = ({ feature, index }: { feature: any; index: number }) => {
         <h3 className="text-2xl font-semibold">{feature.title}</h3>
         <p className="text-gray-700 dark:text-gray-400">{feature.description}</p>
         <div className="flex flex-wrap gap-2 pt-2">
-          {feature.badges.map((badge: string, i: number) => (
+          {feature.badges.map((badge, i) => (
             <span
               key={i}
               className="bg-gray-100 dark:bg-[#1a1a1a] text-xs px-3 py-1 rounded-full text-gray-700 dark:text-gray-300"
