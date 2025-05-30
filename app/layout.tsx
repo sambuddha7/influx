@@ -29,7 +29,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
-          <Navbar />
+          
           {children}
           <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />
         </Providers>

@@ -1,17 +1,18 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 const svgToDataUri = require("mini-svg-data-uri");
 
 const {
   default: flattenColorPalette,
 } = require("tailwindcss/lib/util/flattenColorPalette");
-const config = {
+
+const config: Config = {
   darkMode: "class",
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -84,15 +85,23 @@ const config = {
             backgroundPosition: "-200% 0",
           },
         },
+        move: {
+          "0%": { transform: "translateX(-200px)" },
+          "100%": { transform: "translateX(200px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         scroll: "scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite",
+        move: "move 5s linear infinite",
       },
     },
   },
-  plugins: [require("tailwindcss-animate"),addVariablesForColors, require('daisyui'), 
+  plugins: [
+    require("tailwindcss-animate"),
+    addVariablesForColors,
+    require("daisyui"),
     function ({ matchUtilities, theme }: any) {
       matchUtilities(
         {
@@ -115,17 +124,18 @@ const config = {
         { values: flattenColorPalette(theme("backgroundColor")), type: "color" }
       );
     },
-
   ],
-} satisfies Config
+};
+
 function addVariablesForColors({ addBase, theme }: any) {
   let allColors = flattenColorPalette(theme("colors"));
   let newVars = Object.fromEntries(
     Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
   );
- 
+
   addBase({
     ":root": newVars,
   });
 }
-export default config
+
+export default config;
