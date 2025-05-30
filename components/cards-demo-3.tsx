@@ -33,7 +33,7 @@ const Skeleton = () => {
 
   useEffect(() => {
     animate(sequence, {
-      // @ts-ignore
+      // @ts-expect-error: animate sequence type mismatch
       repeat: Infinity,
       repeatDelay: 1,
     });

@@ -5,31 +5,9 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import CardDemo from "@/components/cards-demo-3";
-import CommunityInsightsCard from "@/components/community-card"
-import AICampaignsCard from "@/components/campaign-card"
-import AuthenticConversationsCard from "@/components/authenticity-card"
-import { CardStack } from "@/components/ui/card-stack";
-
-const cards = [
-  {
-    id: 1,
-    name: '',
-    designation: '',
-    content: <p>“Influx helped us 10x our Reddit engagement.”</p>,
-  },
-  {
-    id: 2,
-    name: '',
-    designation: '',
-    content: <p>“Best tool for finding relevant threads fast.”</p>,
-  },
-  {
-    id: 3,
-    name: '',
-    designation: '',
-    content: <p>“Our campaigns feel authentic and actually convert.”</p>,
-  },
-];
+import CommunityInsightsCard from "@/components/community-card";
+import AICampaignsCard from "@/components/campaign-card";
+import AuthenticConversationsCard from "@/components/authenticity-card";
 
 const features = [
   {
@@ -66,60 +44,62 @@ const features = [
   },
 ];
 
+const FeatureItem = ({ feature, index }: { feature: any; index: number }) => {
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.2 });
+
+  const renderComponent = () => {
+    switch (feature.component) {
+      case 'CardDemo':
+        return <CardDemo />;
+      case 'CommunityCard':
+        return <CommunityInsightsCard />;
+      case 'AICampaignsCard':
+        return <AICampaignsCard />;
+      case 'AuthenticConversationsCard':
+        return <AuthenticConversationsCard />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+      className={`flex flex-col md:flex-row items-center gap-12 ${
+        index % 2 !== 0 ? 'md:flex-row-reverse' : ''
+      }`}
+    >
+      <div className="w-full md:w-1/2">{renderComponent()}</div>
+      <div className="w-full md:w-1/2 space-y-4">
+        <span className="inline-block bg-gray-100 dark:bg-[#1f1f1f] text-sm text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full">
+          {feature.tag}
+        </span>
+        <h3 className="text-2xl font-semibold">{feature.title}</h3>
+        <p className="text-gray-700 dark:text-gray-400">{feature.description}</p>
+        <div className="flex flex-wrap gap-2 pt-2">
+          {feature.badges.map((badge: string, i: number) => (
+            <span
+              key={i}
+              className="bg-gray-100 dark:bg-[#1a1a1a] text-xs px-3 py-1 rounded-full text-gray-700 dark:text-gray-300"
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function Features() {
   return (
     <section className="bg-white dark:bg-black text-gray-900 dark:text-white py-20 px-6 sm:px-12 space-y-24">
-      {features.map((feature, index) => {
-        const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.2 });
-
-        return (
-          <motion.div
-            key={index}
-            ref={ref}
-            initial={{ opacity: 0, y: 50 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className={`flex flex-col md:flex-row items-center gap-12 ${
-              index % 2 !== 0 ? 'md:flex-row-reverse' : ''
-            }`}
-          >
-            {/* Image or Custom Component */}
-            <div className="w-full md:w-1/2">
-            {feature.component === 'CardDemo' ? (
-              <CardDemo />
-            ) : feature.component === 'CardStack' ? (
-              <CardStack items={cards} offset={12} scaleFactor={0.08} />
-            ) : feature.component === 'CommunityCard' ? (
-              <CommunityInsightsCard />
-            ) : feature.component === 'AICampaignsCard' ? (
-              <AICampaignsCard />
-            ) : feature.component === 'AuthenticConversationsCard' ? (
-              <AuthenticConversationsCard />
-            ) : null}
-          </div>
-
-
-            {/* Text */}
-            <div className="w-full md:w-1/2 space-y-4">
-              <span className="inline-block bg-gray-100 dark:bg-[#1f1f1f] text-sm text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full">
-                {feature.tag}
-              </span>
-              <h3 className="text-2xl font-semibold">{feature.title}</h3>
-              <p className="text-gray-700 dark:text-gray-400">{feature.description}</p>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {feature.badges.map((badge, i) => (
-                  <span
-                    key={i}
-                    className="bg-gray-100 dark:bg-[#1a1a1a] text-xs px-3 py-1 rounded-full text-gray-700 dark:text-gray-300"
-                  >
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        );
-      })}
+      {features.map((feature, index) => (
+        <FeatureItem key={index} feature={feature} index={index} />
+      ))}
     </section>
   );
 }
