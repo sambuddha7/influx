@@ -1,5 +1,6 @@
 "use client"
 import React from "react";
+import Navbar from "@/components/navbar";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -32,7 +33,9 @@ export default function AboutPage() {
   ];
 
   return (
+    
     <div className="min-h-screen bg-white dark:bg-black dark:bg-dot-white/[0.2] bg-dot-black/[0.2]">
+      <Navbar></Navbar>
       {/* Company Story Section */}
       <div className="max-w-4xl mx-auto px-6 pt-20 pb-12">
         <h1 className="text-3xl font-bold mb-6 text-neutral-900 dark:text-white">Our <span style={{ color: '#FF5700' }}>Story</span></h1>

@@ -12,33 +12,27 @@ const Navbar = () => {
   const [user] = useAuthState(auth);
   const router = useRouter();
 
-  
-
   return (
-<div className="navbar shadow-sm sticky top-0 z-50 bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(0,0,0,0.7)] backdrop-blur-md">
-<div className="flex-none">
+    <div className="navbar shadow-sm sticky top-0 z-50 bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(0,0,0,0.7)] backdrop-blur-md px-4">
+      <div className="flex-none">
         <Image src="/new_logo.png" width={36} height={36} alt="company logo" />
       </div>
       <div className="flex-1">
-        <Link href="/" className="btn btn-ghost text-3xl">Influx</Link>
+        <Link href="/" className="btn btn-ghost text-3xl font-bold">Influx</Link>
       </div>
-      <div className="flex-none gap-2">
-        {/* {user ? (
-          <>
-            <Link href="/dashboard" className="btn btn-ghost">
-              Dashboard
-            </Link>
-          </>
-        ) : (
-          <>
-            <Link href="/login" className="btn btn-ghost">
-              Sign In
-            </Link>
-            <Link href="/signup" className="btn btn-error">
-              Sign Up
-            </Link>
-          </>
-        )} */}
+
+      <div className="flex gap-4 items-center">
+      <Link href="#features" className="text-sm md:text-base font-normal hover:text-orange-500">Features</Link>
+      <Link href="#why" className="text-sm md:text-base font-normal hover:text-orange-500">Why Reddit</Link>
+      <Link href="#faq" className="text-sm md:text-base font-normal hover:text-orange-500">FAQ</Link>
+      <Link href="#waitlist" className="text-sm md:text-base font-normal hover:text-orange-500">Join Waitlist</Link>
+
+      <Link
+        href="https://calendly.com/adityavjindal/30min?month=2025-05&date=2025-05-30"
+        className="px-4 py-2 rounded-xl text-white font-normal text-sm md:text-base shadow-md bg-gradient-to-r from-orange-500 to-pink-500 hover:from-pink-500 hover:to-orange-500 transition-all duration-300"
+      >
+        Book Demo
+      </Link>
         <button className="btn btn-square btn-ghost">
           <ThemeSwitch />
         </button>

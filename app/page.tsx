@@ -1,7 +1,8 @@
 import Hero from "@/components/new_hero";
-
+import Navbar from "@/components/navbar";
+import Features from "@/components/features"
 import WaitlistComponent  from "@/components/waitlist";
-
+import FAQ from "@/components/faq"
 
 import FeaturesSectionDemo from "@/components/features-section-demo-3";
 import FeaturesSectionDemo1 from "@/components/features-section-demo-1";
@@ -12,21 +13,29 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <div>
+      <Navbar />
         {/* hero section */}
         <Hero />
-
+        <div id="features"> <Features /></div>
+       
 
 
         {/* features */}
 
-        <FeaturesSectionDemo />
+        {/* <FeaturesSectionDemo /> */}
         {/* <FeaturesSectionDemo1 /> */}
 
         {/* why reddit */}
+        
+        <div id="why">
         <h2 className="bg-clip-text text-transparent text-center bg-gradient-to-b from-neutral-900 to-neutral-700 dark:from-neutral-600 dark:to-white text-2xl md:text-4xl lg:text-7xl font-sans py-2 md:py-10 relative z-20 font-bold tracking-tight">
-        The Power of <span style={{ color: '#FF5700' }}>Reddit</span> 
-      </h2>
+          The Power of <span style={{ color: '#FF5700' }}>Reddit</span> 
+        </h2>
+        </div>
         <WobbleCardDemo />
+       
+        <div id="faq"><FAQ /></div>
+        
         {/* last cta section */}
         <div id="waitlist" className="h-[50rem] w-full dark:bg-black bg-white  dark:bg-dot-white/[0.2] bg-dot-black/[0.2] relative flex items-center justify-center">
             <WaitlistComponent />
