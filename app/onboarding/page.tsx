@@ -230,42 +230,44 @@ export default function OnboardingForm() {
   }, [page]);
 
   const generateCompanyDescription = async () => {
-    if (!scrapedPages || scrapedPages.length === 0) return;
-
+    // if (!scrapedPages || scrapedPages.length === 0) return;
+    
     setIsGeneratingDescription(true);
     
     try {
       // Find home page and about page content from scraped pages
-      const homePage = scrapedPages.find(page => 
-        page.url === formData.companyWebsite || 
-        page.url === formData.companyWebsite + '/' ||
-        page.title?.toLowerCase().includes('home') ||
-        page.url.endsWith('/')
-      );
-      
-      const aboutPage = scrapedPages.find(page => 
-        page.title?.toLowerCase().includes('about') ||
-        page.url.toLowerCase().includes('about')
-      );
-
-      // Combine content from home and about pages
+      console.log("yay")
       let content = '';
-      if (homePage) {
-        content += `Home Page Content: ${homePage.content}\n\n`;
-      }
-      if (aboutPage) {
-        content += `About Page Content: ${aboutPage.content}`;
+      if (!scrapedPages) {
+        console.log("not able to scrape")
+      } else {
+        const homePage = scrapedPages.find(page => 
+          page.url === formData.companyWebsite || 
+          page.url === formData.companyWebsite + '/' ||
+          page.title?.toLowerCase().includes('home') ||
+          page.url.endsWith('/')
+        );
+        
+        const aboutPage = scrapedPages.find(page => 
+          page.title?.toLowerCase().includes('about') ||
+          page.url.toLowerCase().includes('about')
+        );
+        if (homePage) {
+          content += `Home Page Content: ${homePage.content}\n\n`;
+        }
+        if (aboutPage) {
+          content += `About Page Content: ${aboutPage.content}`;
+        }
+        // If no specific pages found, use the first available page
+        if (!content && scrapedPages[0]) {
+          content = scrapedPages[0].content;
+        }
+  
+  
       }
       
-      // If no specific pages found, use the first available page
-      if (!content && scrapedPages[0]) {
-        content = scrapedPages[0].content;
-      }
-      // console.log("content::")
-      // console.log(content)
-      // console.log("Content type:", typeof content);
+      // Combine content from home and about pages
 
-      // console.log("end::")
 
       const response = await fetch(`${apiUrl}/company_desc`, {
         method: 'POST',
@@ -295,7 +297,7 @@ export default function OnboardingForm() {
   };
 
   useEffect(() => {
-    if (page === 2 && scrapedPages.length > 0 && !formData.companyDescription) {
+    if (page === 2 && !formData.companyDescription) {
       generateCompanyDescription();
     }
   }, [page, scrapedPages]);
@@ -504,10 +506,10 @@ export default function OnboardingForm() {
                   />
                 </div>
                 <Button
-  onClick={handleScrape}
-  className="w-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center"
-  disabled={!isFirstPageValid() || isScraping}
->
+                      onClick={handleScrape}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center"
+                      disabled={!isFirstPageValid() || isScraping}
+                    >
   {isScraping ? (
     <>
       <span className="loader mr-2 animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
