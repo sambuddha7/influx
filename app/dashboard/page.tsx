@@ -500,17 +500,21 @@ const handleConfirmation = async (didPost: boolean) => {
       const post = displayedPosts.find(p => p.id === postId);
       if (!post) return;
   
-      const response = await fetch(`${apiUrl}/regenerate-reply?feedback=${encodeURIComponent(feedback)}`, {
+      // Updated API call - send feedback in request body
+      const response = await fetch(`${apiUrl}/regenerate-reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id: post.id,
-          subreddit: post.subreddit,
-          title: post.title,
-          content: post.content,
-          suggested_reply: post.suggestedReply // use the original reply, not feedback
+          post: {
+            id: post.id,
+            subreddit: post.subreddit,
+            title: post.title,
+            content: post.content,
+            suggested_reply: post.suggestedReply
+          },
+          feedback: feedback // Send feedback in body
         }),
       });
       
