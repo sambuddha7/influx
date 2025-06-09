@@ -78,9 +78,10 @@ export default function Dashboard() {
   const [showInstructionPopup, setShowInstructionPopup] = useState(false);
   const [currentApprovedPost, setCurrentApprovedPost] = useState<RedditPost | null>(null);
   const [hideInstructionPopup, setHideInstructionPopup] = useState(false);
-  const [pendingPosts, setPendingPosts] = useState<{[key: string]: RedditPost}>({});
-  const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
-  const [currentPendingPostId, setCurrentPendingPostId] = useState<string | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<{[key: string]: RedditPost}>({});
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [currentPendingPost, setCurrentPendingPost] = useState<string | null>(null);
+
 
 
   // Subreddit filter states
@@ -114,21 +115,7 @@ export default function Dashboard() {
   }, [user]);
 
 
-  useEffect(() => {
-  const handleFocus = () => {
-    // Only show confirmation popup if preference is not set to hide
-    if (Object.keys(pendingPosts).length > 0 && !showConfirmationPopup && !showInstructionPopup && !hideConfirmationPopup) {
-      // Get the first pending post ID
-      const postId = Object.keys(pendingPosts)[0];
-      setCurrentPendingPostId(postId);
-      setShowConfirmationPopup(true);
-    }
-  };
-
-  window.addEventListener('focus', handleFocus);
-  return () => window.removeEventListener('focus', handleFocus);
-}, [pendingPosts, showConfirmationPopup, showInstructionPopup, hideConfirmationPopup]);
-
+  
   useEffect(() => {
     const checkUser = async () => {
       if (!user) return;
@@ -359,113 +346,140 @@ export default function Dashboard() {
   };
   
   // Modify the handleApprove function
-const handleApprove = async (postId: string, suggestedReply: string) => {
-  if (!user) return;
-  try {
-    setIsApproving(postId);
-  
-    // Find the post to be approved
-    const postToProcess = allPosts.find(post => post.id === postId);
-  
-    if (postToProcess && suggestedReply) {
-      // Copy the suggested reply to clipboard
-      await navigator.clipboard.writeText(suggestedReply);
-      setgreenAlert({ message: "Reply copied to clipboard!", visible: true });
+  const handleApprove = async (postId: string, suggestedReply: string) => {
+    if (!user) return;
+    
+    try {
+      setIsApproving(postId);
       
-      // Add to pending posts
-      setPendingPosts(prev => ({
-        ...prev,
-        [postId]: {
+      // Find the post to be approved
+      const postToProcess = allPosts.find(post => post.id === postId);
+      
+      if (postToProcess && suggestedReply) {
+        // Copy the suggested reply to clipboard
+        await navigator.clipboard.writeText(suggestedReply);
+        setgreenAlert({ message: "Reply copied to clipboard!", visible: true });
+        
+        // Add to pending approvals
+        setPendingApprovals(prev => ({
+          ...prev,
+          [postId]: postToProcess
+        }));
+        
+        // Check if we should show the instruction popup
+        const savedPreference = localStorage.getItem(`hideInstructionPopup_${user.uid}`);
+        if (savedPreference !== 'true') {
+          setCurrentApprovedPost(postToProcess);
+          setShowInstructionPopup(true);
+        } else {
+          // If popup is disabled, open the post URL immediately and track it
+          if (postToProcess.url) {
+            setWentToReddit(prev => ({ ...prev, [postId]: true }));
+            window.open(postToProcess.url, '_blank');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error processing post:', error);
+      setAlert({ message: "Error occurred while processing the post", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    } finally {
+      setIsApproving(null);
+    }
+  };
+  
+  // New function to handle post confirmation
+  const handlePostConfirmation = async (postId: string, didPost: boolean) => {
+    if (!user) return;
+    
+    try {
+      const postToProcess = pendingApprovals[postId];
+      
+      if (didPost) {
+        // User confirmed they posted - archive the post
+        const archiveCollectionRef = collection(db, "archived-posts", user.uid, "posts");
+        const postWithComment = {
           ...postToProcess,
-          suggestedReply
+          archivedAt: new Date().toISOString()
+        };
+        await addDoc(archiveCollectionRef, postWithComment);
+        
+        // Remove from the current collection
+        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+        const q = query(postsCollectionRef, where("id", "==", postId));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const docToDelete = querySnapshot.docs[0];
+          await deleteDoc(docToDelete.ref);
         }
-      }));
-      
-      // Check if we should show the instruction popup
-      const savedPreference = localStorage.getItem(`hideInstructionPopup_${user.uid}`);
-      if (savedPreference !== 'true') {
-        setCurrentApprovedPost(postToProcess);
-        setShowInstructionPopup(true);
+        
+        // Remove from displayed posts
+        setDisplayedPosts((posts) => posts.filter((post) => post.id !== postId));
+        setAllPosts((posts) => posts.filter((post) => post.id !== postId));
+        
+        setgreenAlert({ message: "Post archived successfully!", visible: true });
       } else {
-        // If popup is disabled, open the post URL immediately
-        if (postToProcess.url) {
-          window.open(postToProcess.url, '_blank');
+        // User didn't post - just show message
+        setgreenAlert({ message: "Post kept on dashboard", visible: true });
+      }
+      
+      // Remove from pending approvals and Reddit tracking
+      setPendingApprovals(prev => {
+        const newPending = {...prev};
+        delete newPending[postId];
+        return newPending;
+      });
+      
+      setWentToReddit(prev => {
+        const newState = { ...prev };
+        delete newState[postId];
+        return newState;
+      });
+      
+      setTimeout(() => {
+        setgreenAlert({ message: "", visible: false });
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error handling confirmation:', error);
+      setAlert({ message: "Error occurred while processing", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    }
+  };
+  
+  // Add state to track if user went to Reddit
+  const [wentToReddit, setWentToReddit] = useState<{[key: string]: boolean}>({});
+  
+  // Modified useEffect to only trigger when returning from Reddit
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && Object.keys(pendingApprovals).length > 0) {
+        // Check if user actually went to Reddit for any pending post
+        const pendingPostIds = Object.keys(pendingApprovals);
+        const postThatWentToReddit = pendingPostIds.find(postId => wentToReddit[postId]);
+        
+        if (postThatWentToReddit) {
+          setCurrentPendingPost(postThatWentToReddit);
+          setShowConfirmationModal(true);
+          
+          // Clear the Reddit tracking for this post
+          setWentToReddit(prev => {
+            const newState = { ...prev };
+            delete newState[postThatWentToReddit];
+            return newState;
+          });
         }
       }
-    }
-  } catch (error) {
-    console.error('Error processing post:', error);
-    setAlert({ message: "Error occurred while processing the post", visible: true });
-    setTimeout(() => {
-      setAlert({ message: "", visible: false });
-    }, 3000);
-  } finally {
-    setIsApproving(null); // Reset loading state
-  }
-};
-
-// Add a function to handle the confirmation response
-const handleConfirmation = async (didPost: boolean) => {
-  if (!currentPendingPostId || !pendingPosts[currentPendingPostId] || !user) {
-    setShowConfirmationPopup(false);
-    return;
-  }
+    };
   
-  const postToProcess = pendingPosts[currentPendingPostId];
-  
-  try {
-    if (didPost) {
-      // User confirmed they posted - archive the post
-      const archiveCollectionRef = collection(db, "archived-posts", user.uid, "posts");
-      const postWithComment = {
-        ...postToProcess,
-        archivedAt: new Date().toISOString()
-      };
-      await addDoc(archiveCollectionRef, postWithComment);
-  
-      // Remove from the current collection
-      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
-      const q = query(postsCollectionRef, where("id", "==", currentPendingPostId));
-      const querySnapshot = await getDocs(q);
-  
-      if (!querySnapshot.empty) {
-        const docToDelete = querySnapshot.docs[0];
-        await deleteDoc(docToDelete.ref);
-      }
-
-      // Remove from displayed posts
-      setDisplayedPosts((posts) => posts.filter((post) => post.id !== currentPendingPostId));
-      setAllPosts((posts) => posts.filter((post) => post.id !== currentPendingPostId));
-      
-      setgreenAlert({ message: "Post archived successfully!", visible: true });
-    } else {
-      // User didn't post - keep the post on the dashboard
-      setgreenAlert({ message: "Post kept on dashboard", visible: true });
-    }
-    
-    // Remove from pending posts
-    setPendingPosts(prev => {
-      const newPending = {...prev};
-      delete newPending[currentPendingPostId];
-      return newPending;
-    });
-    
-    setTimeout(() => {
-      setgreenAlert({ message: "", visible: false });
-    }, 3000);
-  } catch (error) {
-    console.error('Error handling confirmation:', error);
-    setAlert({ message: "Error occurred while processing", visible: true });
-    setTimeout(() => {
-      setAlert({ message: "", visible: false });
-    }, 3000);
-  } finally {
-    setShowConfirmationPopup(false);
-    setCurrentPendingPostId(null);
-  }
-};
-
-  
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [pendingApprovals, wentToReddit]);
 
   //change
   // const handleRegenerateWithFeedback = async (postId: string, feedback: string) => {
@@ -918,62 +932,56 @@ const handleConfirmation = async (didPost: boolean) => {
           </div>
         </div>
       )}
-     {/* Confirmation Popup */}
-      {showConfirmationPopup && currentPendingPostId && pendingPosts[currentPendingPostId] && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-medium text-white">Confirm Action</h3>
+     {showConfirmationModal && currentPendingPost && (
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-medium text-white">Did you post your reply?</h3>
+            <button 
+              onClick={() => {
+                setShowConfirmationModal(false);
+                setCurrentPendingPost(null);
+              }}
+              className="text-gray-400 hover:text-orange-500 transition-colors"
+            >
+              <span className="w-5 h-5">
+                <CrossIcon />
+              </span>
+            </button>
+          </div>
+          
+          <div className="mb-6">
+            <p className="text-gray-200 mb-4">
+              Let us know if you successfully posted your comment on Reddit
+            </p>
+            
+            <div className="space-y-3">
               <button 
-                onClick={() => setShowConfirmationPopup(false)}
-                className="text-gray-400 hover:text-orange-500 transition-colors"
+                onClick={() => {
+                  handlePostConfirmation(currentPendingPost, true);
+                  setShowConfirmationModal(false);
+                  setCurrentPendingPost(null);
+                }}
+                className="w-full px-6 py-3 bg-orange-600 text-white rounded-lg font-medium transition-all duration-200 shadow-lg shadow-orange-900/40 hover:bg-orange-500 transform hover:scale-105"
               >
-                <span className="w-5 h-5">
-                  <CrossIcon />
-                </span>
+                ✓ Yes, I posted it!
               </button>
-            </div>
-            
-            <div className="mb-6">
-              <p className="text-gray-200 mb-2">Did you post your comment on Reddit?</p>
-              <p className="text-sm text-gray-400">
-                Post: {pendingPosts[currentPendingPostId].title}
-              </p>
-            </div>
-            
-            <div className="flex flex-col gap-3 pt-3 border-t border-gray-800">
-              <div className="flex items-center space-x-2 cursor-pointer mb-2">
-                <input 
-                  type="checkbox" 
-                  id="hideConfirmationPopup"
-                  className="rounded bg-gray-800 border-gray-700 text-orange-600 focus:ring-orange-500"
-                  onChange={(e) => {
-                    if (e.target.checked && user) {
-                      localStorage.setItem(`hideConfirmationPopup_${user.uid}`, 'true');
-                    }
-                  }}
-                />
-                <label htmlFor="hideConfirmationPopup" className="text-sm text-gray-400">Don&apos;t show again</label>
-              </div>
               
-              <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => handleConfirmation(false)}
-                  className="px-4 py-2 bg-gray-800 text-gray-200 rounded-md hover:bg-gray-700 transition-colors"
-                >
-                  No, Keep on Dashboard
-                </button>
-                <button 
-                  onClick={() => handleConfirmation(true)}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all"
-                >
-                  Yes, I Posted
-                </button>
-              </div>
+              <button 
+                onClick={() => {
+                  handlePostConfirmation(currentPendingPost, false);
+                  setShowConfirmationModal(false);
+                  setCurrentPendingPost(null);
+                }}
+                className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all duration-200 border border-gray-600 hover:border-gray-500"
+              >
+                No, I didn't post
+              </button>
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }
