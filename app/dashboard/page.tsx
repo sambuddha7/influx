@@ -975,7 +975,7 @@ export default function Dashboard() {
                 }}
                 className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all duration-200 border border-gray-600 hover:border-gray-500"
               >
-                No, I didn't post
+                No, I didn&apos;t post
               </button>
             </div>
           </div>
