@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap } from 'lucide-react';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -29,12 +29,14 @@ interface PostCardProps {
   isApproving: string | null;
   alertt: AlertState;
   greenalertt: AlertState;
+  isArchiving: string | null;
   handleGenerate: (id: string) => void;
   handleRegenerateWithFeedback: (id: string, feedback: string) => void;
   handleEdit: (id: string) => void;
   handleSave: (id: string, reply: string) => void;
   handleReject: (id: string) => void;
   handleApprove: (id: string, reply: string) => void;
+  handleArchive: (id: string) => void;
   setDisplayedPosts: React.Dispatch<React.SetStateAction<Post[]>>;
   page?: 'dashboard' | 'community';
 }
@@ -46,12 +48,14 @@ const PostCard: React.FC<PostCardProps> = ({
   isApproving, 
   alertt, 
   greenalertt,
+  isArchiving,
   handleGenerate, 
   handleRegenerateWithFeedback,
   handleEdit, 
   handleSave, 
   handleReject, 
   handleApprove,
+  handleArchive,
   setDisplayedPosts,
   page = 'dashboard'
 }) => {
@@ -226,42 +230,75 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
           
           {/* Action Buttons */}
-          <div className="flex gap-2">
-            {isEditing === post.id ? (
-              <button 
-                className="btn btn-neutral flex items-center gap-2"
-                onClick={() => handleSave(post.id, post.suggestedReply)}
-              >
-                <Save className="h-4 w-4" />
-                Save Changes
-              </button>
-            ) : (
-              <button 
-                className="btn btn-neutral flex items-center gap-2"
-                onClick={() => handleEdit(post.id)}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </button>
-            )}
-
-            <button 
-              className={`btn btn-success flex items-center gap-2 ${isApproving === post.id ? 'loading' : ''}`}
-              onClick={() => handleApprove(post.id, post.suggestedReply)}
-              disabled={isApproving === post.id}
-            >
-              {isApproving === post.id ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Posting...</span>
-                </>
+          <div className="flex justify-between items-center">
+            {/* Left side buttons group */}
+            <div className="flex gap-2">
+              {isEditing === post.id ? (
+                <button 
+                  className="btn btn-neutral flex items-center gap-2"
+                  onClick={() => handleSave(post.id, post.suggestedReply)}
+                >
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </button>
               ) : (
-                <>
-                  <Check className="h-4 w-4" />
-                  Post Reply
-                </>
+                <button 
+                  className="btn btn-neutral flex items-center gap-2"
+                  onClick={() => handleEdit(post.id)}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </button>
               )}
-            </button>
+
+              <button 
+                className={`btn btn-success flex items-center gap-2 ${isApproving === post.id ? 'loading' : ''}`}
+                onClick={() => handleApprove(post.id, post.suggestedReply)}
+                disabled={isApproving === post.id}
+              >
+                {isApproving === post.id ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Posting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Post Reply
+                  </>
+                )}
+              </button>
+            </div>
+            
+            {/* Right side button */}
+            <button 
+                className={`
+                  px-4 py-2 rounded-lg font-medium transition-all duration-200 
+                  flex items-center gap-2 border-2
+                  ${isArchiving === post.id 
+                    ? 'bg-slate-700 border-slate-500 text-slate-400 cursor-not-allowed' 
+                    : 'bg-slate-800 hover:bg-slate-700 border-blue-500 hover:border-blue-400 text-white hover:scale-105 hover:shadow-lg active:scale-95'
+                  }
+                  disabled:opacity-75
+                `}
+                onClick={() => handleArchive(post.id)}
+                disabled={isArchiving === post.id}
+              >
+                {isArchiving === post.id ? (
+                  <>
+                    <div className="relative">
+                      <div className="w-4 h-4 border-2 border-slate-500 rounded-full"></div>
+                      <div className="absolute top-0 left-0 w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <span>Archiving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Archive className="h-4 w-4" />
+                    <span>I Posted</span>
+                  </>
+                )}
+              </button>
           </div>
         </div>
       </div>
@@ -282,6 +319,7 @@ const PostCard: React.FC<PostCardProps> = ({
           <X className="h-4 w-4" />
         </button>
       )}
+      
 
       {/* Compact Regeneration Modal */}
       {regenerateModalOpen && (
