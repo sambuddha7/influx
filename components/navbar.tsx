@@ -27,7 +27,7 @@ const Navbar = () => {
       {/* Desktop Links */}
       <div className="hidden md:flex gap-4 items-center">
         <Link href="#features" className="text-sm md:text-base font-normal hover:text-orange-500">Features</Link>
-        <Link href="#why" className="text-sm md:text-base font-normal hover:text-orange-500">Why Reddit</Link>
+        <Link href="#use-cases" className="text-sm md:text-base font-normal hover:text-orange-500">Use cases</Link>
         <Link href="#faq" className="text-sm md:text-base font-normal hover:text-orange-500">FAQ</Link>
         <Link href="#waitlist" className="text-sm md:text-base font-normal hover:text-orange-500">Join Waitlist</Link>
         <Link
