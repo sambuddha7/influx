@@ -8,6 +8,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { File } from 'buffer';
 interface SidebarProps {
   isDarkMode?: boolean;
 }
@@ -95,6 +96,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             href="/archive"
             icon={<Archive size={20} />}
             text="Archive"
+            isCollapsed={isCollapsed}
+            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
+          />
+          <NavItem
+            href="/documents"
+            icon={<BookOpen size={20} />}
+            text="Knowledge Base"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
