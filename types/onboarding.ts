@@ -5,6 +5,7 @@ export interface FormData {
   product: string;
   targetAudience: string;
   keywords: string; 
+  phrases: string; 
   subreddits: string;
 
 }

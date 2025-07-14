@@ -71,6 +71,9 @@ export default function OnboardingForm() {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordSuggestions, setKeywordSuggestions] = useState<string[]>([]);
+  const [phrases, setPhrases] = useState<string[]>([]);
+  const [phraseInput, setPhraseInput] = useState('');
+  const [phraseSuggestions, setPhraseSuggestions] = useState<string[]>([]);
   const [scrapedPages, setScrapedPages] = useState<ScrapedPage[]>([]);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isScraping, setIsScraping] = useState(false);
@@ -87,6 +90,7 @@ export default function OnboardingForm() {
     product: '',
     targetAudience: '',
     keywords: '',
+    phrases: '',
     subreddits: '',
   });
 
@@ -111,6 +115,29 @@ export default function OnboardingForm() {
       setKeywordSuggestions([]);
     } catch (error) {
       console.error('Error fetching keyword suggestions:', error);
+    }
+  };
+
+  const fetchPhraseSuggestions = async () => {
+    try {
+      const description = formData.companyDescription || '';
+      const response = await fetch(`${apiUrl}/paraphrases?description=${encodeURIComponent(description)}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch phrases');
+      }
+      const phrases = await response.json();
+      const newPhrases = phrases.split(',')
+        .map((p: string) => p.trim())
+        .filter((p: string) => p);
+      setPhrases(newPhrases);
+      setPhraseSuggestions([]);
+    } catch (error) {
+      console.error('Error fetching phrase suggestions:', error);
     }
   };
 
@@ -144,6 +171,7 @@ export default function OnboardingForm() {
       fetchSubredditSuggestions();
     } else if (page === 4) {
       fetchKeywordSuggestions();
+      fetchPhraseSuggestions();
     }
   }, [page]);
 
@@ -209,14 +237,23 @@ export default function OnboardingForm() {
     setKeywordInput('');
   };
 
+  const addPhrase = () => {
+    if (!phraseInput.trim()) return;
+    setPhrases(prev => [...prev, phraseInput.trim()]);
+    setPhraseInput('');
+  };
+
   const addSubreddit = () => {
     if (!subredditInput.trim()) return;
     setSubreddits(prev => [...prev, subredditInput.trim()]);
-    setSubredditInput('');
   };
 
   const removeKeyword = (keyword: string) => {
     setKeywords(prev => prev.filter(k => k !== keyword));
+  };
+
+  const removePhrase = (phrase: string) => {
+    setPhrases(prev => prev.filter(p => p !== phrase));
   };
 
   const removeSubreddit = (subreddit: string) => {
@@ -225,6 +262,10 @@ export default function OnboardingForm() {
 
   const handleKeywordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKeywordInput(e.target.value);
+  };
+
+  const handlePhraseInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhraseInput(e.target.value);
   };
 
   const handleSubredditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,6 +278,13 @@ export default function OnboardingForm() {
       keywords: keywords.join(',')
     }));
   }, [keywords]);
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      phrases: phrases.join(',')
+    }));
+  }, [phrases]);
 
   useEffect(() => {
     setFormData(prev => ({
@@ -301,7 +349,7 @@ export default function OnboardingForm() {
   };
 
   const isKeywordsPageValid = () => {
-    return keywords.length > 0;
+    return keywords.length > 0 || phrases.length > 0;
   };
 
   const isSubredditPageValid = () => {
@@ -390,9 +438,16 @@ export default function OnboardingForm() {
                 onKeywordInputChange={handleKeywordInputChange}
                 addKeyword={addKeyword}
                 removeKeyword={removeKeyword}
-                handleComplete={() => isKeywordsPageValid() && handleComplete()} // Add validation check
+                phrases={phrases}
+                phraseInput={phraseInput}
+                phraseSuggestions={phraseSuggestions}
+                onPhraseInputChange={handlePhraseInputChange}
+                addPhrase={addPhrase}
+                removePhrase={removePhrase}
+                handleComplete={() => isKeywordsPageValid() && handleComplete()} 
                 isKeywordsPageValid={isKeywordsPageValid}
                 setKeywordInput={setKeywordInput}
+                setPhraseInput={setPhraseInput} // Make sure this is included
               />
             )}
           </motion.div>
@@ -401,4 +456,4 @@ export default function OnboardingForm() {
       </motion.div>
     </div>
   );
-}
+} 
