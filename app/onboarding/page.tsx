@@ -444,11 +444,13 @@ export default function OnboardingForm() {
   }
   
   const handleScrape = async () => {
+    if (!user) return;
     if (!isFirstPageValid()) return;
     setIsScraping(true);
     try {
+      const str = "onboarding"
       const res = await fetch(
-        `${apiUrl}/scrape?base_url=${encodeURIComponent(formData.companyWebsite)}`
+        `${apiUrl}/scrape?base_url=${encodeURIComponent(formData.companyWebsite)}&user_id=${user.uid}&source_type=${str}`
       );
       if (!res.ok) throw new Error("Scrape failed");
       const { pages } = await res.json();
