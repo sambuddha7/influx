@@ -320,7 +320,8 @@ const DocumentUploadPage = () => {
       const uploadedFile: UploadedFile = {
         id: Math.random().toString(36).substr(2, 9),
         file,
-        status: 'pending'
+        status: 'pending',
+        url: ''
       };
 
       newFiles.push(uploadedFile);
