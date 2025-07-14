@@ -24,6 +24,15 @@ interface ProcessedUrl {
   title?: string;
 }
 
+interface DocumentApiResponse {
+  id: string;
+  title: string;
+  file_size?: number;
+  file_type?: string;
+  content?: string;
+  url?: string;
+}
+
 const DocumentUploadPage = () => {
   const [user] = useAuthState(auth);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
@@ -55,7 +64,7 @@ const DocumentUploadPage = () => {
           const data = await response.json();
           
           // Transform the data to match your component's state structure
-          const files: UploadedFile[] = data.files?.map((doc: any) => ({
+          const files: UploadedFile[] = data.files?.map((doc: DocumentApiResponse) => ({
             id: doc.id,
             file: {
               name: doc.title,
@@ -67,7 +76,7 @@ const DocumentUploadPage = () => {
             url: doc.url || 'document'
           })) || [];
   
-          const urls: ProcessedUrl[] = data.urls?.map((doc: any) => ({
+          const urls: ProcessedUrl[] = data.urls?.map((doc: DocumentApiResponse) => ({
             id: doc.id,
             url: doc.url,
             status: 'completed' as const,
