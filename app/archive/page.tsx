@@ -81,7 +81,6 @@ export default function ArchivePage() {
 
         if (!postsSnapshot.empty) {
           console.log('Posts found in Firestore');
-          // await fetch(`http://localhost:8000/relevant_posts_weekly?userid=${user.uid}`);
           const firestorePosts = postsSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
             id: doc.data().id,
             subreddit: doc.data().subreddit,
