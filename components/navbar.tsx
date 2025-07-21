@@ -29,6 +29,7 @@ const Navbar = () => {
         <Link href="#features" className="text-sm md:text-base font-normal hover:text-orange-500">Features</Link>
         <Link href="#use-cases" className="text-sm md:text-base font-normal hover:text-orange-500">Use cases</Link>
         <Link href="#faq" className="text-sm md:text-base font-normal hover:text-orange-500">FAQ</Link>
+        <Link href="/tips" className="text-base font-normal hover:text-orange-500" onClick={toggleMenu}>Tips</Link>
         <Link href="#waitlist" className="text-sm md:text-base font-normal hover:text-orange-500">Join Waitlist</Link>
         <Link
           href="https://calendly.com/adityavjindal/30min?month=2025-05&date=2025-05-30"
