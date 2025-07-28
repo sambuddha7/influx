@@ -25,7 +25,7 @@ const formatTextForMarkdown = (text: string) => {
   if (!text) return text;
   
   // Convert literal \n strings to actual newlines
-  let formatted = text.replace(/\\n/g, '\n');
+  const formatted = text.replace(/\\n/g, '\n');
   
   // Split into lines and process
   const lines = formatted.split('\n');
