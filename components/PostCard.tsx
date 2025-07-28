@@ -21,6 +21,41 @@ interface AlertState {
   message: string;
 }
 
+const formatTextForMarkdown = (text: string) => {
+  if (!text) return text;
+  
+  // Convert literal \n strings to actual newlines
+  const formatted = text.replace(/\\n/g, '\n');
+  
+  // Split into lines and process
+  const lines = formatted.split('\n');
+  const processedLines = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    if (line === '') {
+      // Empty line - add as paragraph break if not already added
+      if (processedLines.length > 0 && processedLines[processedLines.length - 1] !== '') {
+        processedLines.push('');
+      }
+    } else {
+      processedLines.push(line);
+    }
+  }
+  
+  // Join with double newlines for proper markdown paragraph breaks
+  return processedLines.join('\n\n');
+};
+
+// New function specifically for copying - converts \n to actual newlines
+const formatTextForCopy = (text: string) => {
+  if (!text) return text;
+  
+  // Convert literal \n strings to actual newlines for copying
+  return text.replace(/\\n/g, '\n');
+};
+
 // Define props interface for the component
 interface PostCardProps {
   post: Post;
@@ -66,7 +101,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const [feedbackType, setFeedbackType] = useState("");
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(post.suggestedReply);
+    // Use the formatted version for copying
+    const formattedText = formatTextForCopy(post.suggestedReply);
+    navigator.clipboard.writeText(formattedText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -120,6 +157,12 @@ const PostCard: React.FC<PostCardProps> = ({
     setFeedbackType("");
   };
 
+  // Modified handleApprove to also use formatted text
+  const handleApproveClick = () => {
+    const formattedReply = formatTextForCopy(post.suggestedReply);
+    handleApprove(post.id, formattedReply);
+  };
+
   return (
     <div className="relative card bg-base-100 dark:bg-black bg-white shadow-xl border border-gray-200 dark:border-gray-700">
       <div className="card-body">
@@ -158,9 +201,16 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
 
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown className="text-gray-700 dark:text-gray-300">
-              {post.content}
-            </ReactMarkdown>
+          <ReactMarkdown 
+                  className="text-gray-700 dark:text-gray-300"
+                  components={{
+                    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-4 last:mb-0 pl-6">{children}</ul>,
+                    li: ({ children }) => <li className="mb-1">{children}</li>
+                  }}
+                >
+                  {formatTextForMarkdown(post.content)}
+                </ReactMarkdown>
           </div>
         </div>
         
@@ -222,8 +272,15 @@ const PostCard: React.FC<PostCardProps> = ({
               />
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none p-3 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                <ReactMarkdown className="text-gray-700 dark:text-gray-300">
-                  {post.suggestedReply}
+                <ReactMarkdown 
+                  className="text-gray-700 dark:text-gray-300"
+                  components={{
+                    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-4 last:mb-0 pl-6">{children}</ul>,
+                    li: ({ children }) => <li className="mb-1">{children}</li>
+                  }}
+                >
+                  {formatTextForMarkdown(post.suggestedReply)}
                 </ReactMarkdown>
               </div>
             )}
@@ -253,7 +310,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
               <button 
                 className={`btn btn-success flex items-center gap-2 ${isApproving === post.id ? 'loading' : ''}`}
-                onClick={() => handleApprove(post.id, post.suggestedReply)}
+                onClick={handleApproveClick}
                 disabled={isApproving === post.id}
               >
                 {isApproving === post.id ? (
