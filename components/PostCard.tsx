@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle } from 'lucide-react';import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
 // Define the type for a post object
@@ -13,6 +12,8 @@ interface Post {
   content: string;
   suggestedReply: string;
   promotional?: boolean;
+  score?: number;
+  comments?: number;
 }
 
 // Define the type for alert state
@@ -193,11 +194,15 @@ const PostCard: React.FC<PostCardProps> = ({
               <span className="text-sm font-medium">View Post</span>
             </a>
           </div>
-          
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-3" suppressHydrationWarning>
-            {post.date_created && !isNaN(new Date(post.date_created).getTime())
-              ? formatDistanceToNow(new Date(post.date_created), { addSuffix: true })
-              : 'Invalid Date'}
+
+          {/* Date and Stats Section */}
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3" suppressHydrationWarning>
+            <span>
+              {post.date_created && !isNaN(new Date(post.date_created).getTime())
+                ? formatDistanceToNow(new Date(post.date_created), { addSuffix: true })
+                : 'Invalid Date'}
+            </span>
+            
           </div>
 
           <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -212,6 +217,25 @@ const PostCard: React.FC<PostCardProps> = ({
                   {formatTextForMarkdown(post.content)}
                 </ReactMarkdown>
           </div>
+          {/* Reddit-style upvotes and comments display */}
+        <div className="flex items-center gap-4 mt-3">
+          {post.score !== undefined && (
+            <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1.5">
+                <ArrowUp className="w-4 h-4 text-orange-500 mr-1.5" />
+                <span className="text-sm font-medium">{post.score.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+          {post.comments !== undefined && (
+            <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1.5">
+                <MessageCircle className="w-4 h-4 mr-1.5" />
+                <span className="text-sm font-medium">{post.comments.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+        </div>
         </div>
         
         {/* Reply Section */}

@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
-import { ArrowUpRight , Pencil, Save, Check, Sparkles, Filter} from "lucide-react"; // Import the icon
+import { ArrowUpRight , Pencil, Save, Check, Sparkles, Filter, Lightbulb} from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import PostCard from '@/components/PostCard';
 
@@ -44,6 +44,8 @@ interface RedditPost {
   url: string;
   date_created: string;
   promotional?: boolean; 
+  score?: number;        
+  comments?: number;
 
 }
 
@@ -156,6 +158,8 @@ export default function Dashboard() {
         ...post,
         createdAt: new Date().toISOString(), // ISO 8601 string for consistent formatting
         promotional: post.promotional ?? false,
+        score: post.score ?? 0,           // Add this
+        comments: post.comments ?? 0,  
       };
       await addDoc(postsCollectionRef, postWithTimestamp);
       console.log("Post saved successfully!");
@@ -215,6 +219,8 @@ export default function Dashboard() {
             url: doc.data().url,
             date_created: doc.data().date_created,
             promotional: doc.data().promotional ?? false,
+            score: doc.data().score ?? 0,           
+            comments: doc.data().comments ?? 0,
           }));
           setAllPosts(firestorePosts);
           setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
@@ -225,7 +231,8 @@ export default function Dashboard() {
           const data = await response.json();
 
           const formattedPosts = data.map((post: string[]) => {
-            const promoScore = parseFloat(post[7]); // assume promo_score is 8th item
+            // const promoScore = parseFloat(post[7]); // assume promo_score is 8th item
+            const promoScore =  0; // temp
             return {
               id: post[0],
               subreddit: post[1],
@@ -234,6 +241,8 @@ export default function Dashboard() {
               suggestedReply: post[4],
               url: post[5],
               date_created: post[6],
+              score: post[7],
+              comments: post[8],
               promotional: promoScore > 0.70,
               promo_score: promoScore,
             };
@@ -425,7 +434,9 @@ export default function Dashboard() {
     }
   };
   
-  
+  const handleTipsClick = () => {
+    router.push('/tips');
+  };
   
   //change
   // const handleRegenerateWithFeedback = async (postId: string, feedback: string) => {
@@ -689,7 +700,14 @@ export default function Dashboard() {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 p-6 space-y-6">
-        <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 gap-3">
+          <button 
+            onClick={handleTipsClick}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-yellow-100 rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
+          >
+            <Lightbulb size={16} className="text-yellow-300" />
+            <span>Tips</span>
+          </button>
           <button 
             onClick={toggleFilterModal}
             className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-750 text-gray-200 rounded-lg border border-gray-700 hover:border-orange-600 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
