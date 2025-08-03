@@ -13,6 +13,8 @@ import { query, orderBy } from "firebase/firestore";
 import { ArrowUpRight , Pencil, Save, Check, Sparkles, Filter, Lightbulb} from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import PostCard from '@/components/PostCard';
+import PostSorter from '@/components/PostSorter';
+
 
 
 
@@ -96,6 +98,13 @@ export default function Dashboard() {
 
   const POSTS_PER_PAGE = 6;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const [sortConfig, setSortConfig] = useState<{
+    by: 'comments' | 'score' | 'date';
+    order: 'asc' | 'desc';
+  }>({
+    by: 'date',
+    order: 'desc'
+  });
 
 
 //change
@@ -684,6 +693,36 @@ export default function Dashboard() {
       }, 3000);
     }
   };
+  const handleSort = (sortBy: 'comments' | 'score' | 'date', order: 'asc' | 'desc') => {
+    setSortConfig({ by: sortBy, order });
+    
+    // Sort all posts
+    const sortedPosts = [...allPosts].sort((a, b) => {
+      let compareValue = 0;
+      
+      switch (sortBy) {
+        case 'comments':
+          compareValue = (a.comments || 0) - (b.comments || 0);
+          break;
+        case 'score':
+          compareValue = (a.score || 0) - (b.score || 0);
+          break;
+        case 'date':
+          // Parse dates for comparison
+          const dateA = new Date(a.date_created).getTime();
+          const dateB = new Date(b.date_created).getTime();
+          compareValue = dateA - dateB;
+          break;
+      }
+      
+      // Apply sort order
+      return order === 'asc' ? compareValue : -compareValue;
+    });
+    
+    // Update both allPosts and displayedPosts
+    setAllPosts(sortedPosts);
+    setDisplayedPosts(sortedPosts.slice(0, displayedPosts.length));
+  };
 
   if (isLoading || isLoading2) {
     return (
@@ -700,27 +739,33 @@ export default function Dashboard() {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 p-6 space-y-6">
-      <div className="flex justify-end mb-4 gap-3">
-          <button 
-            onClick={handleTipsClick}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-yellow-100 rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
-          >
-            <Lightbulb size={16} className="text-yellow-300" />
-            <span>Tips</span>
-          </button>
-          <button 
-            onClick={toggleFilterModal}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-750 text-gray-200 rounded-lg border border-gray-700 hover:border-orange-600 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
-          >
-            <Filter size={16} className="text-orange-500" />
-            <span>Filter Subreddits</span>
-            {excludedSubreddits.length > 0 && (
-              <span className="flex items-center justify-center h-5 min-w-5 px-1 text-xs font-medium bg-orange-600 text-white rounded-full">
+      <div className="flex justify-between mb-4">
+        <PostSorter 
+          onSort={handleSort}
+          currentSort={sortConfig}
+        />
+      <div className="flex gap-3">
+        <button 
+          onClick={handleTipsClick}
+          className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-yellow-100 rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
+        >
+          <Lightbulb size={16} className="text-yellow-300" />
+          <span>Tips</span>
+        </button>
+        <button 
+          onClick={toggleFilterModal}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-750 text-gray-200 rounded-lg border border-gray-700 hover:border-orange-600 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
+        >
+          <Filter size={16} className="text-orange-500" />
+          <span>Filter Subreddits</span>
+          {excludedSubreddits.length > 0 && (
+            <span className="flex items-center justify-center h-5 min-w-5 px-1 text-xs font-medium bg-orange-600 text-white rounded-full">
               {excludedSubreddits.length}
             </span>
-            )}
-          </button>
-        </div>
+          )}
+        </button>
+      </div>
+    </div>
         {/* Subreddit Filter Modal */}
         {isFilterOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
