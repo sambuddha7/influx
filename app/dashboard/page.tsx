@@ -163,11 +163,21 @@ export default function Dashboard() {
   const savePostToFirestore = async (userId: string, post: RedditPost) => {
     try {
       const postsCollectionRef = collection(db, "reddit-posts", userId, "posts");
+      
+      // Check if post already exists
+      const q = query(postsCollectionRef, where("id", "==", post.id));
+      const existingPost = await getDocs(q);
+      
+      if (!existingPost.empty) {
+        console.log(`Post ${post.id} already exists, not saving duplicate`);
+        return;
+      }
+      
       const postWithTimestamp = {
         ...post,
-        createdAt: new Date().toISOString(), // ISO 8601 string for consistent formatting
+        createdAt: new Date().toISOString(),
         promotional: post.promotional ?? false,
-        score: post.score ?? 0,           // Add this
+        score: post.score ?? 0,
         comments: post.comments ?? 0,  
       };
       await addDoc(postsCollectionRef, postWithTimestamp);
