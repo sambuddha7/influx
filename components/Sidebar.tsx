@@ -60,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
           <NavItem
             href="/dashboard"
             icon={<ArrowUpRight size={20} />}
-            text="Leads"
+            text="Discussions"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
