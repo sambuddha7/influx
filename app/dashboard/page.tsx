@@ -51,6 +51,7 @@ interface RedditPost {
 
 }
 
+
 export default function Dashboard() {
   const router = useRouter();
   const [allPosts, setAllPosts] = useState<RedditPost[]>([]);
@@ -94,6 +95,88 @@ export default function Dashboard() {
   const [subredditInput, setSubredditInput] = useState('');
   const [excludedSubreddits, setExcludedSubreddits] = useState<string[]>([]);
   const [tempExcludedSubreddits, setTempExcludedSubreddits] = useState<string[]>([]);
+  // Add this function after the RedditPost interface definition
+const checkAndUpdatePostMetrics = async (userId: string) => {
+  try {
+    // Get the last update timestamp
+    const metricsRef = doc(db, 'post-metrics', userId);
+    const metricsSnap = await getDoc(metricsRef);
+    console.log(metricsRef)
+    
+    const now = new Date();
+    let shouldUpdate = false;
+    
+    if (!metricsSnap.exists()) {
+      // First time - set the timestamp and update
+      await setDoc(metricsRef, {
+        lastUpdated: now.toISOString()
+      });
+      shouldUpdate = true;
+    } else {
+      // Check if it's been more than 1 hour since last update
+      const lastUpdated = new Date(metricsSnap.data().lastUpdated);
+      const hoursSinceUpdate = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60); 
+      
+      if (hoursSinceUpdate >= 1) {
+        shouldUpdate = true;
+        // Update the timestamp
+        await updateDoc(metricsRef, {
+          lastUpdated: now.toISOString()
+        });
+      }
+    }
+    
+    if (shouldUpdate) {
+      console.log('Updating post metrics...');
+      
+      // Get all posts from Firestore
+      const postsCollectionRef = collection(db, "reddit-posts", userId, "posts");
+      const postsSnapshot = await getDocs(postsCollectionRef);
+      
+      if (!postsSnapshot.empty) {
+        const postIds = postsSnapshot.docs.map(doc => doc.data().id);
+        
+        // Call the API to update metrics
+        const response = await fetch(`${apiUrl}/update_post_metrics`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            post_ids: postIds,
+            user_id: userId
+          }),
+        });
+        
+        if (response.ok) {
+          const updatedMetrics = await response.json();
+          
+          // Update each post in Firestore with new metrics
+          for (const [postId, metrics] of Object.entries(updatedMetrics)) {
+            const q = query(postsCollectionRef, where("id", "==", postId));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+              const docToUpdate = querySnapshot.docs[0];
+              await updateDoc(docToUpdate.ref, {
+                score: (metrics as any).score,
+                comments: (metrics as any).num_comments
+              });
+            }
+          }
+          
+          console.log('Post metrics updated successfully');
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error updating post metrics:', error);
+    return false;
+  }
+};
   
 
   const POSTS_PER_PAGE = 6;
@@ -217,6 +300,7 @@ export default function Dashboard() {
     
     const fetchPosts = async () => {
       try {
+        await checkAndUpdatePostMetrics(user.uid);
 
         // Check if the document exists in Firestore
         const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
