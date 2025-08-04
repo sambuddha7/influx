@@ -307,7 +307,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
         const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
 
       // Check if there are any documents in the "posts" subcollection
-        const postsQuery = query(postsCollectionRef, orderBy("createdAt", "asc"));
+        const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
 
         const postsSnapshot = await getDocs(postsQuery);
 
