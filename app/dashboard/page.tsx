@@ -158,9 +158,10 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
             
             if (!querySnapshot.empty) {
               const docToUpdate = querySnapshot.docs[0];
+              const typedMetrics = metrics as { score: number; num_comments: number };
               await updateDoc(docToUpdate.ref, {
-                score: (metrics as any).score,
-                comments: (metrics as any).num_comments
+                score: typedMetrics.score,
+                comments: typedMetrics.num_comments
               });
             }
           }
