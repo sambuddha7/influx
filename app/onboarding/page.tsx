@@ -274,7 +274,7 @@ export default function OnboardingForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content, companyName: formData.companyName }),
+        body: JSON.stringify({ content, companyName: formData.companyName, companyWebsite: formData.companyWebsite }),
       });
 
       if (!response.ok) {
