@@ -366,7 +366,7 @@ export default function OnboardingForm() {
     setIsScraping(true);
     try {
       const res = await fetch(
-        `${apiUrl}/scrape?base_url=${encodeURIComponent(companyWebsite)}`
+        `${apiUrl}/scrape?base_url=${encodeURIComponent(companyWebsite)}&user_id=${user?.uid}&source_type=onboarding`
       );
       if (!res.ok) throw new Error("Scrape failed");
       const { pages } = await res.json();

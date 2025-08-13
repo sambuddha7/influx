@@ -29,8 +29,10 @@ export default function SubredditPage({
 
   const validateSubreddit = async (subreddit: string): Promise<boolean> => {
     try {
-      const response = await fetch(`https://www.reddit.com/r/${subreddit}/about.json`);
-      return response.ok;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/validate_subreddit?subreddit=${encodeURIComponent(subreddit)}`);
+      const data = await response.json();
+      return data.valid;
     } catch {
       return false;
     }
