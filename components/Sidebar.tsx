@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Users, Settings, Archive, Menu, BookOpen, LogOut, ChartNoAxesCombined, ArrowUpRight} from 'lucide-react';
+import { Home, FileText, Users, Settings, Archive, Menu, BookOpen, LogOut, ChartNoAxesCombined, ArrowUpRight, Plus} from 'lucide-react';
 
 import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -71,6 +71,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           /> */}
+          {/* NEW: Reddit Posts Item - ADD THIS */}
+          <NavItem
+            href="/reddit-posts"
+            icon={<Plus size={20} />}
+            text="Create Post"
+            isCollapsed={isCollapsed}
+            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white hover:bg-orange-50 dark:hover:bg-orange-900/20"
+          />
           <NavItem
             href="/userinput"
             icon={<Users size={20} />}
