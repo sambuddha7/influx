@@ -43,6 +43,7 @@ export default function SubredditPage({
 
   const handleAddSubreddit = async () => {
     setErrorMessage('');
+    if (subreddits.length >= 20) return;
     const isValid = await validateSubreddit(subredditInput);
     if (!isValid) {
       setErrorMessage('Invalid subreddit. Please enter a valid subreddit name.');
@@ -69,9 +70,14 @@ export default function SubredditPage({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-        Add Subreddits
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+          Add Subreddits
+        </h2>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {subreddits.length}/20
+        </span>
+      </div>
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <p className="text-sm text-blue-800 dark:text-blue-200">
           💡 Think of this as your Reddit radar.
@@ -88,18 +94,29 @@ export default function SubredditPage({
             value={subredditInput}
             onChange={onSubredditInputChange}
             onKeyPress={async (e) => {
-              if (e.key === 'Enter') await handleAddSubreddit();
+              if (e.key === 'Enter' && subreddits.length < 20) await handleAddSubreddit();
             }}
-            placeholder="Enter a subreddit"
-            className="flex-grow px-4 py-2 border rounded-lg"
+            placeholder={subreddits.length >= 20 ? "Maximum subreddits reached" : "Enter a subreddit"}
+            disabled={subreddits.length >= 20}
+            className="flex-grow px-4 py-2 border rounded-lg disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
           />
           <Button
             onClick={handleAddSubreddit}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className={`${
+              subreddits.length >= 20
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600 text-white'
+            }`}
+            disabled={subreddits.length >= 20}
           >
             Add
           </Button>
         </div>
+        {subreddits.length >= 20 && (
+          <p className="text-sm text-orange-600 dark:text-orange-400">
+            Maximum of 20 subreddits reached. Remove some to add new ones.
+          </p>
+        )}
         {errorMessage && (
           <p className="text-red-500 text-sm">{errorMessage}</p>
         )}

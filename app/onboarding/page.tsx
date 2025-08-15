@@ -256,8 +256,9 @@ export default function OnboardingForm() {
   };
 
   const addSubreddit = () => {
-    if (!subredditInput.trim()) return;
+    if (!subredditInput.trim() || subreddits.length >= 20) return;
     setSubreddits(prev => [...prev, subredditInput.trim()]);
+    setSubredditInput('');
   };
 
   const removeKeyword = (keyword: string) => {
