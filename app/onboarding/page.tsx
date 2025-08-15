@@ -77,6 +77,9 @@ export default function OnboardingForm() {
   const [scrapedPages, setScrapedPages] = useState<ScrapedPage[]>([]);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isScraping, setIsScraping] = useState(false);
+  const [isFetchingSubreddits, setIsFetchingSubreddits] = useState(false);
+  const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
+  const [isFetchingPhrases, setIsFetchingPhrases] = useState(false);
   const [subreddits, setSubreddits] = useState<string[]>([]);
   const [subredditInput, setSubredditInput] = useState('');
   const [subredditSuggestions, setSubredditSuggestions] = useState<string[]>([]);
@@ -95,6 +98,7 @@ export default function OnboardingForm() {
   });
 
   const fetchKeywordSuggestions = async () => {
+    setIsFetchingKeywords(true);
     try {
       const description = formData.companyDescription || ''; // Default to empty string
       const response = await fetch(`${apiUrl}/keywords?description=${encodeURIComponent(description)}`, {
@@ -115,10 +119,13 @@ export default function OnboardingForm() {
       setKeywordSuggestions([]);
     } catch (error) {
       console.error('Error fetching keyword suggestions:', error);
+    } finally {
+      setIsFetchingKeywords(false);
     }
   };
 
   const fetchPhraseSuggestions = async () => {
+    setIsFetchingPhrases(true);
     try {
       const description = formData.companyDescription || '';
       const response = await fetch(`${apiUrl}/paraphrases?description=${encodeURIComponent(description)}`, {
@@ -138,10 +145,13 @@ export default function OnboardingForm() {
       setPhraseSuggestions([]);
     } catch (error) {
       console.error('Error fetching phrase suggestions:', error);
+    } finally {
+      setIsFetchingPhrases(false);
     }
   };
 
   const fetchSubredditSuggestions = async () => {
+    setIsFetchingSubreddits(true);
     try {
       const description = formData.companyDescription || ''; // Default to empty string
       const response = await fetch(`${apiUrl}/generate_subreddits?description=${encodeURIComponent(description)}`, {
@@ -163,6 +173,8 @@ export default function OnboardingForm() {
       setSubredditSuggestions([]);
     } catch (error) {
       console.error('Error fetching subreddit suggestions:', error);
+    } finally {
+      setIsFetchingSubreddits(false);
     }
   };
 
@@ -428,6 +440,7 @@ export default function OnboardingForm() {
                 isSubredditPageValid={isSubredditPageValid}
                 setSubredditInput={setSubredditInput}
                 onNext={() => isSubredditPageValid() && setPage(4)} // Pass onNext prop
+                isFetchingSubreddits={isFetchingSubreddits}
               />
             )}
             {page === 4 && (
@@ -448,6 +461,8 @@ export default function OnboardingForm() {
                 isKeywordsPageValid={isKeywordsPageValid}
                 setKeywordInput={setKeywordInput}
                 setPhraseInput={setPhraseInput} // Make sure this is included
+                isFetchingKeywords={isFetchingKeywords}
+                isFetchingPhrases={isFetchingPhrases}
               />
             )}
           </motion.div>

@@ -1,6 +1,7 @@
 // components/onboarding/KeywordsPage.tsx
 import { Button } from './SharedFormComponents';
 import { motion } from 'framer-motion';
+import { LoadingState } from './LoadingState';
 
 interface KeywordsPageProps {
   keywords: string[]; // Replace primary/secondary with single array
@@ -19,6 +20,8 @@ interface KeywordsPageProps {
   addPhrase: () => void;
   removePhrase: (phrase: string) => void;
   setPhraseInput: (v: string) => void;  // Add this line
+  isFetchingKeywords: boolean;
+  isFetchingPhrases: boolean;
 }
 
 export default function KeywordsPage({
@@ -38,6 +41,8 @@ export default function KeywordsPage({
   addPhrase,
   removePhrase,
   setPhraseInput,  // Add this to destructuring
+  isFetchingKeywords,
+  isFetchingPhrases,
 }: KeywordsPageProps) {
   const KeywordChip = ({ keyword, onRemove }: { keyword: string, onRemove: () => void }) => (
     <motion.div 
@@ -67,6 +72,9 @@ export default function KeywordsPage({
       {/* Keywords Section */}
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">Keywords</h3>
+        {isFetchingKeywords && (
+          <LoadingState message="Generating keywords..." />
+        )}
         <div className="flex space-x-2">
           <input
             type="text"
@@ -99,6 +107,9 @@ export default function KeywordsPage({
       <div className="space-y-4">
         
         <h3 className="text-xl font-semibold">Phrases</h3>
+        {isFetchingPhrases && (
+          <LoadingState message="Generating phrases..." />
+        )}
         <div className="flex space-x-2">
           <input
             type="text"

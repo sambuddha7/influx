@@ -1,6 +1,7 @@
 import { Button } from './SharedFormComponents';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { LoadingState } from './LoadingState';
 
 interface SubredditPageProps {
   subreddits: string[];
@@ -12,6 +13,7 @@ interface SubredditPageProps {
   isSubredditPageValid: () => boolean;
   setSubredditInput: (v: string) => void;
   onNext: () => void; // Keep onNext prop
+  isFetchingSubreddits: boolean;
 }
 
 export default function SubredditPage({
@@ -24,6 +26,7 @@ export default function SubredditPage({
   isSubredditPageValid,
   setSubredditInput,
   onNext, // Keep onNext
+  isFetchingSubreddits,
 }: SubredditPageProps) {
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -75,6 +78,9 @@ export default function SubredditPage({
           The more subreddits you add, the more ground we cover.
         </p>
       </div>
+      {isFetchingSubreddits && (
+        <LoadingState message="Generating and validating subreddits..." />
+      )}
       <div className="space-y-4">
         <div className="flex space-x-2">
           <input
