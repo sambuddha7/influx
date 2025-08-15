@@ -71,7 +71,12 @@ export default function KeywordsPage({
       
       {/* Keywords Section */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Keywords</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold">Keywords</h3>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {keywords.length}/8
+          </span>
+        </div>
         {isFetchingKeywords && (
           <LoadingState message="Generating keywords..." />
         )}
@@ -80,17 +85,28 @@ export default function KeywordsPage({
             type="text"
             value={keywordInput}
             onChange={onKeywordInputChange}
-            onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
-            placeholder="Enter a keyword"
-            className="flex-grow px-4 py-2 border rounded-lg"
+            onKeyPress={(e) => e.key === 'Enter' && keywords.length < 8 && addKeyword()}
+            placeholder={keywords.length >= 8 ? "Maximum keywords reached" : "Enter a keyword"}
+            disabled={keywords.length >= 8}
+            className="flex-grow px-4 py-2 border rounded-lg disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
           />
           <Button
             onClick={addKeyword}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className={`${
+              keywords.length >= 8
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600 text-white'
+            }`}
+            disabled={keywords.length >= 8}
           >
             Add
           </Button>
         </div>
+        {keywords.length >= 8 && (
+          <p className="text-sm text-orange-600 dark:text-orange-400">
+            Maximum of 8 keywords reached. Remove some to add new ones.
+          </p>
+        )}
         {keywords.length > 0 && (
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-600 mb-2">Selected Keywords</p>

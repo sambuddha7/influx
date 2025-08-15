@@ -244,7 +244,7 @@ export default function OnboardingForm() {
   };
 
   const addKeyword = () => {
-    if (!keywordInput.trim()) return;
+    if (!keywordInput.trim() || keywords.length >= 8) return;
     setKeywords(prev => [...prev, keywordInput.trim()]);
     setKeywordInput('');
   };
