@@ -184,7 +184,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
   const POSTS_PER_PAGE = 6;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const [sortConfig, setSortConfig] = useState<{
-    by: 'comments' | 'score' | 'date';
+    by: 'comments' | 'score' | 'date' | 'relevance';
     order: 'asc' | 'desc';
   }>({
     by: 'date',
@@ -792,7 +792,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
       }, 3000);
     }
   };
-  const handleSort = (sortBy: 'comments' | 'score' | 'date', order: 'asc' | 'desc') => {
+  const handleSort = (sortBy: 'comments' | 'score' | 'date' | 'relevance', order: 'asc' | 'desc') => {
     setSortConfig({ by: sortBy, order });
     
     // Sort all posts
@@ -805,6 +805,9 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
           break;
         case 'score':
           compareValue = (a.score || 0) - (b.score || 0);
+          break;
+        case 'relevance':
+          compareValue = (a.relevanceScore || 0) - (b.relevanceScore || 0);
           break;
         case 'date':
           // Parse dates for comparison
