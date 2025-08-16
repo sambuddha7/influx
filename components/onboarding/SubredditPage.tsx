@@ -89,17 +89,22 @@ export default function SubredditPage({
       )}
       <div className="space-y-4">
         <div className="flex space-x-2">
-          <input
-            type="text"
-            value={subredditInput}
-            onChange={onSubredditInputChange}
-            onKeyPress={async (e) => {
-              if (e.key === 'Enter' && subreddits.length < 20) await handleAddSubreddit();
-            }}
-            placeholder={subreddits.length >= 20 ? "Maximum subreddits reached" : "Enter a subreddit"}
-            disabled={subreddits.length >= 20}
-            className="flex-grow px-4 py-2 border rounded-lg disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
-          />
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-500 dark:text-gray-400 text-sm">r/    </span>
+            </div>
+            <input
+              type="text"
+              value={subredditInput}
+              onChange={onSubredditInputChange}
+              onKeyPress={async (e) => {
+                if (e.key === 'Enter' && subreddits.length < 20) await handleAddSubreddit();
+              }}
+              placeholder={subreddits.length >= 20 ? "Maximum subreddits reached" : "Enter subreddit name "}
+              disabled={subreddits.length >= 20}
+              className="w-full pl-8 pr-4 py-2 border rounded-lg disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+            />
+          </div>
           <Button
             onClick={handleAddSubreddit}
             className={`${
