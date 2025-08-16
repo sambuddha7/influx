@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Loading from '@/components/Loading';
+import AIWorkflowLoading from '@/components/AIWorkflowLoading';
 import Sidebar from '@/components/Sidebar';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { db, auth } from '@/lib/firebase';
@@ -262,7 +263,8 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
         createdAt: new Date().toISOString(),
         promotional: post.promotional ?? false,
         score: post.score ?? 0,
-        comments: post.comments ?? 0,  
+        comments: post.comments ?? 0,
+        relevanceScore: post.relevanceScore,
       };
       await addDoc(postsCollectionRef, postWithTimestamp);
       console.log("Post saved successfully!");
@@ -325,6 +327,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
             promotional: doc.data().promotional ?? false,
             score: doc.data().score ?? 0,           
             comments: doc.data().comments ?? 0,
+            relevanceScore: doc.data().relevanceScore,
           }));
           setAllPosts(firestorePosts);
           setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
@@ -820,12 +823,23 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     setDisplayedPosts(sortedPosts.slice(0, displayedPosts.length));
   };
 
-  if (isLoading || isLoading2) {
+  if (isLoading) {
     return (
       <div className='flex'>
         <Sidebar />
         <div className="flex-1 p-6 space-y-6">
           <Loading />
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading2) {
+    return (
+      <div className='flex'>
+        <Sidebar />
+        <div className="flex-1">
+          <AIWorkflowLoading />
         </div>
       </div>
     );
