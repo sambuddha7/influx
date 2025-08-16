@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle } from 'lucide-react';import ReactMarkdown from 'react-markdown';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
 // Define the type for a post object
@@ -14,6 +15,7 @@ interface Post {
   promotional?: boolean;
   score?: number;
   comments?: number;
+  relevanceScore?: number;
 }
 
 // Define the type for alert state
@@ -180,6 +182,14 @@ const PostCard: React.FC<PostCardProps> = ({
                   <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gradient-to-r from-orange-400 to-orange-600 text-white">
                     Promotional
                   </span>
+                )}
+                {post.relevanceScore !== undefined && (
+                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-200 dark:border-orange-700/50 rounded-full px-3 py-1.5">
+                    <Target className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+                    <span className="text-xs font-medium text-orange-700 dark:text-orange-300">
+                      {post.relevanceScore.toFixed(1)}/10
+                    </span>
+                  </div>
                 )}
               </h2>
             </div>

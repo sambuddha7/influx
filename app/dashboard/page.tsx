@@ -48,7 +48,7 @@ interface RedditPost {
   promotional?: boolean; 
   score?: number;        
   comments?: number;
-
+  relevanceScore?: number;
 }
 
 
@@ -347,6 +347,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
               date_created: post[6],
               score: post[7],
               comments: post[8],
+              relevanceScore: post[9] ? parseFloat(post[9]) : undefined,
               promotional: promoScore > 0.70,
               promo_score: promoScore,
             };
