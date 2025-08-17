@@ -1,12 +1,12 @@
 'use client';
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import Sidebar from '@/components/Sidebar';
 import Loading from '@/components/Loading';
-import { Building2, Globe, FileText, MapPin, Package, Users, Mail, Save, Tag, LucideIcon, Plus, X } from 'lucide-react';
+import { Building2, Globe, FileText, Mail, Save, Tag, LucideIcon, Plus, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface UserData {
@@ -82,6 +82,8 @@ const Settings: React.FC = () => {
   const [phraseInput, setPhraseInput] = useState('');
   const [subredditInput, setSubredditInput] = useState('');
   const [subredditError, setSubredditError] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const originalDataRef = useRef<string>('');
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -98,6 +100,8 @@ const Settings: React.FC = () => {
           setKeywords(data.keywords ? data.keywords.split(',').map(k => k.trim()).filter(k => k) : []);
           setPhrases(data.phrases ? data.phrases.split(',').map(p => p.trim()).filter(p => p) : []);
           setSubreddits(data.subreddits ? data.subreddits.split(',').map(s => s.trim()).filter(s => s) : []);
+          // Store original data for comparison
+          originalDataRef.current = JSON.stringify(data);
         } else {
           console.error('No user data found!');
         }
@@ -110,6 +114,55 @@ const Settings: React.FC = () => {
 
     fetchUserData();
   }, [user]);
+
+  // Check for unsaved changes and warn before leaving
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (hasUnsavedChanges) {
+        const confirmed = window.confirm(
+          'You have unsaved changes. Are you sure you want to leave this page?'
+        );
+        if (!confirmed) {
+          // Push the current state back to prevent navigation
+          window.history.pushState(null, '', window.location.href);
+        }
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (hasUnsavedChanges) {
+        const target = e.target as HTMLElement;
+        const link = target.closest('a[href]') as HTMLAnchorElement;
+        if (link && link.href && !link.href.includes('#') && !link.target) {
+          const confirmed = window.confirm(
+            'You have unsaved changes. Are you sure you want to leave this page?'
+          );
+          if (!confirmed) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [hasUnsavedChanges]);
 
   // Function to clear posts from Firestore for the current user
   const clearPosts = async () => {
@@ -128,6 +181,8 @@ const Settings: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setUserData((prev) => (prev ? { ...prev, [name]: value } : prev));
+    setHasUnsavedChanges(true);
+    console.log('Input changed, hasUnsavedChanges set to true');
   };
 
   // Tag management functions
@@ -137,14 +192,12 @@ const Settings: React.FC = () => {
     setKeywords(newKeywords);
     setKeywordInput('');
     updateUserDataArray('keywords', newKeywords);
-    clearPosts();
   };
 
   const removeKeyword = (keyword: string) => {
     const newKeywords = keywords.filter(k => k !== keyword);
     setKeywords(newKeywords);
     updateUserDataArray('keywords', newKeywords);
-    clearPosts();
   };
 
   const addPhrase = () => {
@@ -153,14 +206,12 @@ const Settings: React.FC = () => {
     setPhrases(newPhrases);
     setPhraseInput('');
     updateUserDataArray('phrases', newPhrases);
-    clearPosts();
   };
 
   const removePhrase = (phrase: string) => {
     const newPhrases = phrases.filter(p => p !== phrase);
     setPhrases(newPhrases);
     updateUserDataArray('phrases', newPhrases);
-    clearPosts();
   };
 
   const validateSubreddit = async (subreddit: string): Promise<boolean> => {
@@ -188,14 +239,12 @@ const Settings: React.FC = () => {
     setSubreddits(newSubreddits);
     setSubredditInput('');
     updateUserDataArray('subreddits', newSubreddits);
-    clearPosts();
   };
 
   const removeSubreddit = (subreddit: string) => {
     const newSubreddits = subreddits.filter(s => s !== subreddit);
     setSubreddits(newSubreddits);
     updateUserDataArray('subreddits', newSubreddits);
-    clearPosts();
   };
 
   const updateUserDataArray = (field: string, array: string[]) => {
@@ -203,6 +252,7 @@ const Settings: React.FC = () => {
       ...prev,
       [field]: array.join(',')
     } : prev);
+    setHasUnsavedChanges(true);
   };
 
   const handleSave = async () => {
@@ -220,6 +270,15 @@ const Settings: React.FC = () => {
 
     setIsSaving(true);
     try {
+      // Check if keywords changed and clear posts if so
+      const originalData = originalDataRef.current ? JSON.parse(originalDataRef.current) : {};
+      const originalKeywords = originalData.keywords || '';
+      const currentKeywords = userData.keywords || '';
+      
+      if (originalKeywords !== currentKeywords) {
+        await clearPosts();
+      }
+      
       const userRef = doc(db, 'onboarding', user.uid);
       await setDoc(userRef, userData, { merge: true });
       setShowAlert(true);
@@ -228,6 +287,10 @@ const Settings: React.FC = () => {
       setTimeout(() => {
         setShowAlert(false);
       }, 3000);
+      
+      // Reset unsaved changes flag after successful save
+      setHasUnsavedChanges(false);
+      originalDataRef.current = JSON.stringify(userData);
     } catch (error) {
       console.error('Error updating user data:', error);
     } finally {
@@ -258,7 +321,14 @@ const Settings: React.FC = () => {
           )}
           
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+              {hasUnsavedChanges && (
+                <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                  You have unsaved changes
+                </p>
+              )}
+            </div>
             <button
               onClick={handleSave}
               disabled={isSaving}

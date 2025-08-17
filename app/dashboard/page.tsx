@@ -72,6 +72,7 @@ export default function Dashboard() {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [currentPendingPost, setCurrentPendingPost] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
 
 
 
@@ -254,86 +255,111 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
 
 
 
-  useEffect(() => {
+  const fetchPosts = async () => {
     if (!user) return;
     
-    const fetchPosts = async () => {
-      try {
-        await checkAndUpdatePostMetrics(user.uid);
+    try {
+      await checkAndUpdatePostMetrics(user.uid);
 
-        // Check if the document exists in Firestore
-        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+      // Check if the document exists in Firestore
+      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
 
-      // Check if there are any documents in the "posts" subcollection
-        const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
+    // Check if there are any documents in the "posts" subcollection
+      const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
 
-        const postsSnapshot = await getDocs(postsQuery);
+      const postsSnapshot = await getDocs(postsQuery);
 
-        if (!postsSnapshot.empty) {
-          console.log('Posts found in Firestore');
-          // await fetch(`${apiUrl}/relevant_posts_weekly?userid=${user.uid}`);
-          const firestorePosts = postsSnapshot.docs.map((doc) => ({
-            id: doc.data().id,
-            subreddit: doc.data().subreddit,
-            title: doc.data().title,
-            content: doc.data().content,
-            suggestedReply: doc.data().suggestedReply,
-            url: doc.data().url,
-            date_created: doc.data().date_created,
-            promotional: doc.data().promotional ?? false,
-            score: doc.data().score ?? 0,           
-            comments: doc.data().comments ?? 0,
-            relevanceScore: doc.data().relevanceScore,
-          }));
-          setAllPosts(firestorePosts);
-          setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
-          setIsLoading2(false);
-          setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
-        } else {
-          const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
-          const data = await response.json();
-
-          const formattedPosts = data.map((post: string[]) => {
-            // const promoScore = parseFloat(post[7]); // assume promo_score is 8th item
-            const promoScore =  0; // temp
-            return {
-              id: post[0],
-              subreddit: post[1],
-              title: post[2],
-              content: post[3],
-              suggestedReply: post[4],
-              url: post[5],
-              date_created: post[6],
-              score: post[7],
-              comments: post[8],
-              relevanceScore: post[9] ? parseFloat(post[9]) : undefined,
-              promotional: promoScore > 0.70,
-              promo_score: promoScore,
-            };
-          });
-          
-          setAllPosts(formattedPosts);
-          setDisplayedPosts(formattedPosts.slice(0, POSTS_PER_PAGE));
-          setIsLoading2(false);
-          setHasMorePosts(formattedPosts.length > POSTS_PER_PAGE);
-
-          for (const post of formattedPosts) {
-            console.log(post);
-            savePostToFirestore(user.uid, post);
-          } 
-
-        }
-        
-      } catch (error) {
-        console.error('Error fetching posts:', error);
+      if (!postsSnapshot.empty) {
+        console.log('Posts found in Firestore');
+        // await fetch(`${apiUrl}/relevant_posts_weekly?userid=${user.uid}`);
+        const firestorePosts = postsSnapshot.docs.map((doc) => ({
+          id: doc.data().id,
+          subreddit: doc.data().subreddit,
+          title: doc.data().title,
+          content: doc.data().content,
+          suggestedReply: doc.data().suggestedReply,
+          url: doc.data().url,
+          date_created: doc.data().date_created,
+          promotional: doc.data().promotional ?? false,
+          score: doc.data().score ?? 0,           
+          comments: doc.data().comments ?? 0,
+          relevanceScore: doc.data().relevanceScore,
+        }));
+        setAllPosts(firestorePosts);
+        setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
         setIsLoading2(false);
-      }
-    };
+        setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
+      } else {
+        const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
+        const data = await response.json();
 
+        const formattedPosts = data.map((post: string[]) => {
+          // const promoScore = parseFloat(post[7]); // assume promo_score is 8th item
+          const promoScore =  0; // temp
+          return {
+            id: post[0],
+            subreddit: post[1],
+            title: post[2],
+            content: post[3],
+            suggestedReply: post[4],
+            url: post[5],
+            date_created: post[6],
+            score: post[7],
+            comments: post[8],
+            relevanceScore: post[9] ? parseFloat(post[9]) : undefined,
+            promotional: promoScore > 0.70,
+            promo_score: promoScore,
+          };
+        });
+        
+        setAllPosts(formattedPosts);
+        setDisplayedPosts(formattedPosts.slice(0, POSTS_PER_PAGE));
+        setIsLoading2(false);
+        setHasMorePosts(formattedPosts.length > POSTS_PER_PAGE);
+
+        for (const post of formattedPosts) {
+          console.log(post);
+          savePostToFirestore(user.uid, post);
+        } 
+
+      }
+      
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setIsLoading2(false);
+    }
+  };
+
+  useEffect(() => {
     if (user) {
       fetchPosts();
     }
   }, [user]);
+
+  // Add periodic check for new posts
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(async () => {
+      // Only check if we're not currently loading and have been on the page for a while
+      if (!isLoading2 && !isLoading) {
+        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+        const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
+        const postsSnapshot = await getDocs(postsQuery);
+        
+        const currentPostCount = allPosts.length;
+        const firestorePostCount = postsSnapshot.size;
+        
+        // If Firestore has more posts than our current state, refresh
+        if (firestorePostCount > currentPostCount) {
+          console.log('New posts detected, refreshing...');
+          await fetchPosts();
+        }
+      }
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [user, allPosts.length, isLoading2, isLoading]);
 
   const loadMorePosts = () => {
     setIsLoadingMore(true);
@@ -501,6 +527,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
   const handleTipsClick = () => {
     router.push('/tips');
   };
+
   
   //change
   // const handleRegenerateWithFeedback = async (postId: string, feedback: string) => {
