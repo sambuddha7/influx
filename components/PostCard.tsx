@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target } from 'lucide-react';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -102,6 +102,46 @@ const PostCard: React.FC<PostCardProps> = ({
   const [regenerateModalOpen, setRegenerateModalOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackType, setFeedbackType] = useState("");
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+
+  const CONTENT_TRUNCATE_LENGTH = 1000;
+  
+  const getTruncatedContent = (content: string) => {
+    if (content.length <= CONTENT_TRUNCATE_LENGTH) {
+      return { content, isTruncated: false };
+    }
+    
+    if (isContentExpanded) {
+      return { content, isTruncated: true };
+    }
+    
+    // Find a good truncation point near the limit (prefer end of sentence or word)
+    let truncateAt = CONTENT_TRUNCATE_LENGTH;
+    const searchEnd = Math.min(content.length, CONTENT_TRUNCATE_LENGTH + 100);
+    
+    // Look for sentence ending
+    for (let i = CONTENT_TRUNCATE_LENGTH; i < searchEnd; i++) {
+      if (content[i] === '.' || content[i] === '!' || content[i] === '?') {
+        truncateAt = i + 1;
+        break;
+      }
+    }
+    
+    // If no sentence ending found, look for word boundary
+    if (truncateAt === CONTENT_TRUNCATE_LENGTH) {
+      for (let i = CONTENT_TRUNCATE_LENGTH; i < searchEnd; i++) {
+        if (content[i] === ' ') {
+          truncateAt = i;
+          break;
+        }
+      }
+    }
+    
+    return { 
+      content: content.substring(0, truncateAt).trim() + '...', 
+      isTruncated: true 
+    };
+  };
 
   const handleCopy = () => {
     // Use the formatted version for copying
@@ -216,16 +256,42 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
 
           <div className="prose prose-sm dark:prose-invert max-w-none">
-          <ReactMarkdown 
-                  className="text-gray-700 dark:text-gray-300"
-                  components={{
-                    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                    ul: ({ children }) => <ul className="mb-4 last:mb-0 pl-6">{children}</ul>,
-                    li: ({ children }) => <li className="mb-1">{children}</li>
-                  }}
-                >
-                  {formatTextForMarkdown(post.content)}
-                </ReactMarkdown>
+            {(() => {
+              const { content, isTruncated } = getTruncatedContent(post.content);
+              return (
+                <>
+                  <ReactMarkdown 
+                    className="text-gray-700 dark:text-gray-300"
+                    components={{
+                      p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                      ul: ({ children }) => <ul className="mb-4 last:mb-0 pl-6">{children}</ul>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>
+                    }}
+                  >
+                    {formatTextForMarkdown(content)}
+                  </ReactMarkdown>
+                  
+                  {isTruncated && (
+                    <button
+                      onClick={() => setIsContentExpanded(!isContentExpanded)}
+                      className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+                    >
+                      {isContentExpanded ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          Read Less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          Read More
+                        </>
+                      )}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </div>
           {/* Reddit-style upvotes and comments display */}
         <div className="flex items-center gap-4 mt-3">
