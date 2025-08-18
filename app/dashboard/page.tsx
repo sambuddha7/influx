@@ -167,7 +167,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     by: 'comments' | 'score' | 'date' | 'relevance';
     order: 'asc' | 'desc';
   }>({
-    by: 'date',
+    by: 'relevance',
     order: 'desc'
   });
 
@@ -285,8 +285,10 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
           comments: doc.data().comments ?? 0,
           relevanceScore: doc.data().relevanceScore,
         }));
-        setAllPosts(firestorePosts);
-        setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
+        // Sort by relevance (highest first) by default
+        const sortedPosts = firestorePosts.sort((a: RedditPost, b: RedditPost) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        setAllPosts(sortedPosts);
+        setDisplayedPosts(sortedPosts.slice(0, POSTS_PER_PAGE));
         setIsLoading2(false);
         setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
       } else {
@@ -312,8 +314,10 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
           };
         });
         
-        setAllPosts(formattedPosts);
-        setDisplayedPosts(formattedPosts.slice(0, POSTS_PER_PAGE));
+        // Sort by relevance (highest first) by default
+        const sortedPosts = formattedPosts.sort((a: RedditPost, b: RedditPost) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        setAllPosts(sortedPosts);
+        setDisplayedPosts(sortedPosts.slice(0, POSTS_PER_PAGE));
         setIsLoading2(false);
         setHasMorePosts(formattedPosts.length > POSTS_PER_PAGE);
 
