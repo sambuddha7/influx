@@ -90,7 +90,8 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     if (!metricsSnap.exists()) {
       // First time - set the timestamp and update
       await setDoc(metricsRef, {
-        lastUpdated: now.toISOString()
+        lastUpdated: now.toISOString(),
+        lastPostSearched: now.toISOString()
       });
       shouldUpdate = true;
     } else {
@@ -156,6 +157,117 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     return false;
   } catch (error) {
     console.error('Error updating post metrics:', error);
+    return false;
+  }
+};
+
+// Function to check if posts need to be refreshed (daily)
+const checkAndRefreshPosts = async (userId: string) => {
+  try {
+    // Get the last post search timestamp
+    const metricsRef = doc(db, 'post-metrics', userId);
+    const metricsSnap = await getDoc(metricsRef);
+    
+    const now = new Date();
+    let shouldRefresh = false;
+    
+    if (!metricsSnap.exists()) {
+      // First time - set the timestamp and refresh
+      await setDoc(metricsRef, {
+        lastUpdated: now.toISOString(),
+        lastPostSearched: now.toISOString()
+      });
+      shouldRefresh = true;
+    } else {
+      const data = metricsSnap.data();
+      
+      // Check if lastPostSearched exists, if not initialize it
+      if (!data.lastPostSearched) {
+        await updateDoc(metricsRef, {
+          lastPostSearched: now.toISOString()
+        });
+        shouldRefresh = true;
+      } else {
+        // Check if it's been more than 24 hours since last post search
+        const lastPostSearched = new Date(data.lastPostSearched);
+        const hoursSinceSearch = (now.getTime() - lastPostSearched.getTime()) / (1000 * 60 * 60); //  (1000 * 60 * 60);
+        
+        if (hoursSinceSearch >= 24) {
+          shouldRefresh = true;
+          // Update the timestamp
+          await updateDoc(metricsRef, {
+            lastPostSearched: now.toISOString()
+          });
+        }
+      }
+    }
+    
+    if (shouldRefresh) {
+      console.log('Refreshing posts - deleting old posts and running AI search...');
+      
+      // Delete all existing posts
+      const postsCollectionRef = collection(db, "reddit-posts", userId, "posts");
+      const postsSnapshot = await getDocs(postsCollectionRef);
+      
+      // Delete posts in batches
+      const batch = [];
+      for (const doc of postsSnapshot.docs) {
+        batch.push(deleteDoc(doc.ref));
+      }
+      
+      if (batch.length > 0) {
+        await Promise.all(batch);
+        console.log(`Deleted ${batch.length} old posts`);
+      }
+      
+      // Trigger the AI search pipeline
+      const response = await fetch(`${apiUrl}/relevant_posts?userid=${userId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        const formattedPosts = data.map((post: string[]) => {
+          const promoScore = 0; // temp
+          return {
+            id: post[0],
+            subreddit: post[1],
+            title: post[2],
+            content: post[3],
+            suggestedReply: post[4],
+            url: post[5],
+            date_created: post[6],
+            score: post[7],
+            comments: post[8],
+            relevanceScore: post[9] ? parseFloat(post[9]) : undefined,
+            promotional: promoScore > 0.70,
+            promo_score: promoScore,
+          };
+        });
+        
+        // Save new posts to Firestore
+        for (const post of formattedPosts) {
+          const postWithTimestamp = {
+            ...post,
+            createdAt: new Date().toISOString(),
+            promotional: post.promotional ?? false,
+            score: post.score ?? 0,
+            comments: post.comments ?? 0,
+            relevanceScore: post.relevanceScore,
+          };
+          await addDoc(postsCollectionRef, postWithTimestamp);
+        }
+        
+        console.log(`Posts refreshed successfully - added ${formattedPosts.length} new posts`);
+        return true;
+      } else {
+        console.error('Failed to fetch new posts from API');
+        return false;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error refreshing posts:', error);
     return false;
   }
 };
@@ -260,6 +372,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     
     try {
       await checkAndUpdatePostMetrics(user.uid);
+      const postsRefreshed = await checkAndRefreshPosts(user.uid);
 
       // Check if the document exists in Firestore
       const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
@@ -269,10 +382,12 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
 
       const postsSnapshot = await getDocs(postsQuery);
 
-      if (!postsSnapshot.empty) {
-        console.log('Posts found in Firestore');
-        // await fetch(`${apiUrl}/relevant_posts_weekly?userid=${user.uid}`);
-        const firestorePosts = postsSnapshot.docs.map((doc) => ({
+      if (!postsSnapshot.empty || postsRefreshed) {
+        console.log(postsRefreshed ? 'Posts refreshed - loading from Firestore' : 'Posts found in Firestore');
+        
+        // Re-fetch posts after refresh or load existing posts
+        const currentPostsSnapshot = await getDocs(postsQuery);
+        const firestorePosts = currentPostsSnapshot.docs.map((doc) => ({
           id: doc.data().id,
           subreddit: doc.data().subreddit,
           title: doc.data().title,
