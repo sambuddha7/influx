@@ -80,27 +80,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white hover:bg-orange-50 dark:hover:bg-orange-900/20"
           />
           <NavItem
-            href="/userinput"
-            icon={<Users size={20} />}
-            text="AI Setup"
-            isCollapsed={isCollapsed}
-            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
-          />
-          {/* <NavItem
-            href="/roi"
-            icon={<ChartNoAxesCombined size={20} />}
-            text="Analytics"
-            isCollapsed={isCollapsed}
-            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
-          /> */}
-          {/* <NavItem
-            href="/tutorial"
-            icon={<BookOpen size={20} />}
-            text="Tutorial"
-            isCollapsed={isCollapsed}
-            className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
-          /> */}
-          <NavItem
             href="/archive"
             icon={<Archive size={20} />}
             text="Archive"
@@ -117,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
           <NavItem
             href="/settings"
             icon={<Settings size={20} />}
-            text="Settings"
+            text="AI Settings"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />
