@@ -7,9 +7,9 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { db, auth } from '@/lib/firebase';
 import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { BarChart3, TrendingUp, MessageCircle, Eye, Calendar, ExternalLink, RefreshCw } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { formatDistanceToNow } from 'date-fns';
+import { BarChart3, TrendingUp, MessageCircle, Eye, Calendar, ExternalLink, RefreshCw, Activity } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area, AreaChart } from 'recharts';
+import { formatDistanceToNow, format, subDays, startOfDay } from 'date-fns';
 
 interface RedditComment {
   id: string;
@@ -39,6 +39,7 @@ export default function ROITracker() {
   const [user, loading] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(true);
   const [isSetupLoading, setIsSetupLoading] = useState(false);
+  const [isDashboardLoading, setIsDashboardLoading] = useState(false); // New loading state for dashboard
   const [redditUsername, setRedditUsername] = useState('');
   const [inputUsername, setInputUsername] = useState('');
   const [hasUsername, setHasUsername] = useState(false);
@@ -63,30 +64,30 @@ export default function ROITracker() {
       if (!user) return;
 
       try {
-        // Check if user has completed onboarding
-        // const docRef = doc(db, 'onboarding', user.uid);
-        // const docSnap = await getDoc(docRef);
+        // Check onboarding status first
+        const docRef = doc(db, 'onboarding', user.uid);
+        const docSnap = await getDoc(docRef);
 
-        // if (!docSnap.exists()) {
-        //   router.push('/onboarding');
-        //   return;
-        // }
+        if (!docSnap.exists()) {
+          router.push('/onboarding');
+          return;
+        }
 
-        // // Check account status
-        // const accountRef = doc(db, 'account-details', user.uid);
-        // const accountSnap = await getDoc(accountRef);
+        // Check account details and status
+        const accountRef = doc(db, 'account-details', user.uid);
+        const accountSnap = await getDoc(accountRef);
 
-        // if (!accountSnap.exists()) {
-        //   console.error('Account details not found');
-        //   setIsLoading(false);
-        //   return;
-        // }
+        if (!accountSnap.exists()) {
+          console.error('Account details not found');
+          setIsLoading(false);
+          return;
+        }
 
-        // const accountStatus = accountSnap.data()?.accountStatus;
-        // if (accountStatus === 'inactive') {
-        //   router.push('/no-access');
-        //   return;
-        // }
+        const accountStatus = accountSnap.data()?.accountStatus;
+        if (accountStatus === 'inactive') {
+          router.push('/no-access');
+          return;
+        }
 
         // Check if Reddit username exists
         const usernameRef = doc(db, 'reddit-username', user.uid);
@@ -182,22 +183,6 @@ export default function ROITracker() {
 
     setIsSetupLoading(true);
     try {
-      // Validate username exists on Reddit
-      // const response = await fetch(`${apiUrl}/validate-reddit-username`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     username: inputUsername.trim(),
-      //     user_id: user.uid
-      //   }),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Reddit username not found or invalid');
-      // }
-
       // Save username to Firebase
       await setDoc(doc(db, 'reddit-username', user.uid), {
         username: inputUsername.trim(),
@@ -205,7 +190,10 @@ export default function ROITracker() {
         user_id: user.uid
       });
 
-      setRedditUsername(inputUsername.trim());
+      const username = inputUsername.trim();
+      
+      // Update state immediately
+      setRedditUsername(username);
       setHasUsername(true);
       setInputUsername('');
       
@@ -214,13 +202,16 @@ export default function ROITracker() {
         setgreenAlert({ message: "", visible: false });
       }, 3000);
 
-      // Initial data fetch
-      await handleUpdateData();
+      // Set dashboard loading state before fetching data
+      setIsDashboardLoading(true);
+      
+      // Initial data fetch with the username directly
+      await handleUpdateDataWithUsername(username);
 
     } catch (error) {
       console.error('Error setting up Reddit username:', error);
       setAlert({ 
-        message: "Invalid Reddit username or user not found", 
+        message: "Error saving Reddit username", 
         visible: true 
       });
       setTimeout(() => {
@@ -231,11 +222,16 @@ export default function ROITracker() {
     }
   };
 
-  // Update ROI data
-  const handleUpdateData = async () => {
-    if (!user || !redditUsername) return;
+  // New function that accepts username parameter
+  const handleUpdateDataWithUsername = async (usernameParam?: string) => {
+    const username = usernameParam || redditUsername;
+    if (!user || !username) return;
 
-    setIsUpdating(true);
+    // If this is not the initial setup, use regular updating state
+    if (!isDashboardLoading) {
+      setIsUpdating(true);
+    }
+
     try {
       const response = await fetch(`${apiUrl}/update-reddit-roi`, {
         method: 'POST',
@@ -243,7 +239,7 @@ export default function ROITracker() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: redditUsername,
+          username: username,
           user_id: user.uid
         }),
       });
@@ -253,7 +249,7 @@ export default function ROITracker() {
       }
 
       // Reload data from Firebase
-      await loadROIData(redditUsername);
+      await loadROIData(username);
       
       setgreenAlert({ message: "ROI data updated successfully!", visible: true });
       setTimeout(() => {
@@ -271,92 +267,127 @@ export default function ROITracker() {
       }, 3000);
     } finally {
       setIsUpdating(false);
+      setIsDashboardLoading(false); // Always clear dashboard loading state
     }
   };
 
-  // Prepare chart data
-  // Replace your getChartData function with this debugged version:
-const getChartData = () => {
-  console.log('Comments for chart:', comments.length);
-  
-  if (!comments.length) return [];
+  // Update the existing handleUpdateData to use the new function
+  const handleUpdateData = async () => {
+    await handleUpdateDataWithUsername();
+  };
 
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  console.log('Thirty days ago:', thirtyDaysAgo);
+  // Improved chart data preparation
+  const getChartData = () => {
+    if (!comments.length) return [];
 
-  const last30Days = comments
-    .filter(comment => {
-      if (!comment.created_utc) {
-        console.log('Comment missing created_utc:', comment.id);
-        return false;
-      }
-      
-      let commentDate: Date;
+    // Create a more robust date parsing function
+    const parseCommentDate = (dateString: string): Date | null => {
       try {
-        // Handle different date formats
-        if (comment.created_utc.includes('T') || comment.created_utc.includes('Z')) {
-          commentDate = new Date(comment.created_utc);
+        // Handle various date formats
+        let date: Date;
+        
+        if (dateString.includes('T') || dateString.includes('Z')) {
+          date = new Date(dateString);
+        } else if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // YYYY-MM-DD format
+          date = new Date(dateString + 'T00:00:00Z');
         } else {
-          commentDate = new Date(comment.created_utc + 'Z');
+          // Try parsing as is and add Z if needed
+          date = new Date(dateString.includes('Z') ? dateString : dateString + 'Z');
         }
         
-        // Check if date is valid
-        if (isNaN(commentDate.getTime())) {
-          console.log('Invalid date for comment:', comment.id, comment.created_utc);
-          return false;
-        }
-        
-        const isWithin30Days = commentDate >= thirtyDaysAgo;
-        console.log('Comment date:', commentDate, 'Within 30 days:', isWithin30Days);
-        return isWithin30Days;
+        return isNaN(date.getTime()) ? null : date;
       } catch (error) {
-        console.log('Error parsing date for comment:', comment.id, error);
-        return false;
+        console.log('Error parsing date:', dateString, error);
+        return null;
       }
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.created_utc.includes('Z') ? a.created_utc : a.created_utc + 'Z');
-      const dateB = new Date(b.created_utc.includes('Z') ? b.created_utc : b.created_utc + 'Z');
-      return dateA.getTime() - dateB.getTime();
+    };
+
+    // Get the last 30 days of data
+    const thirtyDaysAgo = startOfDay(subDays(new Date(), 30));
+    const today = startOfDay(new Date());
+
+    // Filter and sort comments from the last 30 days
+    const recentComments = comments
+      .map(comment => ({
+        ...comment,
+        parsedDate: parseCommentDate(comment.created_utc)
+      }))
+      .filter(comment => 
+        comment.parsedDate && 
+        comment.parsedDate >= thirtyDaysAgo && 
+        comment.parsedDate <= today
+      )
+      .sort((a, b) => a.parsedDate!.getTime() - b.parsedDate!.getTime());
+
+    // Create a complete date range for the last 30 days
+    const dateRange = [];
+    for (let i = 0; i < 30; i++) {
+      const date = startOfDay(subDays(new Date(), 29 - i));
+      dateRange.push(format(date, 'yyyy-MM-dd'));
+    }
+
+    // Group comments by date
+    const groupedByDate: { [key: string]: { karma: number; comments: number; replies: number } } = {};
+    
+    // Initialize all dates with zero values
+    dateRange.forEach(date => {
+      groupedByDate[date] = { karma: 0, comments: 0, replies: 0 };
     });
 
-  console.log('Filtered comments (last 30 days):', last30Days.length);
-
-  const groupedByDate: { [key: string]: { karma: number; comments: number } } = {};
-  
-  last30Days.forEach(comment => {
-    try {
-      let commentDate: Date;
-      if (comment.created_utc.includes('T') || comment.created_utc.includes('Z')) {
-        commentDate = new Date(comment.created_utc);
-      } else {
-        commentDate = new Date(comment.created_utc + 'Z');
+    // Add actual comment data
+    recentComments.forEach(comment => {
+      const date = format(comment.parsedDate!, 'yyyy-MM-dd');
+      if (groupedByDate[date]) {
+        groupedByDate[date].karma += comment.score || 0;
+        groupedByDate[date].comments += 1;
+        groupedByDate[date].replies += comment.replies || 0;
       }
+    });
+
+    // Convert to chart data format
+    const chartData = dateRange.map(date => ({
+      date: format(new Date(date), 'MMM dd'),
+      fullDate: date,
+      karma: groupedByDate[date].karma,
+      comments: groupedByDate[date].comments,
+      replies: groupedByDate[date].replies,
+      totalEngagement: groupedByDate[date].karma + groupedByDate[date].replies
+    }));
+
+    return chartData;
+  };
+
+  // Get weekly summary data for a different view
+  const getWeeklySummary = () => {
+    if (!comments.length) return [];
+
+    const weeks = 4;
+    const weeklyData = [];
+
+    for (let i = 0; i < weeks; i++) {
+      const weekStart = startOfDay(subDays(new Date(), (i + 1) * 7));
+      const weekEnd = startOfDay(subDays(new Date(), i * 7));
       
-      const date = commentDate.toISOString().split('T')[0];
-      if (!groupedByDate[date]) {
-        groupedByDate[date] = { karma: 0, comments: 0 };
-      }
-      groupedByDate[date].karma += comment.score || 0;
-      groupedByDate[date].comments += 1;
-    } catch (error) {
-      console.log('Error processing comment for chart:', comment.id, error);
+      const weekComments = comments.filter(comment => {
+        const commentDate = new Date(comment.created_utc.includes('Z') ? comment.created_utc : comment.created_utc + 'Z');
+        return commentDate >= weekStart && commentDate < weekEnd;
+      });
+
+      const weekKarma = weekComments.reduce((sum, comment) => sum + (comment.score || 0), 0);
+      const weekReplies = weekComments.reduce((sum, comment) => sum + (comment.replies || 0), 0);
+
+      weeklyData.unshift({
+        week: `Week ${weeks - i}`,
+        comments: weekComments.length,
+        karma: weekKarma,
+        replies: weekReplies,
+        avgScore: weekComments.length > 0 ? Math.round((weekKarma / weekComments.length) * 100) / 100 : 0
+      });
     }
-  });
 
-  console.log('Grouped by date:', groupedByDate);
-
-  const chartData = Object.entries(groupedByDate).map(([date, data]) => ({
-    date,
-    karma: data.karma,
-    comments: data.comments,
-    engagement: data.karma + data.comments
-  }));
-
-  console.log('Final chart data:', chartData);
-  
-  return chartData;
-};
+    return weeklyData;
+  };
 
   if (isLoading) {
     return (
@@ -397,7 +428,7 @@ const getChartData = () => {
             </p>
           </div>
           
-          {hasUsername && (
+          {hasUsername && !isDashboardLoading && (
             <button
               onClick={handleUpdateData}
               disabled={isUpdating}
@@ -435,8 +466,28 @@ const getChartData = () => {
                   disabled={!inputUsername.trim() || isSetupLoading}
                   className="w-full px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSetupLoading ? 'Validating...' : 'Connect Account'}
+                  {isSetupLoading ? 'Setting up...' : 'Connect Account'}
                 </button>
+              </div>
+            </div>
+          </div>
+        ) : isDashboardLoading ? (
+          // Show loading state while dashboard is being prepared
+          <div className="bg-gray-900 rounded-xl p-8 border border-gray-800">
+            <div className="max-w-md mx-auto text-center">
+              <div className="flex justify-center mb-4">
+                <RefreshCw size={64} className="text-orange-500 animate-spin" />
+              </div>
+              <h2 className="text-xl font-semibold text-white mb-2">
+                Loading Your ROI Dashboard
+              </h2>
+              <p className="text-gray-400 mb-6">
+                We're fetching and analyzing your Reddit comments. This may take a few moments...
+              </p>
+              <div className="flex justify-center">
+                <div className="w-48 bg-gray-800 rounded-full h-2">
+                  <div className="bg-orange-600 h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
+                </div>
               </div>
             </div>
           </div>
@@ -503,37 +554,149 @@ const getChartData = () => {
                 <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                      <BarChart3 size={20} className="text-white" />
+                      <Activity size={20} className="text-white" />
                     </div>
                     <div>
-                      <p className="text-gray-400 text-sm">Engagement Rate</p>
-                      <p className="text-white text-2xl font-bold">{metrics.engagement_rate}</p>
+                      <p className="text-gray-400 text-sm">Total Replies</p>
+                      <p className="text-white text-2xl font-bold">{metrics.total_replies_generated}</p>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Charts */}
+            {/* Enhanced Charts */}
             {comments.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Engagement Over Time */}
+                {/* Daily Engagement Trend */}
                 <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                  <h3 className="text-white text-lg font-medium mb-4">Engagement Over Time (30 Days)</h3>
+                  <h3 className="text-white text-lg font-medium mb-4 flex items-center gap-2">
+                    <TrendingUp size={20} className="text-orange-500" />
+                    Daily Engagement (Last 30 Days)
+                  </h3>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={getChartData()}>
+                    <AreaChart data={getChartData()}>
+                      <defs>
+                        <linearGradient id="karmaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="repliesGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey="date" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#9CA3AF" 
+                        fontSize={12}
+                        tick={{ fill: '#9CA3AF' }}
+                      />
+                      <YAxis stroke="#9CA3AF" fontSize={12} tick={{ fill: '#9CA3AF' }} />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: '#1F2937', 
                           border: '1px solid #374151',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          color: '#F3F4F6'
                         }}
+                        labelStyle={{ color: '#F3F4F6' }}
                       />
-                      <Line type="monotone" dataKey="karma" stroke="#F59E0B" strokeWidth={2} />
-                      <Line type="monotone" dataKey="comments" stroke="#3B82F6" strokeWidth={2} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="karma" 
+                        stroke="#F59E0B" 
+                        fillOpacity={1} 
+                        fill="url(#karmaGradient)"
+                        strokeWidth={2}
+                        name="Karma"
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="replies" 
+                        stroke="#3B82F6" 
+                        fillOpacity={1} 
+                        fill="url(#repliesGradient)"
+                        strokeWidth={2}
+                        name="Replies"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Weekly Performance Summary */}
+                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                  <h3 className="text-white text-lg font-medium mb-4 flex items-center gap-2">
+                    <BarChart3 size={20} className="text-purple-500" />
+                    Weekly Performance
+                  </h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={getWeeklySummary()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="week" 
+                        stroke="#9CA3AF" 
+                        fontSize={12}
+                        tick={{ fill: '#9CA3AF' }}
+                      />
+                      <YAxis stroke="#9CA3AF" fontSize={12} tick={{ fill: '#9CA3AF' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1F2937', 
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          color: '#F3F4F6'
+                        }}
+                        labelStyle={{ color: '#F3F4F6' }}
+                      />
+                      <Bar dataKey="comments" fill="#8B5CF6" name="Comments" />
+                      <Bar dataKey="karma" fill="#10B981" name="Karma" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Comments vs Engagement */}
+                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                  <h3 className="text-white text-lg font-medium mb-4 flex items-center gap-2">
+                    <MessageCircle size={20} className="text-blue-500" />
+                    Comment Volume vs Total Engagement
+                  </h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={getChartData()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#9CA3AF" 
+                        fontSize={12}
+                        tick={{ fill: '#9CA3AF' }}
+                      />
+                      <YAxis stroke="#9CA3AF" fontSize={12} tick={{ fill: '#9CA3AF' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1F2937', 
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          color: '#F3F4F6'
+                        }}
+                        labelStyle={{ color: '#F3F4F6' }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="comments" 
+                        stroke="#3B82F6" 
+                        strokeWidth={3}
+                        dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                        name="Comments Posted"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="totalEngagement" 
+                        stroke="#EF4444" 
+                        strokeWidth={3}
+                        dot={{ fill: '#EF4444', strokeWidth: 2, r: 4 }}
+                        name="Total Engagement"
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -546,10 +709,15 @@ const getChartData = () => {
                       {Object.entries(metrics.top_performing_subreddits)
                         .sort(([,a], [,b]) => b - a)
                         .slice(0, 8)
-                        .map(([subreddit, score]) => (
-                          <div key={subreddit} className="flex justify-between items-center">
-                            <span className="text-gray-300">r/{subreddit}</span>
-                            <span className="text-orange-500 font-medium">{score}</span>
+                        .map(([subreddit, score], index) => (
+                          <div key={subreddit} className="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                {index + 1}
+                              </div>
+                              <span className="text-gray-300">r/{subreddit}</span>
+                            </div>
+                            <span className="text-orange-500 font-medium">{score} pts</span>
                           </div>
                         ))}
                     </div>
@@ -571,7 +739,7 @@ const getChartData = () => {
                             r/{comment.subreddit}
                           </span>
                           {/* <span className="text-gray-500 text-sm">
-                            {formatDistanceToNow(new Date(comment.created_utc + 'Z'))} ago
+                            {formatDistanceToNow(new Date(comment.created_utc.includes('Z') ? comment.created_utc : comment.created_utc + 'Z'))} ago
                           </span> */}
                         </div>
                         <a
@@ -590,8 +758,14 @@ const getChartData = () => {
                         {comment.comment_text}
                       </p>
                       <div className="flex gap-4 text-xs text-gray-400">
-                        <span>Score: {comment.score}</span>
-                        <span>Replies: {comment.replies}</span>
+                        <span className="flex items-center gap-1">
+                          <TrendingUp size={12} />
+                          Score: {comment.score}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle size={12} />
+                          Replies: {comment.replies}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -599,8 +773,8 @@ const getChartData = () => {
               </div>
             )}
 
-            {/* No Data State */}
-            {hasUsername && comments.length === 0 && (
+            {/* No Data State - Only show if NOT loading dashboard and no comments */}
+            {hasUsername && comments.length === 0 && !isDashboardLoading && (
               <div className="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center">
                 <MessageCircle size={64} className="mx-auto text-gray-600 mb-4" />
                 <h3 className="text-white text-lg font-medium mb-2">
