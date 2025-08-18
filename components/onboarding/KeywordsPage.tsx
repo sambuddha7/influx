@@ -9,6 +9,7 @@ interface KeywordsPageProps {
   keywordSuggestions: string[];
   onKeywordInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   addKeyword: () => void;
+  addSuggestedKeyword: (keyword: string) => void;
   removeKeyword: (keyword: string) => void;
   handleComplete: () => void;
   isKeywordsPageValid: () => boolean;
@@ -30,6 +31,7 @@ export default function KeywordsPage({
   keywordSuggestions,
   onKeywordInputChange,
   addKeyword,
+  addSuggestedKeyword,
   removeKeyword,
   handleComplete,
   isKeywordsPageValid,
@@ -106,6 +108,28 @@ export default function KeywordsPage({
           <p className="text-sm text-orange-600 dark:text-orange-400">
             Maximum of 8 keywords reached. Remove some to add new ones.
           </p>
+        )}
+        {keywordSuggestions.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+              Suggested Keywords (click to add)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {keywordSuggestions.map(keyword => (
+                <motion.button
+                  key={keyword}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  onClick={() => addSuggestedKeyword(keyword)}
+                  className="flex items-center bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-800 px-3 py-1 rounded-full text-sm transition-colors duration-200 border border-gray-200 dark:border-gray-600 hover:border-orange-300 dark:hover:border-orange-600"
+                  disabled={keywords.length >= 8 || keywords.includes(keyword)}
+                >
+                  {keyword}
+                  <span className="ml-2 text-orange-500">+</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
         )}
         {keywords.length > 0 && (
           <div className="mt-4">

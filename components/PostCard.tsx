@@ -356,7 +356,7 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
 
           {/* Reply Content */}
-          <div className="min-h-[200px] mb-4">
+          <div className="mb-4">
             {isEditing === post.id ? (
               <textarea 
                 className="w-full p-4 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-vertical"
@@ -367,12 +367,20 @@ const PostCard: React.FC<PostCardProps> = ({
                     posts.map(p => p.id === post.id ? { ...p, suggestedReply: newValue } : p)
                   );
                 }}
-                rows={12}
-                style={{ minHeight: '200px' }}
+                rows={Math.max(3, Math.min(20, post.suggestedReply.split('\n').length + 2))}
+                style={{ 
+                  minHeight: `${Math.max(100, Math.min(400, post.suggestedReply.length * 0.8 + 60))}px`,
+                  height: 'auto'
+                }}
                 placeholder="Write your reply here..."
               />
             ) : (
-              <div className="prose prose-sm dark:prose-invert max-w-none p-3 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+              <div 
+                className="prose prose-sm dark:prose-invert max-w-none p-3 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700"
+                style={{
+                  minHeight: `${Math.max(80, Math.min(300, post.suggestedReply.length * 0.6 + 40))}px`
+                }}
+              >
                 <ReactMarkdown 
                   className="text-gray-700 dark:text-gray-300"
                   components={{

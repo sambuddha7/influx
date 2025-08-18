@@ -115,8 +115,7 @@ export default function OnboardingForm() {
       const newKeywords = keywords.split(',')
         .map((k: string) => k.trim())
         .filter((k: string) => k); // Remove empty strings
-      setKeywords(newKeywords);
-      setKeywordSuggestions([]);
+      setKeywordSuggestions(newKeywords);
     } catch (error) {
       console.error('Error fetching keyword suggestions:', error);
     } finally {
@@ -265,6 +264,13 @@ export default function OnboardingForm() {
     setSubreddits(prev => [...prev, subreddit]);
     setSubredditSuggestions(prev => prev.filter(s => s !== subreddit));
   };
+
+  const addSuggestedKeyword = (keyword: string) => {
+    if (keywords.length >= 8 || keywords.includes(keyword)) return;
+    setKeywords(prev => [...prev, keyword]);
+    setKeywordSuggestions(prev => prev.filter(k => k !== keyword));
+  };
+
 
   const removeKeyword = (keyword: string) => {
     setKeywords(prev => prev.filter(k => k !== keyword));
@@ -457,6 +463,7 @@ export default function OnboardingForm() {
                 keywordSuggestions={keywordSuggestions}
                 onKeywordInputChange={handleKeywordInputChange}
                 addKeyword={addKeyword}
+                addSuggestedKeyword={addSuggestedKeyword}
                 removeKeyword={removeKeyword}
                 phrases={phrases}
                 phraseInput={phraseInput}

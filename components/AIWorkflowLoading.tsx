@@ -10,21 +10,21 @@ const AIWorkflowLoading: React.FC = () => {
       icon: Search,
       title: 'Scanning Reddit',
       description: 'Identifying high-signal discussion threads across communities',
-      duration: 10000
+      duration: 15000
     },
     {
       id: 'analyzing',
       icon: Target,
       title: 'Analyzing Relevance',
       description: 'Finding posts most relevant to your business context',
-      duration: 10000
+      duration: 15000
     },
     {
       id: 'scoring',
       icon: Zap,
       title: 'Scoring Opportunities',
       description: 'Evaluating engagement potential and lead quality',
-      duration: 10000
+      duration: 15000
     },
     {
       id: 'finalizing',
