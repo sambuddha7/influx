@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle } from 'lucide-react';import ReactMarkdown from 'react-markdown';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
 // Define the type for a post object
