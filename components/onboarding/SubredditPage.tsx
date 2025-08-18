@@ -9,6 +9,7 @@ interface SubredditPageProps {
   subredditSuggestions: string[];
   onSubredditInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   addSubreddit: () => void;
+  addSuggestedSubreddit: (subreddit: string) => void;
   removeSubreddit: (subreddit: string) => void;
   isSubredditPageValid: () => boolean;
   setSubredditInput: (v: string) => void;
@@ -22,6 +23,7 @@ export default function SubredditPage({
   subredditSuggestions,
   onSubredditInputChange,
   addSubreddit,
+  addSuggestedSubreddit,
   removeSubreddit,
   isSubredditPageValid,
   setSubredditInput,
@@ -124,6 +126,28 @@ export default function SubredditPage({
         )}
         {errorMessage && (
           <p className="text-red-500 text-sm">{errorMessage}</p>
+        )}
+        {subredditSuggestions.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+              Suggested Subreddits (click to add)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {subredditSuggestions.map(subreddit => (
+                <motion.button
+                  key={subreddit}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  onClick={() => addSuggestedSubreddit(subreddit)}
+                  className="flex items-center bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-800 px-3 py-1 rounded-full text-sm transition-colors duration-200 border border-gray-200 dark:border-gray-600 hover:border-orange-300 dark:hover:border-orange-600"
+                  disabled={subreddits.length >= 20 || subreddits.includes(subreddit)}
+                >
+                  {`r/${subreddit}`}
+                  <span className="ml-2 text-orange-500">+</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
         )}
         {subreddits.length > 0 && (
           <div className="mt-4">

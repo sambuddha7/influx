@@ -169,8 +169,7 @@ export default function OnboardingForm() {
       const newSubreddits = subreddits.split(',')
         .map((s: string) => s.trim())
         .filter((s: string) => s); // Remove empty strings
-      setSubreddits(newSubreddits);
-      setSubredditSuggestions([]);
+      setSubredditSuggestions(newSubreddits);
     } catch (error) {
       console.error('Error fetching subreddit suggestions:', error);
     } finally {
@@ -259,6 +258,12 @@ export default function OnboardingForm() {
     if (!subredditInput.trim() || subreddits.length >= 20) return;
     setSubreddits(prev => [...prev, subredditInput.trim()]);
     setSubredditInput('');
+  };
+
+  const addSuggestedSubreddit = (subreddit: string) => {
+    if (subreddits.length >= 20 || subreddits.includes(subreddit)) return;
+    setSubreddits(prev => [...prev, subreddit]);
+    setSubredditSuggestions(prev => prev.filter(s => s !== subreddit));
   };
 
   const removeKeyword = (keyword: string) => {
@@ -437,6 +442,7 @@ export default function OnboardingForm() {
                 subredditSuggestions={subredditSuggestions}
                 onSubredditInputChange={handleSubredditInputChange}
                 addSubreddit={addSubreddit}
+                addSuggestedSubreddit={addSuggestedSubreddit}
                 removeSubreddit={removeSubreddit}
                 isSubredditPageValid={isSubredditPageValid}
                 setSubredditInput={setSubredditInput}
