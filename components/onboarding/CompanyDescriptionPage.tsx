@@ -1,8 +1,9 @@
 // components/onboarding/CompanyDescriptionPage.tsx
 import { FormTextArea, Button } from './SharedFormComponents';
+import { FormData } from '@/types/onboarding';
 
 interface CompanyDescriptionPageProps {
-  formData: any;
+  formData: Partial<FormData>;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   isGeneratingDescription: boolean;
   isSecondPageValid: () => boolean;
@@ -41,7 +42,7 @@ export default function CompanyDescriptionPage({
           <FormTextArea
             label="Tell us about your company"
             name="companyDescription"
-            value={formData.companyDescription.replace(/^"|"$/g, '')}
+            value={formData.companyDescription?.replace(/^"|"$/g, '') || ''}
             onChange={onInputChange}
             required
           />

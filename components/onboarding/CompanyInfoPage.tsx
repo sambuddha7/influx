@@ -1,9 +1,10 @@
 // components/onboarding/CompanyInfoPage.tsx
 import { FormInput, Button } from './SharedFormComponents';
+import { FormData } from '@/types/onboarding';
 import Image from 'next/image';
 
 interface CompanyInfoPageProps {
-  formData: any;
+  formData: Partial<FormData>;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onScrape: () => void;
   isFirstPageValid: () => boolean;
@@ -28,7 +29,7 @@ export default function CompanyInfoPage({
         <FormInput
           label="Company Name"
           name="companyName"
-          value={formData.companyName}
+          value={formData.companyName || ''}
           onChange={onInputChange}
           required
         />
@@ -36,7 +37,7 @@ export default function CompanyInfoPage({
           label="Company Website"
           name="companyWebsite"
           type="url"
-          value={formData.companyWebsite}
+          value={formData.companyWebsite || ''}
           onChange={onInputChange}
           required
         />
