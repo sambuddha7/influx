@@ -24,6 +24,7 @@ interface ArchivedPost {
   url: string;
   date_created: string;
   date_archived: string;
+  roiData?: any;
 }
 
 interface GeneratedPost {
@@ -38,6 +39,7 @@ interface GeneratedPost {
   status?: string;
   created_at?: string;
   saved_at?: string;
+  roiData?: any;
 }
 
 export default function ArchivePage() {
@@ -58,7 +60,7 @@ export default function ArchivePage() {
   const [redditUsername, setRedditUsername] = useState('');
   const [inputUsername, setInputUsername] = useState('');
   const [hasUsername, setHasUsername] = useState(false);
-  const [isAnalyticsMode, setIsAnalyticsMode] = useState(true);
+  const [isAnalyticsMode, setIsAnalyticsMode] = useState(false);
   const [roiComments, setRoiComments] = useState<Array<{id: string; score: number; replies: number; created_utc: string; subreddit: string; permalink: string; post_title: string; comment_text: string; last_updated?: string}>>([]);
   const [roiMetrics, setRoiMetrics] = useState<{total_comments: number; total_karma: number; avg_score_per_comment: number; total_replies_generated: number; engagement_rate: number; top_performing_subreddits: {[key: string]: number}} | null>(null);
   const [isUpdatingRoi, setIsUpdatingRoi] = useState(false);
@@ -73,6 +75,13 @@ export default function ArchivePage() {
   const [matchedComments, setMatchedComments] = useState<ArchivedPost[]>([]);
   const [matchedPosts, setMatchedPosts] = useState<any[]>([]);
 
+  const [displayedMatchedComments, setDisplayedMatchedComments] = useState<ArchivedPost[]>([]);
+  const [displayedMatchedPosts, setDisplayedMatchedPosts] = useState<GeneratedPost[]>([]);
+  const [hasMoreMatchedComments, setHasMoreMatchedComments] = useState(false);
+  const [hasMoreMatchedPosts, setHasMoreMatchedPosts] = useState(false);
+  const [isLoadingMoreAnalytics, setIsLoadingMoreAnalytics] = useState(false);
+  const ANALYTICS_ITEMS_PER_PAGE = 5;
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const POSTS_PER_PAGE = 6;
 
@@ -84,6 +93,21 @@ export default function ArchivePage() {
       setActiveTab('posts');
     }
   }, []);
+
+  // Reactive analytics loading - triggers when archive data becomes available
+useEffect(() => {
+  if (!hasUsername || !redditUsername) return;
+  
+  // For comments: load analytics when archived posts become available
+  if (activeTab === 'comments' && isAnalyticsMode && archivedPosts.length > 0 && roiComments.length === 0) {
+    loadROIData(redditUsername);
+  }
+  
+  // For posts: load analytics when generated posts become available  
+  if (activeTab === 'posts' && isPostsAnalyticsMode && generatedPosts.length > 0 && userRedditPosts.length === 0) {
+    loadPostsAnalytics(redditUsername);
+  }
+}, [hasUsername, redditUsername, activeTab, isAnalyticsMode, isPostsAnalyticsMode, archivedPosts.length, generatedPosts.length, roiComments.length, userRedditPosts.length]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -142,6 +166,8 @@ export default function ArchivePage() {
           if (roiComments.length > 0) {
             const matched = matchArchivedWithProfile(firestorePosts, roiComments);
             setMatchedComments(matched);
+            setDisplayedMatchedComments(matched.slice(0, ANALYTICS_ITEMS_PER_PAGE));
+            setHasMoreMatchedComments(matched.length > ANALYTICS_ITEMS_PER_PAGE);
             
             // Only recalculate metrics with matched data if in analytics mode
             if (isAnalyticsMode) {
@@ -228,15 +254,15 @@ export default function ArchivePage() {
   // ROI-related functions
   // Function to match archived content with Reddit profile content
   const matchArchivedWithProfile = useCallback((archivedData: ArchivedPost[], profileData: any[]) => {
-    const matched: ArchivedPost[] = [];
+    const matched: (ArchivedPost & { roiData?: any })[] = [];
     
     archivedData.forEach(archivedItem => {
       // For comments: match by URL or title + subreddit combination
-      const foundInProfile = profileData.some(profileItem => {
+      const foundProfile = profileData.find(profileItem => {
         // Try to match by URL if available
         if (archivedItem.url && profileItem.permalink) {
-          const archivedPostId = archivedItem.url.split('/')[6]?.split('?')[0]; // Extract post ID from URL
-          const profilePostId = profileItem.permalink.split('/')[4]; // Extract post ID from permalink
+          const archivedPostId = archivedItem.url.split('/')[6]?.split('?')[0];
+          const profilePostId = profileItem.permalink.split('/')[4];
           return archivedPostId === profilePostId;
         }
         
@@ -249,8 +275,11 @@ export default function ArchivePage() {
         );
       });
       
-      if (foundInProfile) {
-        matched.push(archivedItem);
+      if (foundProfile) {
+        matched.push({
+          ...archivedItem,
+          roiData: foundProfile // Attach the ROI data for scoring
+        });
       }
     });
     
@@ -259,10 +288,10 @@ export default function ArchivePage() {
 
   // Function to match generated posts with Reddit profile posts
   const matchGeneratedWithProfile = useCallback((generatedData: GeneratedPost[], profileData: any[]) => {
-    const matched: GeneratedPost[] = [];
+    const matched: (GeneratedPost & { roiData?: any })[] = [];
     
     generatedData.forEach(generatedItem => {
-      const foundInProfile = profileData.some(profileItem => {
+      const foundProfile = profileData.find(profileItem => {
         // Match by title similarity and subreddit
         return (
           generatedItem.subreddit === profileItem.subreddit &&
@@ -272,13 +301,42 @@ export default function ArchivePage() {
         );
       });
       
-      if (foundInProfile) {
-        matched.push(generatedItem);
+      if (foundProfile) {
+        matched.push({
+          ...generatedItem,
+          roiData: foundProfile // Attach the ROI data for scoring
+        });
       }
     });
     
     return matched;
   }, []);
+
+  const loadMoreMatchedComments = () => {
+    setIsLoadingMoreAnalytics(true);
+    const currentLength = displayedMatchedComments.length;
+    const nextComments = matchedComments.slice(
+      currentLength,
+      currentLength + ANALYTICS_ITEMS_PER_PAGE
+    );
+    
+    setDisplayedMatchedComments(prev => [...prev, ...nextComments]);
+    setHasMoreMatchedComments(currentLength + ANALYTICS_ITEMS_PER_PAGE < matchedComments.length);
+    setIsLoadingMoreAnalytics(false);
+  };
+  
+  const loadMoreMatchedPosts = () => {
+    setIsLoadingMoreAnalytics(true);
+    const currentLength = displayedMatchedPosts.length;
+    const nextPosts = matchedPosts.slice(
+      currentLength,
+      currentLength + ANALYTICS_ITEMS_PER_PAGE
+    );
+    
+    setDisplayedMatchedPosts(prev => [...prev, ...nextPosts]);
+    setHasMoreMatchedPosts(currentLength + ANALYTICS_ITEMS_PER_PAGE < matchedPosts.length);
+    setIsLoadingMoreAnalytics(false);
+  };
 
   const calculateROIMetrics = useCallback((commentsData: Array<{score: number; replies: number; subreddit: string}>) => {
     if (commentsData.length === 0) {
@@ -336,40 +394,38 @@ export default function ArchivePage() {
         setRoiComments(commentsData);
         
         // Always match if we have archived posts, regardless of order
-        if (archivedPosts.length > 0) {
-          const matched = matchArchivedWithProfile(archivedPosts, commentsData);
-          setMatchedComments(matched);
-          
-          // Get the ROI comments that match the archived comments
-          const matchedRoiComments = commentsData.filter(comment => 
-            matched.some(archivedItem => {
-              // Match by URL if available
-              if (archivedItem.url && comment.permalink) {
-                const archivedPostId = archivedItem.url.split('/')[6]?.split('?')[0];
-                const profilePostId = comment.permalink.split('/')[4];
-                return archivedPostId === profilePostId;
-              }
-              
-              // Fallback matching
-              return (
-                archivedItem.title.toLowerCase().includes(comment.post_title?.toLowerCase() || '') ||
-                comment.post_title?.toLowerCase().includes(archivedItem.title.toLowerCase() || '') ||
-                (archivedItem.subreddit === comment.subreddit && 
-                 comment.comment_text?.toLowerCase().includes(archivedItem.suggestedReply.toLowerCase().substring(0, 50) || ''))
-              );
-            })
-          );
-          
-          // Only calculate metrics from matched ROI comments for analytics mode
-          if (isAnalyticsMode) {
-            calculateROIMetrics(matchedRoiComments);
-          } else {
-            calculateROIMetrics(commentsData);
-          }
-        } else {
-          // No archived posts, use all data
-          calculateROIMetrics(commentsData);
+        // ONLY calculate metrics if we have archived posts to match against
+      if (archivedPosts.length > 0) {
+        const matched = matchArchivedWithProfile(archivedPosts, commentsData);
+        setMatchedComments(matched);
+        setDisplayedMatchedComments(matched.slice(0, ANALYTICS_ITEMS_PER_PAGE));
+        setHasMoreMatchedComments(matched.length > ANALYTICS_ITEMS_PER_PAGE);
+
+        
+        // Get the ROI comments that match the archived comments
+        const matchedRoiComments = commentsData.filter(comment => 
+          matched.some(archivedItem => {
+            if (archivedItem.url && comment.permalink) {
+              const archivedPostId = archivedItem.url.split('/')[6]?.split('?')[0];
+              const profilePostId = comment.permalink.split('/')[4];
+              return archivedPostId === profilePostId;
+            }
+            
+            return (
+              archivedItem.title.toLowerCase().includes(comment.post_title?.toLowerCase() || '') ||
+              comment.post_title?.toLowerCase().includes(archivedItem.title.toLowerCase() || '') ||
+              (archivedItem.subreddit === comment.subreddit && 
+              comment.comment_text?.toLowerCase().includes(archivedItem.suggestedReply.toLowerCase().substring(0, 50) || ''))
+            );
+          })
+        );
+        
+        // ALWAYS calculate metrics only from matched data in analytics mode
+        if (isAnalyticsMode) {
+          calculateROIMetrics(matchedRoiComments);
         }
+      }
+// Remove the else clause - don't calculate metrics without archived data
         
         const lastDoc = commentsSnap.docs[0];
         setLastRoiUpdate(lastDoc.data().last_updated || '');
@@ -398,28 +454,28 @@ useEffect(() => {
         const savedCommentsView = localStorage.getItem('archive-comments-view-preference');
         const savedPostsView = localStorage.getItem('archive-posts-view-preference');
         
-        if (savedCommentsView === 'archive') {
-          setIsAnalyticsMode(false);
-        } else {
+        // 🔄 CHANGED: Default to 'archive' instead of 'analytics'
+        if (savedCommentsView === 'analytics') {
           setIsAnalyticsMode(true);
-          // Only load data if we don't have it yet
-          if (activeTab === 'comments' && roiComments.length === 0) {
-            await loadROIData(username);
-          }
+        } else {
+          setIsAnalyticsMode(false); // Default to archive view
         }
         
         if (savedPostsView === 'analytics') {
           setIsPostsAnalyticsMode(true);
-          if (activeTab === 'posts') {
-            await loadPostsAnalytics(username);
-          }
-        }
-      } else {
-        setIsAnalyticsMode(false);
-        setIsPostsAnalyticsMode(false);
+        } else {
+          setIsPostsAnalyticsMode(false); // Default to archive view for posts too
+        } 
       }
+        else {
+          // No username found, default to archive mode
+          setIsAnalyticsMode(false);
+          setIsPostsAnalyticsMode(false);
+        }
     } catch (error) {
       console.error('Error checking Reddit username:', error);
+      setIsAnalyticsMode(false);
+      setIsPostsAnalyticsMode(false);
     }
   };
   
@@ -500,6 +556,55 @@ useEffect(() => {
     }
   };
 
+  // Add this function to load archived comments specifically for analytics
+const loadArchivedCommentsForAnalytics = async () => {
+  if (!user) return;
+  try {
+    const postsCollectionRef = collection(db, "archived-posts", user.uid, "posts");
+    const postsQuery = query(postsCollectionRef, orderBy("archivedAt", "asc"));
+    const postsSnapshot = await getDocs(postsQuery);
+
+    if (!postsSnapshot.empty) {
+      const firestorePosts = postsSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+        id: doc.data().id,
+        subreddit: doc.data().subreddit,
+        title: doc.data().title,
+        content: doc.data().content,
+        suggestedReply: doc.data().suggestedReply,
+        url: doc.data().url,
+        date_created: doc.data().date_created,
+        date_archived: doc.data().date_archived || new Date(),
+      }));
+      setArchivedPosts(firestorePosts);
+    }
+  } catch (error) {
+    console.error('Error loading archived comments for analytics:', error);
+  }
+};
+
+// Add this function to load generated posts specifically for analytics
+const loadGeneratedPostsForAnalytics = async () => {
+  if (!user) return;
+  try {
+    const response = await fetch(`${apiUrl}/reddit-posts/post-history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        user_id: user.uid,
+        limit: 50
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const posts = data.data.posts;
+      setGeneratedPosts(posts);
+    }
+  } catch (err) {
+    console.error('Failed to load generated posts for analytics:', err);
+  }
+};
+
   const toggleView = (viewMode: 'analytics' | 'archive') => {
     setIsAnalyticsMode(viewMode === 'analytics');
     localStorage.setItem('archive-view-preference', viewMode);
@@ -531,10 +636,11 @@ useEffect(() => {
           return false;
         }
       })
+      // CHANGED: Sort by date in DESCENDING order (newest first)
       .sort((a, b) => {
         const dateA = new Date(a.created_utc.includes('Z') ? a.created_utc : a.created_utc + 'Z');
         const dateB = new Date(b.created_utc.includes('Z') ? b.created_utc : b.created_utc + 'Z');
-        return dateA.getTime() - dateB.getTime();
+        return dateB.getTime() - dateA.getTime(); // CHANGED: dateB - dateA for descending order
       });
   
     const groupedByDate: { [key: string]: { karma: number; comments: number } } = {};
@@ -559,12 +665,15 @@ useEffect(() => {
       }
     });
   
-    return Object.entries(groupedByDate).map(([date, data]) => ({
-      date,
-      karma: data.karma,
-      comments: data.comments,
-      engagement: data.karma + data.comments
-    }));
+    // CHANGED: Sort the final data by date in ASCENDING order (oldest to newest for chart display)
+    return Object.entries(groupedByDate)
+      .sort(([dateA], [dateB]) => dateA.localeCompare(dateB)) // This ensures oldest to newest on x-axis
+      .map(([date, data]) => ({
+        date,
+        karma: data.karma,
+        comments: data.comments,
+        engagement: data.karma + data.comments
+      }));
   };
 
 
@@ -608,32 +717,32 @@ useEffect(() => {
         setUserRedditPosts(postsData);
         
         // Match generated posts with profile posts first
-        if (generatedPosts.length > 0) {
-          const matched = matchGeneratedWithProfile(generatedPosts, postsData);
-          setMatchedPosts(matched);
-          
-          // Only calculate metrics from matched data if in posts analytics mode
-          if (isPostsAnalyticsMode) {
-            // Get the Reddit posts that match the generated posts
-            const matchedRedditPosts = postsData.filter((redditPost: any) => 
-              matched.some(generatedItem => {
-                return (
-                  generatedItem.subreddit === (redditPost.subreddit || '') &&
-                  ((generatedItem.title || '').toLowerCase().includes((redditPost.title || '').toLowerCase()) ||
-                   (redditPost.title || '').toLowerCase().includes((generatedItem.title || '').toLowerCase()) ||
-                   (generatedItem.body || generatedItem.content || '').toLowerCase().includes((redditPost.selftext || '').toLowerCase().substring(0, 100)))
-                );
-              })
+        // ONLY calculate metrics if we have generated posts to match against
+      if (generatedPosts.length > 0) {
+        const matched = matchGeneratedWithProfile(generatedPosts, postsData);
+        setMatchedPosts(matched);
+        setDisplayedMatchedPosts(matched.slice(0, ANALYTICS_ITEMS_PER_PAGE));
+        setHasMoreMatchedPosts(matched.length > ANALYTICS_ITEMS_PER_PAGE);
+
+        
+        // Get the Reddit posts that match the generated posts
+        const matchedRedditPosts = postsData.filter((redditPost: any) => 
+          matched.some(generatedItem => {
+            return (
+              generatedItem.subreddit === (redditPost.subreddit || '') &&
+              ((generatedItem.title || '').toLowerCase().includes((redditPost.title || '').toLowerCase()) ||
+              (redditPost.title || '').toLowerCase().includes((generatedItem.title || '').toLowerCase()) ||
+              (generatedItem.body || generatedItem.content || '').toLowerCase().includes((redditPost.selftext || '').toLowerCase().substring(0, 100)))
             );
-            
-            // Calculate metrics only from matched Reddit posts
-            calculatePostsMetrics(matchedRedditPosts);
-          } else {
-            calculatePostsMetrics(postsData);
-          }
-        } else {
-          calculatePostsMetrics(postsData);
+          })
+        );
+        
+        // ALWAYS calculate metrics only from matched data in analytics mode
+        if (isPostsAnalyticsMode) {
+          calculatePostsMetrics(matchedRedditPosts);
         }
+      }
+      // Remove the else clause - don't calculate metrics without generated data
       } else {
         console.log('No posts found in Firestore');
         setUserRedditPosts([]);
@@ -689,19 +798,49 @@ const getPostsChartData = () => {
       if (!post.created_utc) return false;
       
       try {
-        const postDate = new Date(post.created_utc * 1000); // Reddit uses Unix timestamp
+        let postDate: Date;
+        // Handle both string ISO dates and Unix timestamps
+        if (typeof post.created_utc === 'string') {
+          if (post.created_utc.includes('T') || post.created_utc.includes('Z')) {
+            postDate = new Date(post.created_utc);
+          } else {
+            postDate = new Date(post.created_utc + 'Z');
+          }
+        } else {
+          // Unix timestamp
+          postDate = new Date(post.created_utc * 1000);
+        }
+        
         return !isNaN(postDate.getTime()) && postDate >= thirtyDaysAgo;
       } catch (error) {
         return false;
       }
     })
-    .sort((a, b) => a.created_utc - b.created_utc);
+    .sort((a, b) => {
+      const dateA = typeof a.created_utc === 'string' 
+        ? new Date(a.created_utc.includes('Z') ? a.created_utc : a.created_utc + 'Z').getTime()
+        : a.created_utc * 1000;
+      const dateB = typeof b.created_utc === 'string'
+        ? new Date(b.created_utc.includes('Z') ? b.created_utc : b.created_utc + 'Z').getTime()
+        : b.created_utc * 1000;
+      return dateA - dateB;
+    });
 
   const groupedByDate: { [key: string]: { upvotes: number; posts: number; comments: number } } = {};
   
   last30Days.forEach(post => {
     try {
-      const postDate = new Date(post.created_utc * 1000);
+      let postDate: Date;
+      if (typeof post.created_utc === 'string') {
+        if (post.created_utc.includes('T') || post.created_utc.includes('Z')) {
+          postDate = new Date(post.created_utc);
+        } else {
+          postDate = new Date(post.created_utc + 'Z');
+        }
+      } else {
+        postDate = new Date(post.created_utc * 1000);
+      }
+      
       const date = postDate.toISOString().split('T')[0];
       
       if (!groupedByDate[date]) {
@@ -736,7 +875,6 @@ const togglePostsView = (viewMode: 'analytics' | 'archive') => {
 const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
   setIsAnalyticsMode(viewMode === 'analytics');
   localStorage.setItem('archive-comments-view-preference', viewMode);
-  
   // Recalculate metrics based on view mode if we already have data
   if (roiComments.length > 0 && archivedPosts.length > 0) {
     if (viewMode === 'analytics') {
@@ -758,10 +896,7 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
         })
       );
       calculateROIMetrics(matchedRoiComments);
-    } else {
-      // Calculate metrics for all comments
-      calculateROIMetrics(roiComments);
-    }
+    } 
   } else if (viewMode === 'analytics' && hasUsername && roiComments.length === 0) {
     // Only load data if we don't have it yet
     loadROIData(redditUsername);
@@ -1038,17 +1173,28 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
             )}
 
                 {/* Recent Comments from ROI - Only show matched comments */}
-                {isAnalyticsMode && matchedComments.length > 0 && (
+                {isAnalyticsMode && displayedMatchedComments.length > 0 && (
                   <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                     <h3 className="text-white text-lg font-medium mb-4">Posted Comments ({matchedComments.length})</h3>
                     <div className="space-y-4">
-                      {matchedComments.slice(0, 5).map((comment) => (
+                      {displayedMatchedComments.map((comment) => (
                         <div key={comment.id} className="bg-gray-800 rounded-lg p-4">
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex items-center gap-2">
                               <span className="text-orange-500 text-sm font-medium">
                                 r/{comment.subreddit}
                               </span>
+                              {/* Display scores */}
+                              <div className="flex items-center gap-3 text-xs text-gray-400">
+                                <div className="flex items-center gap-1">
+                                  <TrendingUp size={12} />
+                                  <span>{comment.roiData?.score || 0} karma</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MessageSquare size={12} />
+                                  <span>{comment.roiData?.replies || 0} replies</span>
+                                </div>
+                              </div>
                             </div>
                             <a
                               href={comment.url}
@@ -1066,11 +1212,25 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                             {comment.suggestedReply}
                           </p>
                           <div className="flex gap-4 text-xs text-gray-400">
-                            <span>Posted: {formatDistanceToNow(new Date(comment.date_created), { addSuffix: true })}</span>
+                          <span>Posted: {formatDistanceToNow(new Date(comment.date_created), { addSuffix: true })}</span>
+
                           </div>
                         </div>
                       ))}
                     </div>
+                    
+                    {/* Load More Button for Comments */}
+                    {hasMoreMatchedComments && (
+                      <div className="flex justify-center mt-6">
+                        <button
+                          onClick={loadMoreMatchedComments}
+                          disabled={isLoadingMoreAnalytics}
+                          className="px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {isLoadingMoreAnalytics ? 'Loading...' : 'Load More Comments'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1264,10 +1424,15 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                               {Object.entries(postsMetrics.top_performing_subreddits)
                                 .sort(([,a], [,b]) => (b as number) - (a as number))
                                 .slice(0, 8)
-                                .map(([subreddit, score]) => (
-                                  <div key={subreddit} className="flex justify-between items-center">
-                                    <span className="text-gray-300">r/{subreddit}</span>
-                                    <span className="text-orange-500 font-medium">{score as number}</span>
+                                .map(([subreddit, score], index) => (
+                                  <div key={subreddit} className="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        {index + 1}
+                                      </div>
+                                      <span className="text-gray-300">r/{subreddit}</span>
+                                    </div>
+                                    <span className="text-orange-500 font-medium">{score as number} pts</span>
                                   </div>
                                 ))}
                             </div>
@@ -1277,11 +1442,11 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                     )}
 
                     {/* Recent Posts from Reddit - Only show matched posts */}
-                    {isPostsAnalyticsMode && matchedPosts.length > 0 && (
+                    {isPostsAnalyticsMode && displayedMatchedPosts.length > 0 && (
                       <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                         <h3 className="text-white text-lg font-medium mb-4">Posted Content ({matchedPosts.length})</h3>
                         <div className="space-y-4">
-                          {matchedPosts.slice(0, 5).map((post) => (
+                          {displayedMatchedPosts.map((post) => (
                             <div key={post.id} className="bg-gray-800 rounded-lg p-4">
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center gap-2">
@@ -1291,6 +1456,17 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                                   <span className="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full">
                                     {post.post_type?.replace('_', ' ')}
                                   </span>
+                                  {/* Display scores */}
+                                  <div className="flex items-center gap-3 text-xs text-gray-400">
+                                    <div className="flex items-center gap-1">
+                                      <TrendingUp size={12} />
+                                      <span>{post.roiData?.score || 0} upvotes</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <MessageSquare size={12} />
+                                      <span>{post.roiData?.num_comments || 0} comments</span>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                               <h4 className="text-white font-medium mb-2 text-sm">
@@ -1300,12 +1476,26 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                                 {post.body || post.content}
                               </p>
                               <div className="flex gap-4 text-xs text-gray-400">
-                                <span>Created: {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+                              <span>Created: {post.created_at ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true }) : 'Unknown'}</span>
+
                                 {post.target_audience && <span>Target: {post.target_audience}</span>}
                               </div>
                             </div>
                           ))}
                         </div>
+                        
+                        {/* Load More Button for Posts */}
+                        {hasMoreMatchedPosts && (
+                          <div className="flex justify-center mt-6">
+                            <button
+                              onClick={loadMoreMatchedPosts}
+                              disabled={isLoadingMoreAnalytics}
+                              className="px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {isLoadingMoreAnalytics ? 'Loading...' : 'Load More Posts'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
