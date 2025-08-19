@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Loading from '@/components/Loading';
+import AIWorkflowLoading from '@/components/AIWorkflowLoading';
 import Sidebar from '@/components/Sidebar';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { db, auth } from '@/lib/firebase';
@@ -10,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
-import { ArrowUpRight , Pencil, Save, Check, Sparkles, Filter, Lightbulb} from "lucide-react";
+import { ArrowUpRight , Pencil, Save, Check, Sparkles, Lightbulb, X} from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import PostCard from '@/components/PostCard';
 import PostSorter from '@/components/PostSorter';
@@ -19,22 +20,6 @@ import PostSorter from '@/components/PostSorter';
 
 
 
-const CrossIcon = () => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="14" 
-    height="14" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-  >
-    <line x1="18" y1="6" x2="6" y2="18"></line>
-    <line x1="6" y1="6" x2="18" y2="18"></line>
-  </svg>
-);
 
 
 interface RedditPost {
@@ -48,7 +33,7 @@ interface RedditPost {
   promotional?: boolean; 
   score?: number;        
   comments?: number;
-
+  relevanceScore?: number;
 }
 
 
@@ -87,14 +72,10 @@ export default function Dashboard() {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [currentPendingPost, setCurrentPendingPost] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
 
 
 
-  // Subreddit filter states
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [subredditInput, setSubredditInput] = useState('');
-  const [excludedSubreddits, setExcludedSubreddits] = useState<string[]>([]);
-  const [tempExcludedSubreddits, setTempExcludedSubreddits] = useState<string[]>([]);
   // Add this function after the RedditPost interface definition
 const checkAndUpdatePostMetrics = async (userId: string) => {
   try {
@@ -109,7 +90,8 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     if (!metricsSnap.exists()) {
       // First time - set the timestamp and update
       await setDoc(metricsRef, {
-        lastUpdated: now.toISOString()
+        lastUpdated: now.toISOString(),
+        lastPostSearched: now.toISOString()
       });
       shouldUpdate = true;
     } else {
@@ -178,15 +160,126 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     return false;
   }
 };
+
+// Function to check if posts need to be refreshed (daily)
+const checkAndRefreshPosts = async (userId: string) => {
+  try {
+    // Get the last post search timestamp
+    const metricsRef = doc(db, 'post-metrics', userId);
+    const metricsSnap = await getDoc(metricsRef);
+    
+    const now = new Date();
+    let shouldRefresh = false;
+    
+    if (!metricsSnap.exists()) {
+      // First time - set the timestamp and refresh
+      await setDoc(metricsRef, {
+        lastUpdated: now.toISOString(),
+        lastPostSearched: now.toISOString()
+      });
+      shouldRefresh = true;
+    } else {
+      const data = metricsSnap.data();
+      
+      // Check if lastPostSearched exists, if not initialize it
+      if (!data.lastPostSearched) {
+        await updateDoc(metricsRef, {
+          lastPostSearched: now.toISOString()
+        });
+        shouldRefresh = true;
+      } else {
+        // Check if it's been more than 24 hours since last post search
+        const lastPostSearched = new Date(data.lastPostSearched);
+        const hoursSinceSearch = (now.getTime() - lastPostSearched.getTime()) / (1000 * 60 * 60); //  (1000 * 60 * 60);
+        
+        if (hoursSinceSearch >= 24) {
+          shouldRefresh = true;
+          // Update the timestamp
+          await updateDoc(metricsRef, {
+            lastPostSearched: now.toISOString()
+          });
+        }
+      }
+    }
+    
+    if (shouldRefresh) {
+      console.log('Refreshing posts - deleting old posts and running AI search...');
+      
+      // Delete all existing posts
+      const postsCollectionRef = collection(db, "reddit-posts", userId, "posts");
+      const postsSnapshot = await getDocs(postsCollectionRef);
+      
+      // Delete posts in batches
+      const batch = [];
+      for (const doc of postsSnapshot.docs) {
+        batch.push(deleteDoc(doc.ref));
+      }
+      
+      if (batch.length > 0) {
+        await Promise.all(batch);
+        console.log(`Deleted ${batch.length} old posts`);
+      }
+      
+      // Trigger the AI search pipeline
+      const response = await fetch(`${apiUrl}/relevant_posts?userid=${userId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        const formattedPosts = data.map((post: string[]) => {
+          const promoScore = 0; // temp
+          return {
+            id: post[0],
+            subreddit: post[1],
+            title: post[2],
+            content: post[3],
+            suggestedReply: post[4],
+            url: post[5],
+            date_created: post[6],
+            score: post[7],
+            comments: post[8],
+            relevanceScore: post[9] ? parseFloat(post[9]) : undefined,
+            promotional: promoScore > 0.70,
+            promo_score: promoScore,
+          };
+        });
+        
+        // Save new posts to Firestore
+        for (const post of formattedPosts) {
+          const postWithTimestamp = {
+            ...post,
+            createdAt: new Date().toISOString(),
+            promotional: post.promotional ?? false,
+            score: post.score ?? 0,
+            comments: post.comments ?? 0,
+            relevanceScore: post.relevanceScore,
+          };
+          await addDoc(postsCollectionRef, postWithTimestamp);
+        }
+        
+        console.log(`Posts refreshed successfully - added ${formattedPosts.length} new posts`);
+        return true;
+      } else {
+        console.error('Failed to fetch new posts from API');
+        return false;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error refreshing posts:', error);
+    return false;
+  }
+};
   
 
   const POSTS_PER_PAGE = 6;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const [sortConfig, setSortConfig] = useState<{
-    by: 'comments' | 'score' | 'date';
+    by: 'comments' | 'score' | 'date' | 'relevance';
     order: 'asc' | 'desc';
   }>({
-    by: 'date',
+    by: 'relevance',
     order: 'desc'
   });
 
@@ -262,7 +355,8 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
         createdAt: new Date().toISOString(),
         promotional: post.promotional ?? false,
         score: post.score ?? 0,
-        comments: post.comments ?? 0,  
+        comments: post.comments ?? 0,
+        relevanceScore: post.relevanceScore,
       };
       await addDoc(postsCollectionRef, postWithTimestamp);
       console.log("Post saved successfully!");
@@ -271,109 +365,120 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     }
   };
 
-  // Fetch excluded subreddits from Firebase
-  useEffect(() => {
-    const fetchExcludedSubreddits = async () => {
-      if (!user) return;
-      
-      try {
-        const excludedRef = doc(db, "excluded-subreddits", user.uid);
-        const excludedSnap = await getDoc(excludedRef);
-        
-        if (excludedSnap.exists() && excludedSnap.data().subreddits) {
-          const subreddits = excludedSnap.data().subreddits;
-          setExcludedSubreddits(subreddits);
-          setTempExcludedSubreddits(subreddits);
-        }
-      } catch (error) {
-        console.error("Error fetching excluded subreddits:", error);
-      }
-    };
-    
-    if (user) {
-      fetchExcludedSubreddits();
-    }
-  }, [user]);
 
 
-  useEffect(() => {
+  const fetchPosts = async () => {
     if (!user) return;
     
-    const fetchPosts = async () => {
-      try {
-        await checkAndUpdatePostMetrics(user.uid);
+    try {
+      await checkAndUpdatePostMetrics(user.uid);
+      const postsRefreshed = await checkAndRefreshPosts(user.uid);
 
-        // Check if the document exists in Firestore
-        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+      // Check if the document exists in Firestore
+      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
 
-      // Check if there are any documents in the "posts" subcollection
-        const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
+    // Check if there are any documents in the "posts" subcollection
+      const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
 
-        const postsSnapshot = await getDocs(postsQuery);
+      const postsSnapshot = await getDocs(postsQuery);
 
-        if (!postsSnapshot.empty) {
-          console.log('Posts found in Firestore');
-          // await fetch(`${apiUrl}/relevant_posts_weekly?userid=${user.uid}`);
-          const firestorePosts = postsSnapshot.docs.map((doc) => ({
-            id: doc.data().id,
-            subreddit: doc.data().subreddit,
-            title: doc.data().title,
-            content: doc.data().content,
-            suggestedReply: doc.data().suggestedReply,
-            url: doc.data().url,
-            date_created: doc.data().date_created,
-            promotional: doc.data().promotional ?? false,
-            score: doc.data().score ?? 0,           
-            comments: doc.data().comments ?? 0,
-          }));
-          setAllPosts(firestorePosts);
-          setDisplayedPosts(firestorePosts.slice(0, POSTS_PER_PAGE));
-          setIsLoading2(false);
-          setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
-        } else {
-          const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
-          const data = await response.json();
-
-          const formattedPosts = data.map((post: string[]) => {
-            // const promoScore = parseFloat(post[7]); // assume promo_score is 8th item
-            const promoScore =  0; // temp
-            return {
-              id: post[0],
-              subreddit: post[1],
-              title: post[2],
-              content: post[3],
-              suggestedReply: post[4],
-              url: post[5],
-              date_created: post[6],
-              score: post[7],
-              comments: post[8],
-              promotional: promoScore > 0.70,
-              promo_score: promoScore,
-            };
-          });
-          
-          setAllPosts(formattedPosts);
-          setDisplayedPosts(formattedPosts.slice(0, POSTS_PER_PAGE));
-          setIsLoading2(false);
-          setHasMorePosts(formattedPosts.length > POSTS_PER_PAGE);
-
-          for (const post of formattedPosts) {
-            console.log(post);
-            savePostToFirestore(user.uid, post);
-          } 
-
-        }
+      if (!postsSnapshot.empty || postsRefreshed) {
+        console.log(postsRefreshed ? 'Posts refreshed - loading from Firestore' : 'Posts found in Firestore');
         
-      } catch (error) {
-        console.error('Error fetching posts:', error);
+        // Re-fetch posts after refresh or load existing posts
+        const currentPostsSnapshot = await getDocs(postsQuery);
+        const firestorePosts = currentPostsSnapshot.docs.map((doc) => ({
+          id: doc.data().id,
+          subreddit: doc.data().subreddit,
+          title: doc.data().title,
+          content: doc.data().content,
+          suggestedReply: doc.data().suggestedReply,
+          url: doc.data().url,
+          date_created: doc.data().date_created,
+          promotional: doc.data().promotional ?? false,
+          score: doc.data().score ?? 0,           
+          comments: doc.data().comments ?? 0,
+          relevanceScore: doc.data().relevanceScore,
+        }));
+        // Sort by relevance (highest first) by default
+        const sortedPosts = firestorePosts.sort((a: RedditPost, b: RedditPost) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        setAllPosts(sortedPosts);
+        setDisplayedPosts(sortedPosts.slice(0, POSTS_PER_PAGE));
         setIsLoading2(false);
-      }
-    };
+        setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
+      } else {
+        const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
+        const data = await response.json();
 
+        const formattedPosts = data.map((post: string[]) => {
+          // const promoScore = parseFloat(post[7]); // assume promo_score is 8th item
+          const promoScore =  0; // temp
+          return {
+            id: post[0],
+            subreddit: post[1],
+            title: post[2],
+            content: post[3],
+            suggestedReply: post[4],
+            url: post[5],
+            date_created: post[6],
+            score: post[7],
+            comments: post[8],
+            relevanceScore: post[9] ? parseFloat(post[9]) : undefined,
+            promotional: promoScore > 0.70,
+            promo_score: promoScore,
+          };
+        });
+        
+        // Sort by relevance (highest first) by default
+        const sortedPosts = formattedPosts.sort((a: RedditPost, b: RedditPost) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        setAllPosts(sortedPosts);
+        setDisplayedPosts(sortedPosts.slice(0, POSTS_PER_PAGE));
+        setIsLoading2(false);
+        setHasMorePosts(formattedPosts.length > POSTS_PER_PAGE);
+
+        for (const post of formattedPosts) {
+          console.log(post);
+          savePostToFirestore(user.uid, post);
+        } 
+
+      }
+      
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setIsLoading2(false);
+    }
+  };
+
+  useEffect(() => {
     if (user) {
       fetchPosts();
     }
   }, [user]);
+
+  // Add periodic check for new posts
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(async () => {
+      // Only check if we're not currently loading and have been on the page for a while
+      if (!isLoading2 && !isLoading) {
+        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+        const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
+        const postsSnapshot = await getDocs(postsQuery);
+        
+        const currentPostCount = allPosts.length;
+        const firestorePostCount = postsSnapshot.size;
+        
+        // If Firestore has more posts than our current state, refresh
+        if (firestorePostCount > currentPostCount) {
+          console.log('New posts detected, refreshing...');
+          await fetchPosts();
+        }
+      }
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [user, allPosts.length, isLoading2, isLoading]);
 
   const loadMorePosts = () => {
     setIsLoadingMore(true);
@@ -541,6 +646,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
   const handleTipsClick = () => {
     router.push('/tips');
   };
+
   
   //change
   // const handleRegenerateWithFeedback = async (postId: string, feedback: string) => {
@@ -710,85 +816,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     }
   };
 
-  // Subreddit filter functions
-  const toggleFilterModal = () => {
-    setIsFilterOpen(!isFilterOpen);
-    setTempExcludedSubreddits([...excludedSubreddits]);
-  };
-
-  const handleAddSubreddit = () => {
-    if (subredditInput.trim() !== '' && !tempExcludedSubreddits.includes(subredditInput.trim())) {
-      setTempExcludedSubreddits([...tempExcludedSubreddits, subredditInput.trim()]);
-      setSubredditInput('');
-    }
-  };
-
-  const handleRemoveSubreddit = (subreddit: string) => {
-    setTempExcludedSubreddits(tempExcludedSubreddits.filter(s => s !== subreddit));
-  };
-
-
-  const handleSaveSubreddits = async () => {
-    if (!user) return;
-    
-    try {
-      // Save to Firebase
-      await setDoc(doc(db, "excluded-subreddits", user.uid), {
-        subreddits: tempExcludedSubreddits,
-        updatedAt: new Date().toISOString()
-      });
-      
-      // Update local state
-      setExcludedSubreddits(tempExcludedSubreddits);
-      
-      // Show initial message
-      setgreenAlert({ 
-        message: "Subreddit filters saved, refreshing posts...", 
-        visible: true 
-      });
-      
-      // Close modal
-      setIsFilterOpen(false);
-      
-      // Delete all posts from reddit-posts collection
-      try {
-        const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
-        const postsSnapshot = await getDocs(postsCollectionRef);
-        
-        // Delete all documents in batch
-        const deletePromises = postsSnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-
-        const userDocRef = doc(db, "reddit-posts", user.uid);
-        await deleteDoc(userDocRef);
-
-        console.log("All posts deleted successfully");
-      
-
-        window.location.href = '/dashboard';
-        
-      } catch (deleteError) {
-        console.error("Error deleting posts:", deleteError);
-        setAlert({ 
-          message: "Error refreshing posts", 
-          visible: true 
-        });
-        setTimeout(() => {
-          setAlert({ message: "", visible: false });
-        }, 3000);
-      }
-    } catch (error) {
-      console.error("Error saving subreddit filters:", error);
-      setAlert({ 
-        message: "Error saving subreddit filters", 
-        visible: true 
-      });
-      setTimeout(() => {
-        setAlert({ message: "", visible: false });
-      }, 3000);
-    }
-  };
-  const handleSort = (sortBy: 'comments' | 'score' | 'date', order: 'asc' | 'desc') => {
+  const handleSort = (sortBy: 'comments' | 'score' | 'date' | 'relevance', order: 'asc' | 'desc') => {
     setSortConfig({ by: sortBy, order });
     
     // Sort all posts
@@ -801,6 +829,9 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
           break;
         case 'score':
           compareValue = (a.score || 0) - (b.score || 0);
+          break;
+        case 'relevance':
+          compareValue = (a.relevanceScore || 0) - (b.relevanceScore || 0);
           break;
         case 'date':
           // Parse dates for comparison
@@ -819,12 +850,23 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     setDisplayedPosts(sortedPosts.slice(0, displayedPosts.length));
   };
 
-  if (isLoading || isLoading2) {
+  if (isLoading) {
     return (
       <div className='flex'>
         <Sidebar />
         <div className="flex-1 p-6 space-y-6">
           <Loading />
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading2) {
+    return (
+      <div className='flex'>
+        <Sidebar />
+        <div className="flex-1">
+          <AIWorkflowLoading />
         </div>
       </div>
     );
@@ -847,96 +889,8 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
           <Lightbulb size={16} className="text-yellow-300" />
           <span>Tips</span>
         </button>
-        <button 
-          onClick={toggleFilterModal}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-750 text-gray-200 rounded-lg border border-gray-700 hover:border-orange-600 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
-        >
-          <Filter size={16} className="text-orange-500" />
-          <span>Filter Subreddits</span>
-          {excludedSubreddits.length > 0 && (
-            <span className="flex items-center justify-center h-5 min-w-5 px-1 text-xs font-medium bg-orange-600 text-white rounded-full">
-              {excludedSubreddits.length}
-            </span>
-          )}
-        </button>
       </div>
     </div>
-        {/* Subreddit Filter Modal */}
-        {isFilterOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-medium text-white">Filter Subreddits</h3>
-                <button 
-                  onClick={toggleFilterModal}
-                  className="text-gray-400 hover:text-orange-500 transition-colors"
-                >
-                  <span className="w-5 h-5">
-                    <CrossIcon />
-                  </span>
-                </button>
-              </div>
-              
-              <p className="text-sm mb-5 text-gray-400">
-                Add subreddits you want to exclude from your feed.
-              </p>
-              
-              <div className="flex gap-2 mb-6">
-                <input
-                  type="text"
-                  placeholder="Enter subreddit name"
-                  className="w-full px-3 py-2 rounded-md bg-gray-800 border-0 text-gray-200 placeholder-gray-500 ring-1 ring-gray-700 focus:ring-2 focus:ring-orange-500 outline-none transition-all"
-                  value={subredditInput}
-                  onChange={(e) => setSubredditInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddSubreddit()}
-                />
-                <button 
-                  onClick={handleAddSubreddit}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-500 transition-colors"
-                >
-                  Add
-                </button>
-              </div>
-              
-              <div className="mb-6">
-                {tempExcludedSubreddits.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {tempExcludedSubreddits.map((subreddit) => (
-                      <div key={subreddit} className="px-3 py-1 rounded-full bg-gray-800 text-gray-200 text-sm flex items-center gap-1 border border-gray-700 group">
-                        r/{subreddit}
-                        <button 
-                          onClick={() => handleRemoveSubreddit(subreddit)} 
-                          className="ml-1 text-gray-400 group-hover:text-orange-500 transition-colors"
-                        >
-                          <span className="w-4 h-4">
-                            <CrossIcon />
-                          </span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No subreddits excluded yet.</p>
-                )}
-              </div>
-              
-              <div className="flex justify-end gap-3 pt-3 border-t border-gray-800">
-                <button 
-                  onClick={toggleFilterModal}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleSaveSubreddits}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all"
-                >
-                  Save Filters
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
 
         {displayedPosts.map((post) => (
@@ -987,9 +941,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
                 onClick={() => setShowInstructionPopup(false)}
                 className="text-gray-400 hover:text-orange-500 transition-colors"
               >
-                <span className="w-5 h-5">
-                  <CrossIcon />
-                </span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle } from 'lucide-react';import ReactMarkdown from 'react-markdown';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
 // Define the type for a post object
@@ -14,6 +15,7 @@ interface Post {
   promotional?: boolean;
   score?: number;
   comments?: number;
+  relevanceScore?: number;
 }
 
 // Define the type for alert state
@@ -100,6 +102,46 @@ const PostCard: React.FC<PostCardProps> = ({
   const [regenerateModalOpen, setRegenerateModalOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackType, setFeedbackType] = useState("");
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+
+  const CONTENT_TRUNCATE_LENGTH = 1000;
+  
+  const getTruncatedContent = (content: string) => {
+    if (content.length <= CONTENT_TRUNCATE_LENGTH) {
+      return { content, isTruncated: false };
+    }
+    
+    if (isContentExpanded) {
+      return { content, isTruncated: true };
+    }
+    
+    // Find a good truncation point near the limit (prefer end of sentence or word)
+    let truncateAt = CONTENT_TRUNCATE_LENGTH;
+    const searchEnd = Math.min(content.length, CONTENT_TRUNCATE_LENGTH + 100);
+    
+    // Look for sentence ending
+    for (let i = CONTENT_TRUNCATE_LENGTH; i < searchEnd; i++) {
+      if (content[i] === '.' || content[i] === '!' || content[i] === '?') {
+        truncateAt = i + 1;
+        break;
+      }
+    }
+    
+    // If no sentence ending found, look for word boundary
+    if (truncateAt === CONTENT_TRUNCATE_LENGTH) {
+      for (let i = CONTENT_TRUNCATE_LENGTH; i < searchEnd; i++) {
+        if (content[i] === ' ') {
+          truncateAt = i;
+          break;
+        }
+      }
+    }
+    
+    return { 
+      content: content.substring(0, truncateAt).trim() + '...', 
+      isTruncated: true 
+    };
+  };
 
   const handleCopy = () => {
     // Use the formatted version for copying
@@ -181,6 +223,14 @@ const PostCard: React.FC<PostCardProps> = ({
                     Promotional
                   </span>
                 )}
+                {post.relevanceScore !== undefined && (
+                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-200 dark:border-orange-700/50 rounded-full px-3 py-1.5">
+                    <Target className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+                    <span className="text-xs font-medium text-orange-700 dark:text-orange-300">
+                      {post.relevanceScore.toFixed(1)}/10
+                    </span>
+                  </div>
+                )}
               </h2>
             </div>
             
@@ -206,16 +256,42 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
 
           <div className="prose prose-sm dark:prose-invert max-w-none">
-          <ReactMarkdown 
-                  className="text-gray-700 dark:text-gray-300"
-                  components={{
-                    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                    ul: ({ children }) => <ul className="mb-4 last:mb-0 pl-6">{children}</ul>,
-                    li: ({ children }) => <li className="mb-1">{children}</li>
-                  }}
-                >
-                  {formatTextForMarkdown(post.content)}
-                </ReactMarkdown>
+            {(() => {
+              const { content, isTruncated } = getTruncatedContent(post.content);
+              return (
+                <>
+                  <ReactMarkdown 
+                    className="text-gray-700 dark:text-gray-300"
+                    components={{
+                      p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                      ul: ({ children }) => <ul className="mb-4 last:mb-0 pl-6">{children}</ul>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>
+                    }}
+                  >
+                    {formatTextForMarkdown(content)}
+                  </ReactMarkdown>
+                  
+                  {isTruncated && (
+                    <button
+                      onClick={() => setIsContentExpanded(!isContentExpanded)}
+                      className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+                    >
+                      {isContentExpanded ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          Read Less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          Read More
+                        </>
+                      )}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </div>
           {/* Reddit-style upvotes and comments display */}
         <div className="flex items-center gap-4 mt-3">
@@ -280,10 +356,10 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
 
           {/* Reply Content */}
-          <div className="min-h-[80px] mb-4">
+          <div className="mb-4">
             {isEditing === post.id ? (
               <textarea 
-                className="w-full p-3 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+                className="w-full p-4 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-vertical"
                 value={post.suggestedReply}
                 onChange={(e) => {
                   const newValue = e.target.value;
@@ -291,11 +367,20 @@ const PostCard: React.FC<PostCardProps> = ({
                     posts.map(p => p.id === post.id ? { ...p, suggestedReply: newValue } : p)
                   );
                 }}
-                rows={4}
+                rows={Math.max(3, Math.min(20, post.suggestedReply.split('\n').length + 2))}
+                style={{ 
+                  minHeight: `${Math.max(100, Math.min(400, post.suggestedReply.length * 0.8 + 60))}px`,
+                  height: 'auto'
+                }}
                 placeholder="Write your reply here..."
               />
             ) : (
-              <div className="prose prose-sm dark:prose-invert max-w-none p-3 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+              <div 
+                className="prose prose-sm dark:prose-invert max-w-none p-3 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700"
+                style={{
+                  minHeight: `${Math.max(80, Math.min(300, post.suggestedReply.length * 0.6 + 40))}px`
+                }}
+              >
                 <ReactMarkdown 
                   className="text-gray-700 dark:text-gray-300"
                   components={{

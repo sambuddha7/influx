@@ -1,0 +1,183 @@
+import { Button } from './SharedFormComponents';
+import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { LoadingState } from './LoadingState';
+
+interface SubredditPageProps {
+  subreddits: string[];
+  subredditInput: string;
+  subredditSuggestions: string[];
+  onSubredditInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  addSubreddit: () => void;
+  addSuggestedSubreddit: (subreddit: string) => void;
+  removeSubreddit: (subreddit: string) => void;
+  isSubredditPageValid: () => boolean;
+  setSubredditInput: (v: string) => void;
+  onNext: () => void; // Keep onNext prop
+  isFetchingSubreddits: boolean;
+}
+
+export default function SubredditPage({
+  subreddits,
+  subredditInput,
+  subredditSuggestions,
+  onSubredditInputChange,
+  addSubreddit,
+  addSuggestedSubreddit,
+  removeSubreddit,
+  isSubredditPageValid,
+  setSubredditInput,
+  onNext, // Keep onNext
+  isFetchingSubreddits,
+}: SubredditPageProps) {
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const validateSubreddit = async (subreddit: string): Promise<boolean> => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/validate_subreddit?subreddit=${encodeURIComponent(subreddit)}`);
+      const data = await response.json();
+      return data.valid;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleAddSubreddit = async () => {
+    setErrorMessage('');
+    if (subreddits.length >= 20) return;
+    const isValid = await validateSubreddit(subredditInput);
+    if (!isValid) {
+      setErrorMessage('Invalid subreddit. Please enter a valid subreddit name.');
+      return;
+    }
+    addSubreddit();
+  };
+
+  const SubredditChip = ({ subreddit }: { subreddit: string }) => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex items-center bg-orange-100 dark:bg-orange-800 px-3 py-1 rounded-full text-sm"
+    >
+      {`r/${subreddit}`}
+      <button
+        onClick={() => removeSubreddit(subreddit)}
+        className="ml-2 text-orange-500 hover:text-orange-700"
+      >
+        x
+      </button>
+    </motion.div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+          Add Subreddits
+        </h2>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {subreddits.length}/20
+        </span>
+      </div>
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <p className="text-sm text-blue-800 dark:text-blue-200">
+          💡 Think of this as your Reddit radar.
+          The more subreddits you add, the more ground we cover.
+        </p>
+      </div>
+      {isFetchingSubreddits && (
+        <LoadingState message="Generating and validating subreddits..." />
+      )}
+      <div className="space-y-4">
+        <div className="flex space-x-2">
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-500 dark:text-gray-400 text-sm">r/    </span>
+            </div>
+            <input
+              type="text"
+              value={subredditInput}
+              onChange={onSubredditInputChange}
+              onKeyPress={async (e) => {
+                if (e.key === 'Enter' && subreddits.length < 20) await handleAddSubreddit();
+              }}
+              placeholder={subreddits.length >= 20 ? "Maximum subreddits reached" : "Enter subreddit name "}
+              disabled={subreddits.length >= 20}
+              className="w-full pl-8 pr-4 py-2 border rounded-lg disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+            />
+          </div>
+          <Button
+            onClick={handleAddSubreddit}
+            className={`${
+              subreddits.length >= 20
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600 text-white'
+            }`}
+            disabled={subreddits.length >= 20}
+          >
+            Add
+          </Button>
+        </div>
+        {subreddits.length >= 20 && (
+          <p className="text-sm text-orange-600 dark:text-orange-400">
+            Maximum of 20 subreddits reached. Remove some to add new ones.
+          </p>
+        )}
+        {errorMessage && (
+          <p className="text-red-500 text-sm">{errorMessage}</p>
+        )}
+        {subredditSuggestions.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+              Suggested Subreddits (click to add)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {subredditSuggestions.map(subreddit => (
+                <motion.button
+                  key={subreddit}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  onClick={() => addSuggestedSubreddit(subreddit)}
+                  className="flex items-center bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-800 px-3 py-1 rounded-full text-sm transition-colors duration-200 border border-gray-200 dark:border-gray-600 hover:border-orange-300 dark:hover:border-orange-600"
+                  disabled={subreddits.length >= 20 || subreddits.includes(subreddit)}
+                >
+                  {`r/${subreddit}`}
+                  <span className="ml-2 text-orange-500">+</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        )}
+        {subreddits.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-600 mb-2">Selected Subreddits</p>
+            <div className="flex flex-wrap gap-2">
+              {subreddits.map(subreddit => (
+                <SubredditChip key={subreddit} subreddit={subreddit} />
+              ))}
+            </div>
+          </div>
+        )}
+        {subreddits.length === 0 && (
+          <div>
+            <p className="text-red-500 text-sm text-center">
+              Please add at least one subreddit to continue
+            </p>
+          </div>
+        )}
+      </div>
+      <Button
+        onClick={onNext} // Use onNext for navigation
+        className={`w-full ${
+          subreddits.length > 0
+            ? 'bg-orange-500 hover:bg-orange-600 text-white'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        }`}
+        disabled={!isSubredditPageValid()}
+      >
+        Next Step
+      </Button>
+    </div>
+  );
+}

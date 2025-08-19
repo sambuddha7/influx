@@ -2,9 +2,9 @@ import React from 'react';
 import { ChevronDown } from 'lucide-react';
 
 interface PostSorterProps {
-  onSort: (sortBy: 'comments' | 'score' | 'date', order: 'asc' | 'desc') => void;
+  onSort: (sortBy: 'comments' | 'score' | 'date' | 'relevance', order: 'asc' | 'desc') => void;
   currentSort: {
-    by: 'comments' | 'score' | 'date';
+    by: 'comments' | 'score' | 'date' | 'relevance';
     order: 'asc' | 'desc';
   };
 }
@@ -13,6 +13,8 @@ const PostSorter: React.FC<PostSorterProps> = ({ onSort, currentSort }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const sortOptions = [
+    { label: 'Highest Relevancy', value: 'relevance', order: 'desc' },
+    { label: 'Lowest Relevancy', value: 'relevance', order: 'asc' },
     { label: 'Most Comments', value: 'comments', order: 'desc' },
     { label: 'Least Comments', value: 'comments', order: 'asc' },
     { label: 'Most Upvotes', value: 'score', order: 'desc' },
@@ -28,7 +30,7 @@ const PostSorter: React.FC<PostSorterProps> = ({ onSort, currentSort }) => {
     return current?.label || 'Sort Posts';
   };
 
-  const handleSort = (value: 'comments' | 'score' | 'date', order: 'asc' | 'desc') => {
+  const handleSort = (value: 'comments' | 'score' | 'date' | 'relevance', order: 'asc' | 'desc') => {
     onSort(value, order);
     setIsOpen(false);
   };
@@ -57,7 +59,7 @@ const PostSorter: React.FC<PostSorterProps> = ({ onSort, currentSort }) => {
               {sortOptions.map((option, index) => (
                 <button
                   key={`${option.value}-${option.order}`}
-                  onClick={() => handleSort(option.value as 'comments' | 'score' | 'date', option.order as 'asc' | 'desc')}
+                  onClick={() => handleSort(option.value as 'comments' | 'score' | 'date' | 'relevance', option.order as 'asc' | 'desc')}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${
                     currentSort.by === option.value && currentSort.order === option.order
                       ? 'text-orange-500 bg-gray-800'
