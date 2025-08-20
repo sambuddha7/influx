@@ -103,13 +103,15 @@ const D3CommentsChart = ({ data }: { data: any[] }) => {
       .call(d3.axisBottom(xScale).tickFormat("" as any).tickSize(0))
       .selectAll("text")
       .style("fill", "#9CA3AF")
-      .style("font-size", "12px");
+      .style("font-size", "12px")
+      .attr("dy", "1.5em");
 
     g.append("g")
       .call(d3.axisLeft(yScaleKarma).tickSize(0))
       .selectAll("text")
       .style("fill", "#9CA3AF")
-      .style("font-size", "12px");
+      .style("font-size", "12px")
+      .attr("dx", "-0.5em");
 
     // Create lines
     const karmaLine = d3.line<any>()
@@ -323,13 +325,15 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
       .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%m/%d") as any).tickSize(0))
       .selectAll("text")
       .style("fill", "#9CA3AF")
-      .style("font-size", "12px");
+      .style("font-size", "12px")
+      .attr("dy", "2.5em");
 
     g.append("g")
       .call(d3.axisLeft(yScaleUpvotes).tickSize(0))
       .selectAll("text")
       .style("fill", "#9CA3AF")
-      .style("font-size", "12px");
+      .style("font-size", "12px")
+      .attr("dx", "-0.5em");
 
     // Create lines
     const upvotesLine = d3.line<any>()
@@ -375,14 +379,14 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
     g.append("path")
       .datum(processedData)
       .attr("fill", "none")
-      .attr("stroke", "#10B981")
+      .attr("stroke", "#F59E0B")
       .attr("stroke-width", 3)
       .attr("d", upvotesLine);
 
     g.append("path")
       .datum(processedData)
       .attr("fill", "none")
-      .attr("stroke", "#8B5CF6")
+      .attr("stroke", "#3B82F6")
       .attr("stroke-width", 3)
       .attr("d", commentsLine);
 
@@ -411,7 +415,7 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
       .attr("cx", d => xScale(d.date))
       .attr("cy", d => yScaleUpvotes(d.upvotes))
       .attr("r", 4)
-      .attr("fill", "#10B981")
+      .attr("fill", "#F59E0B")
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
@@ -434,7 +438,7 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
       .attr("cx", d => xScale(d.date))
       .attr("cy", d => yScaleComments(d.comments))
       .attr("r", 4)
-      .attr("fill", "#8B5CF6")
+      .attr("fill", "#3B82F6")
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
@@ -456,7 +460,7 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
 
     legend.append("line")
       .attr("x1", 0).attr("x2", 20).attr("y1", 0).attr("y2", 0)
-      .attr("stroke", "#10B981").attr("stroke-width", 3);
+      .attr("stroke", "#F59E0B").attr("stroke-width", 3);
 
     legend.append("text")
       .attr("x", 25).attr("y", 0).attr("dy", "0.35em")
@@ -465,7 +469,7 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
 
     legend.append("line")
       .attr("x1", 0).attr("x2", 20).attr("y1", 20).attr("y2", 20)
-      .attr("stroke", "#8B5CF6").attr("stroke-width", 3);
+      .attr("stroke", "#3B82F6").attr("stroke-width", 3);
 
     legend.append("text")
       .attr("x", 25).attr("y", 20).attr("dy", "0.35em")
@@ -1526,7 +1530,7 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
 
                     <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
                           <TrendingUp size={20} className="text-white" />
                         </div>
                         <div>
@@ -1538,7 +1542,7 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
 
                     <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                           <Eye size={20} className="text-white" />
                         </div>
                         <div>
@@ -1554,8 +1558,8 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                           <BarChart3 size={20} className="text-white" />
                         </div>
                         <div>
-                          <p className="text-gray-400 text-sm">Engagement Rate</p>
-                          <p className="text-white text-2xl font-bold">{roiMetrics.engagement_rate}</p>
+                          <p className="text-gray-400 text-sm">Total Replies</p>
+                          <p className="text-white text-2xl font-bold">{roiMetrics.total_replies_generated}</p>
                         </div>
                       </div>
                     </div>
@@ -1611,14 +1615,14 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                                 r/{comment.subreddit}
                               </span>
                               {/* Display scores */}
-                              <div className="flex items-center gap-3 text-xs text-gray-400">
-                                <div className="flex items-center gap-1">
-                                  <TrendingUp size={12} />
-                                  <span>{comment.roiData?.score || 0} karma</span>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 border border-orange-500/30 rounded-md">
+                                  <TrendingUp size={12} className="text-orange-400" />
+                                  <span className="text-orange-300 text-xs font-medium">{comment.roiData?.score || 0} karma</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <MessageSquare size={12} />
-                                  <span>{comment.roiData?.replies || 0} replies</span>
+                                <div className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 border border-orange-500/30 rounded-md">
+                                  <MessageSquare size={12} className="text-orange-400" />
+                                  <span className="text-orange-300 text-xs font-medium">{comment.roiData?.replies || 0} replies</span>
                                 </div>
                               </div>
                             </div>
@@ -1637,9 +1641,16 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                           <p className="text-gray-300 text-sm mb-3 line-clamp-2">
                             {comment.suggestedReply}
                           </p>
-                          <div className="flex gap-4 text-xs text-gray-400">
-                          <span>Posted: {formatDistanceToNow(new Date(comment.date_created), { addSuffix: true })}</span>
-
+                          <div className="flex justify-between items-center text-xs text-gray-400">
+                            <span>Posted: {formatDistanceToNow(new Date(comment.date_created), { addSuffix: true })}</span>
+                            {(comment.roiData?.replies || 0) > 0 && (
+                              <button 
+                                onClick={() => window.open(`https://reddit.com${comment.roiData?.permalink}`, '_blank')}
+                                className="px-2 py-1 bg-blue-500/20 border border-blue-500/30 rounded-md text-blue-300 hover:bg-blue-500/30 transition-colors text-xs"
+                              >
+                                View Replies ({comment.roiData?.replies})
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1782,7 +1793,7 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
 
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
                               <TrendingUp size={20} className="text-white" />
                             </div>
                             <div>
@@ -1794,7 +1805,7 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
 
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                               <MessageSquare size={20} className="text-white" />
                             </div>
                             <div>
