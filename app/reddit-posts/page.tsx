@@ -597,7 +597,7 @@ const CreateRedditPostPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
+      <div className="flex items-center justify-center h-screen">
         <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full"></div>
       </div>
     );
@@ -608,7 +608,7 @@ const CreateRedditPostPage = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-black text-white transition-all duration-300 ease-in-out ${
+    <div className={`min-h-screen transition-all duration-300 ease-in-out ${
       isPageTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
     }`}>
       <div className="max-w-6xl mx-auto p-6">
