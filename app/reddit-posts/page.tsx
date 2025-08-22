@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle } from 'lucide-react';
+import Sidebar from '@/components/Sidebar';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle, Search } from 'lucide-react';
 
 // Types (keep existing)
 interface PostType {
@@ -608,6 +609,9 @@ const CreateRedditPostPage = () => {
   }
 
   return (
+    <div className="flex">
+        <Sidebar />
+
     <div className={`min-h-screen transition-all duration-300 ease-in-out ${
       isPageTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
     }`}>
@@ -615,23 +619,8 @@ const CreateRedditPostPage = () => {
         {/* Enhanced Header */}
         <div className="mb-12">
           <div className="flex items-center justify-between">
-            {/* Left side - Back button and title */}
+            {/* Left side - title */}
             <div className="flex items-center">
-              <button
-                onClick={() => {
-                  if (currentStep > 1) {
-                    handleStepChange(currentStep - 1);
-                  } else {
-                    setIsPageTransitioning(true);
-                    setTimeout(() => {
-                      router.back();
-                    }, 200);
-                  }
-                }}
-                className="mr-6 p-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all duration-200"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
               <div>
                 <h1 className="text-4xl font-bold text-white mb-2" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}}>
                   Create Reddit Post
@@ -654,7 +643,7 @@ const CreateRedditPostPage = () => {
                   <button
                     onClick={findMoreSubreddits}
                     disabled={isLoadingMore}
-                    className="flex items-center px-5 py-3 text-sm bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                    className="flex items-center px-5 py-3 text-sm bg-gray-700 text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium"
                   >
                     {isLoadingMore ? (
                       <>
@@ -663,7 +652,7 @@ const CreateRedditPostPage = () => {
                       </>
                     ) : (
                       <>
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Search className="w-4 h-4 mr-2" />
                         Find More
                       </>
                     )}
@@ -683,25 +672,19 @@ const CreateRedditPostPage = () => {
           </div>
         </div>
 
-        {/* Enhanced Progress Steps - Card Stack Style */}
+        {/* Enhanced Progress Steps - Dynamic Card Stack Style */}
 <div className="mb-12">
- <div 
-   className="flex items-center justify-center"
-   style={{
-     marginLeft: `${-((steps.length - 1) * 50) }px`
-   }}
- >
+ <div className="flex items-center justify-center gap-2 sm:gap-4 px-2 sm:px-4 overflow-x-auto">
    {steps.map((step, index) => (
      <div 
        key={step.number} 
-       className="flex flex-col items-center"
+       className="flex flex-col items-center flex-shrink-0"
        style={{
-         transform: `translateX(${index * 50}px)`,
          zIndex: currentStep >= step.number ? 30 + index : 10 + index
        }}
      >
-       <div 
-         className="relative h-24 px-12 flex flex-col items-center justify-center text-white font-bold text-lg rounded-xl"
+       <button 
+         className="relative h-12 sm:h-16 md:h-20 lg:h-24 px-2 sm:px-4 md:px-8 lg:px-12 flex flex-col items-center justify-center text-white font-bold rounded-lg sm:rounded-xl w-24 sm:w-32 md:w-48 lg:w-64 xl:w-80 cursor-pointer hover:scale-105 transition-transform duration-200"
          style={{
            background: currentStep >= step.number 
              ? 'linear-gradient(135deg, #f97316, #ea580c)' 
@@ -710,17 +693,22 @@ const CreateRedditPostPage = () => {
              ? `0 ${20 + index * 5}px ${30 + index * 5}px -5px rgba(249, 115, 22, 0.4)`
              : `0 ${8 + index * 2}px ${16 + index * 2}px -2px rgba(0, 0, 0, 0.3)`,
            transition: 'all 500ms ease-in-out',
-           width: '280px',
            border: currentStep >= step.number ? '2px solid rgba(249, 115, 22, 0.3)' : '2px solid transparent'
          }}
+         onClick={() => {
+           // Only allow going back to completed steps or current step
+           if (step.number <= currentStep) {
+             handleStepChange(step.number);
+           }
+         }}
        >
-         <span className="text-center font-semibold mb-1">
+         <span className="text-center font-semibold mb-0 sm:mb-1 text-xs sm:text-sm md:text-base lg:text-lg truncate">
            {step.title}
          </span>
-         <span className="text-xs text-center opacity-80">
+         <span className="text-xs text-center opacity-80 hidden md:block">
            {step.description}
          </span>
-       </div>
+       </button>
      </div>
    ))}
  </div>
@@ -779,7 +767,7 @@ const CreateRedditPostPage = () => {
                           onChange={(e) => setCustomSubredditName(e.target.value)}
                           placeholder="programming"
                           className="flex-1 px-4 py-3 border border-gray-600 rounded-r-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800 text-white"
-                          onKeyPress={(e) => e.key === 'Enter' && addCustomSubreddit()}
+                          onKeyDown={(e) => e.key === 'Enter' && addCustomSubreddit()}
                         />
                       </div>
                     </div>
@@ -915,6 +903,27 @@ const CreateRedditPostPage = () => {
                 </div>
               ) : (
                 <>
+                  {/* Subreddit Analysis Summary */}
+                  <div className="mb-8 p-6 bg-blue-900/20 border border-blue-800 rounded-xl">
+                    <div className="flex items-start">
+                      <Shield className="w-6 h-6 text-blue-400 mr-3 mt-0.5" />
+                      <div>
+                        <h4 className="text-lg font-medium text-blue-200 mb-2">
+                          Subreddit Analysis Summary
+                        </h4>
+                        <div className="text-sm text-blue-300 space-y-2">
+                          <div>✓ Recommended: {complianceData?.allowed_post_types.join(', ') || 'None identified'}</div>
+                          {complianceData?.unclear_post_types && complianceData.unclear_post_types.length > 0 && (
+                            <div>⚠ Verify rules for: {complianceData.unclear_post_types.join(', ')}</div>
+                          )}
+                          {complianceData?.blocked_post_types && complianceData.blocked_post_types.length > 0 && (
+                            <div>✗ Not recommended: {complianceData.blocked_post_types.join(', ')}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {Object.entries(postTypes).map(([key, postType], index) => {
                       const status = getPostTypeStatus(key);
@@ -924,22 +933,24 @@ const CreateRedditPostPage = () => {
                       return (
                         <div
                           key={key}
-                          className={`border-2 rounded-xl p-6 transition-all duration-200 animate-slideUp ${
+                          className={`border-2 rounded-xl p-6 transition-all duration-200 animate-slideUp backdrop-blur-md ${
                             isSelected
                               ? 'border-orange-500 bg-orange-900/20 shadow-lg shadow-orange-500/20'
                               : canSelect
-                              ? `${getCardBorderColor(status, isSelected)} cursor-pointer hover:shadow-lg hover:shadow-gray-900/20`
+                              ? `${getCardBorderColor(status, isSelected)} cursor-pointer hover:shadow-lg hover:shadow-gray-900/20 bg-gray-900/30`
                               : 'border-gray-700 bg-gray-900/50 opacity-60 cursor-not-allowed'
                           }`}
                           style={{ animationDelay: `${index * 100}ms` }}
                           onClick={() => canSelect && setSelectedPostType(key)}
                         >
                           <div className="flex items-start justify-between mb-3">
-                            <h3 className="font-semibold text-lg text-white">{postType.name}</h3>
                             <div className="flex items-center space-x-2">
+                              <h3 className="font-semibold text-lg text-white">{postType.name}</h3>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRiskBadgeColor(postType.risk_level)}`}>
                                 {postType.risk_level} risk
                               </span>
+                            </div>
+                            <div className="flex items-center">
                               {getStatusBadge(status)}
                             </div>
                           </div>
@@ -967,27 +978,6 @@ const CreateRedditPostPage = () => {
                         </div>
                       );
                     })}
-                  </div>
-
-                  {/* Subreddit Analysis Summary */}
-                  <div className="mt-8 p-6 bg-blue-900/20 border border-blue-800 rounded-xl">
-                    <div className="flex items-start">
-                      <Shield className="w-6 h-6 text-blue-400 mr-3 mt-0.5" />
-                      <div>
-                        <h4 className="text-lg font-medium text-blue-200 mb-2">
-                          Subreddit Analysis Summary
-                        </h4>
-                        <div className="text-sm text-blue-300 space-y-2">
-                          <div>✓ Recommended: {complianceData?.allowed_post_types.join(', ') || 'None identified'}</div>
-                          {complianceData?.unclear_post_types && complianceData.unclear_post_types.length > 0 && (
-                            <div>⚠ Check rules first: {complianceData.unclear_post_types.join(', ')}</div>
-                          )}
-                          {complianceData?.blocked_post_types && complianceData.blocked_post_types.length > 0 && (
-                            <div>✗ Not recommended: {complianceData.blocked_post_types.join(', ')}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </>
               )}
@@ -1233,6 +1223,7 @@ const CreateRedditPostPage = () => {
           animation: slideUp 0.4s ease-out both;
         }
       `}</style>
+    </div>
     </div>
   );
 };
