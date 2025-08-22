@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode = false }) => {
           <NavItem
             href="/archive"
             icon={<Archive size={20} />}
-            text="Archive"
+            text="Analytics & Archive"
             isCollapsed={isCollapsed}
             className="dark:hover:bg-gray-800/50 dark:text-gray-300 dark:hover:text-white"
           />

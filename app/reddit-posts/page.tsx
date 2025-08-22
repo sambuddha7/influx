@@ -68,8 +68,10 @@ const CreateRedditPostPage = () => {
   const [regenerateInstructions, setRegenerateInstructions] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showPostSuccessModal, setShowPostSuccessModal] = useState(false);
+  const [showNextStepsModal, setShowNextStepsModal] = useState(false);
   
   // Data
+  const api_url = process.env.NEXT_PUBLIC_API_URL;
   const [recommendedSubreddits, setRecommendedSubreddits] = useState<SubredditRecommendation[]>([]);
   const [postTypes, setPostTypes] = useState<Record<string, PostType>>({});
   const [complianceData, setComplianceData] = useState<{
@@ -129,7 +131,7 @@ const CreateRedditPostPage = () => {
 
   const fetchPostTypes = async () => {
     try {
-      const response = await fetch('http://localhost:8000/reddit-posts/post-types');
+      const response = await fetch(`${api_url}/reddit-posts/post-types`);
       const data = await response.json();
       setPostTypes(data.data);
     } catch (err) {
@@ -145,7 +147,7 @@ const CreateRedditPostPage = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8000/reddit-posts/recommended-subreddits', {
+      const response = await fetch(`${api_url}/reddit-posts/recommended-subreddits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -206,7 +208,7 @@ const CreateRedditPostPage = () => {
         regenerateInstructions ? `REGENERATION CHANGES: ${regenerateInstructions}` : ''
       ].filter(Boolean).join('\n\n');
       
-      const response = await fetch('http://localhost:8000/reddit-posts/generate-post', {
+      const response = await fetch(`${api_url}/reddit-posts/generate-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -246,21 +248,6 @@ const CreateRedditPostPage = () => {
     setShowPostSuccessModal(true);
   };
   
-  const handleMakeAnotherPost = () => {
-    // Reset all state to go back to step 1
-    setCurrentStep(1);
-    setSelectedPostType('');
-    setSelectedSubreddit('');
-    setGeneratedPost(null);
-    setCustomInstructions('');
-    setComplianceData(null);
-    setShowPostSuccessModal(false);
-    setError(null);
-  };
-  
-  const handleBackToDashboard = () => {
-    router.push('/dashboard'); // Adjust path as needed
-  };
 
   const findMoreSubreddits = async () => {
     if (!user) return;
@@ -269,7 +256,7 @@ const CreateRedditPostPage = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8000/reddit-posts/find-more-subreddits', {
+      const response = await fetch(`${api_url}/reddit-posts/find-more-subreddits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.uid })
@@ -321,7 +308,7 @@ const CreateRedditPostPage = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8000/reddit-posts/add-custom-subreddit', {
+      const response = await fetch(`${api_url}/reddit-posts/add-custom-subreddit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -369,7 +356,7 @@ const CreateRedditPostPage = () => {
     if (!user) return;
     
     try {
-      const response = await fetch('http://localhost:8000/reddit-posts/remove-subreddit', {
+      const response = await fetch(`${api_url}/reddit-posts/remove-subreddit`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -427,7 +414,7 @@ const CreateRedditPostPage = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8000/reddit-posts/generate-post', {
+      const response = await fetch(`${api_url}/reddit-posts/generate-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -506,6 +493,82 @@ const CreateRedditPostPage = () => {
       default:
         return null;
     }
+  };
+
+  const handlePostConfirmed = async () => {
+    if (!user || !generatedPost) return;
+    
+    try {
+      console.log('🔍 DEBUG: Starting handlePostConfirmed with:', {
+        user_id: user.uid,
+        post_id: generatedPost.post_id,
+        generatedPost: generatedPost
+      });
+      
+      // Simply update the existing post's status to 'posted' and include any edits
+      if (generatedPost.post_id) {
+        console.log('🔍 DEBUG: Updating existing post status for post_id:', generatedPost.post_id);
+        console.log('🔍 DEBUG: Current generatedPost content:', {
+          title: generatedPost.title,
+          body: generatedPost.body,
+          target_audience: generatedPost.target_audience
+        });
+        
+        const updateResponse = await fetch(`${api_url}/reddit-posts/update-post-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            post_id: generatedPost.post_id,
+            status: 'posted',
+            updated_content: {
+              title: generatedPost.title,
+              body: generatedPost.body,
+              target_audience: generatedPost.target_audience
+            }
+          })
+        });
+        
+        console.log('🔍 DEBUG: Update response status:', updateResponse.status);
+        
+        if (updateResponse.ok) {
+          const updateData = await updateResponse.json();
+          console.log('🔍 DEBUG: Successfully updated post status:', updateData);
+        } else {
+          const errorData = await updateResponse.text();
+          console.error('🔍 DEBUG: Failed to update post status:', errorData);
+        }
+      } else {
+        console.log('🔍 DEBUG: No post_id found, cannot update status');
+      }
+    } catch (err) {
+      console.error('🔍 DEBUG: Failed to track posted status:', err);
+    }
+    
+    // Close first modal and show second modal
+    setShowPostSuccessModal(false);
+    setShowNextStepsModal(true);
+  };
+  
+  const handlePostNotMade = () => {
+    // Close first modal and show second modal
+    setShowPostSuccessModal(false);
+    setShowNextStepsModal(true);
+  };
+  
+  const handleCreateAnotherPost = () => {
+    // Reset all state to go back to step 1
+    setCurrentStep(1);
+    setSelectedPostType('');
+    setSelectedSubreddit('');
+    setGeneratedPost(null);
+    setCustomInstructions('');
+    setComplianceData(null);
+    setShowNextStepsModal(false);
+    setError(null);
+  };
+  
+  const handleReturnToDashboard = () => {
+    router.push('/dashboard'); // Adjust path as needed
   };
 
   const getRiskBadgeColor = (riskLevel: string) => {
@@ -1101,71 +1164,58 @@ const CreateRedditPostPage = () => {
         {showPostSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
-            <h3 className="text-xl font-semibold text-white mb-4">Reddit Opened!</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">Did you make that post?</h3>
             <p className="text-gray-300 text-sm mb-6">
-                Reddit&apos;s submit page has opened in a new tab. Copy and paste your title and content to complete your post.
+                We opened Reddit for you. If you posted your content, click &quot;Yes&quot; to track it in your analytics. 
+                This helps us measure your Reddit marketing performance.
             </p>
             
             <div className="space-y-3">
                 <button
-                onClick={handleMakeAnotherPost}
-                className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                onClick={handlePostConfirmed}
+                className="w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
                 >
-                Make Another Post
+                Yes, I posted it
                 </button>
                 <button
-                onClick={handleBackToDashboard}
-                className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                onClick={handlePostNotMade}
+                className="w-full px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
                 >
-                Back to Dashboard
-                </button>
-                <button
-                onClick={async () => {
-                    console.log('Save button clicked'); // Debug log
-                    if (!user || !generatedPost) {
-                    console.log('Missing user or post data');
-                    return;
-                    }
-                    
-                    try {
-                    console.log('Saving post...', generatedPost); // Debug log
-                    const response = await fetch('http://localhost:8000/reddit-posts/save-generated-post', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                        user_id: user.uid,
-                        post_data: {
-                            ...generatedPost,
-                            status: 'archived',
-                            saved_at: new Date().toISOString()
-                        }
-                        })
-                    });
-                    
-                    console.log('Response status:', response.status); // Debug log
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('Save successful:', data); // Debug log
-                        alert('Post saved to archive!');
-                    } else {
-                        const errorData = await response.json();
-                        console.error('Save failed:', errorData);
-                        alert(`Failed to save post: ${errorData.detail || 'Unknown error'}`);
-                    }
-                    } catch (err) {
-                    console.error('Failed to save post:', err);
-                    alert('Failed to save post - check console for details');
-                    }
-                }}
-                className="w-full px-4 py-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 font-medium"
-                >
-                Save Post
+                No, I didn&apos;t post
                 </button>
             </div>
             </div>
         </div>
         )}
+
+        {/* Next Steps Modal */}
+        {showNextStepsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
+            <h3 className="text-xl font-semibold text-white mb-4">What would you like to do next?</h3>
+            <p className="text-gray-300 text-sm mb-6">
+                Great! Your post has been tracked. Choose your next action:
+            </p>
+            
+            <div className="space-y-3">
+                <button
+                onClick={handleCreateAnotherPost}
+                className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                >
+                Create Another Post
+                </button>
+                <button
+                onClick={handleReturnToDashboard}
+                className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                >
+                Return to Dashboard
+                </button>
+            </div>
+            </div>
+        </div>
+        )}
+
+
 
       {/* Custom CSS for animations */}
       <style jsx>{`
