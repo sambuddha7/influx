@@ -551,9 +551,8 @@ const CreateRedditPostPage = () => {
   };
   
   const handlePostNotMade = () => {
-    // Close first modal and show second modal
+    // Close modal and stay on generate and edit page
     setShowPostSuccessModal(false);
-    setShowNextStepsModal(true);
   };
   
   const handleCreateAnotherPost = () => {
