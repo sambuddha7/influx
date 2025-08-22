@@ -131,7 +131,7 @@ const D3CommentsChart = ({ data }: { data: ChartDataPoint[] }) => {
     // Add axes
     g.append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickFormat("" as any).tickSize(0))
+      .call(d3.axisBottom(xScale).tickFormat(() => "").tickSize(0))
       .selectAll("text")
       .style("fill", "#9CA3AF")
       .style("font-size", "12px")
@@ -228,11 +228,11 @@ const D3CommentsChart = ({ data }: { data: ChartDataPoint[] }) => {
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedChartData & { date: Date }) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: MouseEvent, d: ProcessedChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
         tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Karma: ${d.karma}<br/>Comments: ${d.comments}`)
-          .style("left", ((event as MouseEvent).pageX + 10) + "px")
-          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
         d3.select(this as SVGCircleElement).attr("r", 6);
       })
       .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
@@ -251,11 +251,11 @@ const D3CommentsChart = ({ data }: { data: ChartDataPoint[] }) => {
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedChartData & { date: Date }) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: MouseEvent, d: ProcessedChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
         tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Karma: ${d.karma}<br/>Comments: ${d.comments}`)
-          .style("left", ((event as MouseEvent).pageX + 10) + "px")
-          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
         d3.select(this as SVGCircleElement).attr("r", 6);
       })
       .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
@@ -304,6 +304,16 @@ interface ProcessedPostChartData {
   date: Date | null;
   upvotes: number;
   comments: number;
+}
+
+interface PostsMetrics {
+  total_posts: number;
+  total_upvotes: number;
+  total_comments: number;
+  avg_upvotes_per_post: number;
+  avg_comments_per_post: number;
+  engagement_rate: number;
+  top_performing_subreddits: { [key: string]: number };
 }
 
 // D3 Posts Chart Component
@@ -365,7 +375,7 @@ const D3PostsChart = ({ data }: { data: PostChartDataPoint[] }) => {
     // Add axes
     g.append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%m/%d") as any).tickSize(0))
+      .call(d3.axisBottom(xScale).tickFormat((d: d3.NumberValue | Date) => d3.timeFormat("%m/%d")(d as Date)).tickSize(0))
       .selectAll("text")
       .style("fill", "#9CA3AF")
       .style("font-size", "12px")
@@ -462,11 +472,11 @@ const D3PostsChart = ({ data }: { data: PostChartDataPoint[] }) => {
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedPostChartData & { date: Date }) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: MouseEvent, d: ProcessedPostChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
         tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Upvotes: ${d.upvotes}<br/>Comments: ${d.comments}`)
-          .style("left", ((event as MouseEvent).pageX + 10) + "px")
-          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
         d3.select(this as SVGCircleElement).attr("r", 6);
       })
       .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
@@ -485,11 +495,11 @@ const D3PostsChart = ({ data }: { data: PostChartDataPoint[] }) => {
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedPostChartData & { date: Date }) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: MouseEvent, d: ProcessedPostChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
         tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Upvotes: ${d.upvotes}<br/>Comments: ${d.comments}`)
-          .style("left", ((event as MouseEvent).pageX + 10) + "px")
-          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
         d3.select(this as SVGCircleElement).attr("r", 6);
       })
       .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
@@ -554,12 +564,12 @@ export default function ArchivePage() {
   const [isSetupLoading, setIsSetupLoading] = useState(false);
   // Posts Analytics states
   const [isPostsAnalyticsMode, setIsPostsAnalyticsMode] = useState(false);
-  const [postsMetrics, setPostsMetrics] = useState<any>(null);
-  const [userRedditPosts, setUserRedditPosts] = useState<any[]>([]);
+  const [postsMetrics, setPostsMetrics] = useState<PostsMetrics | null>(null);
+  const [userRedditPosts, setUserRedditPosts] = useState<RedditPostData[]>([]);
   const [isLoadingPostsAnalytics, setIsLoadingPostsAnalytics] = useState(false);
   // Matched content states
   const [matchedComments, setMatchedComments] = useState<ArchivedPost[]>([]);
-  const [matchedPosts, setMatchedPosts] = useState<any[]>([]);
+  const [matchedPosts, setMatchedPosts] = useState<GeneratedPost[]>([]);
 
   const [displayedMatchedComments, setDisplayedMatchedComments] = useState<ArchivedPost[]>([]);
   const [displayedMatchedPosts, setDisplayedMatchedPosts] = useState<GeneratedPost[]>([]);
@@ -1305,10 +1315,10 @@ const getPostsChartData = () => {
     .sort((a, b) => {
       const dateA = typeof a.created_utc === 'string' 
         ? new Date(a.created_utc.includes('Z') ? a.created_utc : a.created_utc + 'Z').getTime()
-        : a.created_utc * 1000;
+        : (a.created_utc || 0) * 1000;
       const dateB = typeof b.created_utc === 'string'
         ? new Date(b.created_utc.includes('Z') ? b.created_utc : b.created_utc + 'Z').getTime()
-        : b.created_utc * 1000;
+        : (b.created_utc || 0) * 1000;
       return dateA - dateB;
     });
 
@@ -1324,7 +1334,7 @@ const getPostsChartData = () => {
           postDate = new Date(post.created_utc + 'Z');
         }
       } else {
-        postDate = new Date(post.created_utc * 1000);
+        postDate = new Date((post.created_utc || 0) * 1000);
       }
       
       const date = postDate.toISOString().split('T')[0];
