@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [displayedPosts, setDisplayedPosts] = useState<RedditPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoading2, setIsLoading2] = useState(true);
+  const [isUpdatingMetrics, setIsUpdatingMetrics] = useState(false);
   const [isApproving, setIsApproving] = useState<string | null>(null);
 
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -77,7 +78,7 @@ export default function Dashboard() {
 
 
   // Add this function after the RedditPost interface definition
-const checkAndUpdatePostMetrics = async (userId: string) => {
+const checkAndUpdatePostMetrics = async (userId: string, setUpdatingMetrics?: (loading: boolean) => void) => {
   try {
     // Get the last update timestamp
     const metricsRef = doc(db, 'post-metrics', userId);
@@ -99,7 +100,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
       const lastUpdated = new Date(metricsSnap.data().lastUpdated);
       const hoursSinceUpdate = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60); 
       
-      if (hoursSinceUpdate >= 1) {
+      if (hoursSinceUpdate >= 0.01) {
         shouldUpdate = true;
         // Update the timestamp
         await updateDoc(metricsRef, {
@@ -110,6 +111,7 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
     
     if (shouldUpdate) {
       console.log('Updating post metrics...');
+      setUpdatingMetrics?.(true);
       
       // Get all posts from Firestore
       const postsCollectionRef = collection(db, "reddit-posts", userId, "posts");
@@ -149,14 +151,17 @@ const checkAndUpdatePostMetrics = async (userId: string) => {
           }
           
           console.log('Post metrics updated successfully');
+          setUpdatingMetrics?.(false);
           return true;
         }
       }
+      setUpdatingMetrics?.(false);
     }
     
     return false;
   } catch (error) {
     console.error('Error updating post metrics:', error);
+    setUpdatingMetrics?.(false);
     return false;
   }
 };
@@ -371,7 +376,8 @@ const checkAndRefreshPosts = async (userId: string) => {
     if (!user) return;
     
     try {
-      await checkAndUpdatePostMetrics(user.uid);
+      // Check and update metrics independently
+      checkAndUpdatePostMetrics(user.uid, setIsUpdatingMetrics);
       const postsRefreshed = await checkAndRefreshPosts(user.uid);
 
       // Check if the document exists in Firestore
@@ -455,13 +461,16 @@ const checkAndRefreshPosts = async (userId: string) => {
     }
   }, [user]);
 
-  // Add periodic check for new posts
+  // Add periodic check for new posts and metrics updates
   useEffect(() => {
     if (!user) return;
     
     const interval = setInterval(async () => {
       // Only check if we're not currently loading and have been on the page for a while
-      if (!isLoading2 && !isLoading) {
+      if (!isLoading2 && !isLoading && !isUpdatingMetrics) {
+        // Check for metrics updates
+        checkAndUpdatePostMetrics(user.uid, setIsUpdatingMetrics);
+        
         const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
         const postsQuery = query(postsCollectionRef, orderBy("date_created", "desc"));
         const postsSnapshot = await getDocs(postsQuery);
@@ -478,7 +487,7 @@ const checkAndRefreshPosts = async (userId: string) => {
     }, 5000); // Check every 5 seconds
     
     return () => clearInterval(interval);
-  }, [user, allPosts.length, isLoading2, isLoading]);
+  }, [user, allPosts.length, isLoading2, isLoading, isUpdatingMetrics]);
 
   const loadMorePosts = () => {
     setIsLoadingMore(true);
@@ -861,12 +870,23 @@ const checkAndRefreshPosts = async (userId: string) => {
     );
   }
 
+  if (isUpdatingMetrics) {
+    return (
+      <div className='flex'>
+        <Sidebar />
+        <div className="flex-1">
+          <AIWorkflowLoading type="metrics" />
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading2) {
     return (
       <div className='flex'>
         <Sidebar />
         <div className="flex-1">
-          <AIWorkflowLoading />
+          <AIWorkflowLoading type="search" />
         </div>
       </div>
     );

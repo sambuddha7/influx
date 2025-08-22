@@ -1,30 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Target, Zap, CheckCircle, Loader } from 'lucide-react';
+import { Search, Target, Zap, CheckCircle, Loader, TrendingUp } from 'lucide-react';
 
-const AIWorkflowLoading: React.FC = () => {
+interface AIWorkflowLoadingProps {
+  type?: 'search' | 'metrics';
+}
+
+const AIWorkflowLoading: React.FC<AIWorkflowLoadingProps> = ({ type = 'search' }) => {
   const [currentStep, setCurrentStep] = useState(0);
 
-  const steps = [
+  const searchSteps = [
     {
       id: 'scanning',
       icon: Search,
       title: 'Scanning Reddit',
       description: 'Identifying high-signal discussion threads across communities',
-      duration: 15000
+      duration: 20000
     },
     {
       id: 'analyzing',
       icon: Target,
       title: 'Analyzing Relevance',
       description: 'Finding posts most relevant to your business context',
-      duration: 15000
+      duration: 20000
     },
     {
       id: 'scoring',
       icon: Zap,
       title: 'Scoring Opportunities',
       description: 'Evaluating engagement potential and lead quality',
-      duration: 15000
+      duration: 20000
     },
     {
       id: 'finalizing',
@@ -34,6 +38,32 @@ const AIWorkflowLoading: React.FC = () => {
       duration: 10000
     }
   ];
+
+  const metricsSteps = [
+    {
+      id: 'fetching',
+      icon: TrendingUp,
+      title: 'Fetching Latest Metrics',
+      description: 'Retrieving updated scores and comment counts from Reddit',
+      duration: 3000
+    },
+    {
+      id: 'processing',
+      icon: Target,
+      title: 'Processing Data',
+      description: 'Analyzing engagement trends and performance changes',
+      duration: 3000
+    },
+    {
+      id: 'updating',
+      icon: CheckCircle,
+      title: 'Updating Posts',
+      description: 'Refreshing your dashboard with latest metrics',
+      duration: 3000
+    }
+  ];
+
+  const steps = type === 'metrics' ? metricsSteps : searchSteps;
 
   useEffect(() => {
     if (currentStep < steps.length - 1) {
@@ -59,7 +89,11 @@ const AIWorkflowLoading: React.FC = () => {
               {/* Center icon */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                  <Search className="w-4 h-4 text-white" />
+                  {type === 'metrics' ? (
+                    <TrendingUp className="w-4 h-4 text-white" />
+                  ) : (
+                    <Search className="w-4 h-4 text-white" />
+                  )}
                 </div>
               </div>
             </div>
@@ -162,7 +196,9 @@ const AIWorkflowLoading: React.FC = () => {
         {/* Footer Message */}
         <div className="text-center mt-6">
           <p className="text-gray-600 dark:text-gray-400 text-sm">
-            Finding the perfect discussions for your business...
+            {type === 'metrics' 
+              ? 'Updating post metrics...' 
+              : 'Finding the perfect discussions for your business...'}
           </p>
         </div>
       </div>
