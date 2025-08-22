@@ -597,7 +597,7 @@ const CreateRedditPostPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
+      <div className="flex items-center justify-center h-screen">
         <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full"></div>
       </div>
     );
@@ -608,7 +608,7 @@ const CreateRedditPostPage = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-black text-white transition-all duration-300 ease-in-out ${
+    <div className={`min-h-screen transition-all duration-300 ease-in-out ${
       isPageTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
     }`}>
       <div className="max-w-6xl mx-auto p-6">
@@ -636,7 +636,6 @@ const CreateRedditPostPage = () => {
                 <h1 className="text-4xl font-bold text-white mb-2" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}}>
                   Create Reddit Post
                 </h1>
-                <p className="text-gray-400 text-lg">Generate engaging Reddit posts using AI</p>
               </div>
             </div>
             
@@ -665,7 +664,7 @@ const CreateRedditPostPage = () => {
                     ) : (
                       <>
                         <Plus className="w-4 h-4 mr-2" />
-                        Find More (5)
+                        Find More
                       </>
                     )}
                   </button>
@@ -755,14 +754,14 @@ const CreateRedditPostPage = () => {
               
               {/* Add Custom Subreddit Modal */}
               {showAddSubreddit && (
-                <div className="bg-blue-900/20 border border-blue-800 rounded-xl p-6 mb-6 animate-fadeIn">
+                <div className="bg-gray-800/50 border border-gray-600 rounded-xl p-6 mb-6 animate-fadeIn backdrop-blur-md">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-blue-200">
+                    <h3 className="text-lg font-medium text-gray-200">
                       Add Custom Subreddit
                     </h3>
                     <button
                       onClick={() => setShowAddSubreddit(false)}
-                      className="text-blue-400 hover:text-blue-200 transition-colors"
+                      className="text-gray-400 hover:text-gray-200 transition-colors"
                     >
                       ✕
                     </button>
@@ -800,7 +799,7 @@ const CreateRedditPostPage = () => {
                     </button>
                   </div>
                   
-                  <p className="text-sm text-blue-300 mt-3">
+                  <p className="text-sm text-gray-300 mt-3">
                     Enter the name of any subreddit to analyze and add to your list
                   </p>
                 </div>
@@ -836,7 +835,7 @@ const CreateRedditPostPage = () => {
                     return (
                       <div
                         key={subreddit.name}
-                        className="border border-gray-700 rounded-xl p-6 cursor-pointer hover:border-orange-500 hover:bg-gray-900/50 transition-all duration-200 relative group animate-slideUp"
+                        className="border border-gray-700 rounded-xl p-6 cursor-pointer hover:border-orange-500 hover:bg-gray-900/50 transition-all duration-200 relative group animate-slideUp backdrop-blur-md bg-gray-900/30"
                         style={{ animationDelay: `${index * 100}ms` }}
                         onClick={() => handleSubredditSelect(subreddit.name)}
                       >
