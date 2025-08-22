@@ -912,6 +912,27 @@ const CreateRedditPostPage = () => {
                 </div>
               ) : (
                 <>
+                  {/* Subreddit Analysis Summary */}
+                  <div className="mb-8 p-6 bg-blue-900/20 border border-blue-800 rounded-xl">
+                    <div className="flex items-start">
+                      <Shield className="w-6 h-6 text-blue-400 mr-3 mt-0.5" />
+                      <div>
+                        <h4 className="text-lg font-medium text-blue-200 mb-2">
+                          Subreddit Analysis Summary
+                        </h4>
+                        <div className="text-sm text-blue-300 space-y-2">
+                          <div>✓ Recommended: {complianceData?.allowed_post_types.join(', ') || 'None identified'}</div>
+                          {complianceData?.unclear_post_types && complianceData.unclear_post_types.length > 0 && (
+                            <div>⚠ Verify rules for: {complianceData.unclear_post_types.join(', ')}</div>
+                          )}
+                          {complianceData?.blocked_post_types && complianceData.blocked_post_types.length > 0 && (
+                            <div>✗ Not recommended: {complianceData.blocked_post_types.join(', ')}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {Object.entries(postTypes).map(([key, postType], index) => {
                       const status = getPostTypeStatus(key);
@@ -964,27 +985,6 @@ const CreateRedditPostPage = () => {
                         </div>
                       );
                     })}
-                  </div>
-
-                  {/* Subreddit Analysis Summary */}
-                  <div className="mt-8 p-6 bg-blue-900/20 border border-blue-800 rounded-xl">
-                    <div className="flex items-start">
-                      <Shield className="w-6 h-6 text-blue-400 mr-3 mt-0.5" />
-                      <div>
-                        <h4 className="text-lg font-medium text-blue-200 mb-2">
-                          Subreddit Analysis Summary
-                        </h4>
-                        <div className="text-sm text-blue-300 space-y-2">
-                          <div>✓ Recommended: {complianceData?.allowed_post_types.join(', ') || 'None identified'}</div>
-                          {complianceData?.unclear_post_types && complianceData.unclear_post_types.length > 0 && (
-                            <div>⚠ Check rules first: {complianceData.unclear_post_types.join(', ')}</div>
-                          )}
-                          {complianceData?.blocked_post_types && complianceData.blocked_post_types.length > 0 && (
-                            <div>✗ Not recommended: {complianceData.blocked_post_types.join(', ')}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </>
               )}
