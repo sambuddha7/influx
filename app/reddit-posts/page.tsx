@@ -836,7 +836,7 @@ const CreateRedditPostPage = () => {
                     return (
                       <div
                         key={subreddit.name}
-                        className="border border-gray-700 rounded-xl p-6 cursor-pointer hover:border-orange-500 hover:bg-gray-900/50 transition-all duration-200 relative group animate-slideUp"
+                        className="border border-gray-700 rounded-xl p-6 cursor-pointer hover:border-orange-500 hover:bg-gray-900/50 transition-all duration-200 relative group animate-slideUp backdrop-blur-md bg-gray-900/30"
                         style={{ animationDelay: `${index * 100}ms` }}
                         onClick={() => handleSubredditSelect(subreddit.name)}
                       >
