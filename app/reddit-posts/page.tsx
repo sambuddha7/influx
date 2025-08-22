@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import Sidebar from '@/components/Sidebar';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle } from 'lucide-react';
 
 // Types (keep existing)
@@ -608,6 +609,9 @@ const CreateRedditPostPage = () => {
   }
 
   return (
+    <div className="flex">
+        <Sidebar />
+
     <div className={`min-h-screen transition-all duration-300 ease-in-out ${
       isPageTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
     }`}>
@@ -1226,6 +1230,7 @@ const CreateRedditPostPage = () => {
           animation: slideUp 0.4s ease-out both;
         }
       `}</style>
+    </div>
     </div>
   );
 };
