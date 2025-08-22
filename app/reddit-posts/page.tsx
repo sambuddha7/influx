@@ -619,23 +619,8 @@ const CreateRedditPostPage = () => {
         {/* Enhanced Header */}
         <div className="mb-12">
           <div className="flex items-center justify-between">
-            {/* Left side - Back button and title */}
+            {/* Left side - title */}
             <div className="flex items-center">
-              <button
-                onClick={() => {
-                  if (currentStep > 1) {
-                    handleStepChange(currentStep - 1);
-                  } else {
-                    setIsPageTransitioning(true);
-                    setTimeout(() => {
-                      router.back();
-                    }, 200);
-                  }
-                }}
-                className="mr-6 p-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all duration-200"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
               <div>
                 <h1 className="text-4xl font-bold text-white mb-2" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}}>
                   Create Reddit Post
@@ -698,8 +683,8 @@ const CreateRedditPostPage = () => {
          zIndex: currentStep >= step.number ? 30 + index : 10 + index
        }}
      >
-       <div 
-         className="relative h-12 sm:h-16 md:h-20 lg:h-24 px-2 sm:px-4 md:px-8 lg:px-12 flex flex-col items-center justify-center text-white font-bold rounded-lg sm:rounded-xl w-24 sm:w-32 md:w-48 lg:w-64 xl:w-80"
+       <button 
+         className="relative h-12 sm:h-16 md:h-20 lg:h-24 px-2 sm:px-4 md:px-8 lg:px-12 flex flex-col items-center justify-center text-white font-bold rounded-lg sm:rounded-xl w-24 sm:w-32 md:w-48 lg:w-64 xl:w-80 cursor-pointer hover:scale-105 transition-transform duration-200"
          style={{
            background: currentStep >= step.number 
              ? 'linear-gradient(135deg, #f97316, #ea580c)' 
@@ -710,6 +695,12 @@ const CreateRedditPostPage = () => {
            transition: 'all 500ms ease-in-out',
            border: currentStep >= step.number ? '2px solid rgba(249, 115, 22, 0.3)' : '2px solid transparent'
          }}
+         onClick={() => {
+           // Only allow going back to completed steps or current step
+           if (step.number <= currentStep) {
+             handleStepChange(step.number);
+           }
+         }}
        >
          <span className="text-center font-semibold mb-0 sm:mb-1 text-xs sm:text-sm md:text-base lg:text-lg truncate">
            {step.title}
@@ -717,7 +708,7 @@ const CreateRedditPostPage = () => {
          <span className="text-xs text-center opacity-80 hidden md:block">
            {step.description}
          </span>
-       </div>
+       </button>
      </div>
    ))}
  </div>
