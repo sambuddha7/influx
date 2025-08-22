@@ -636,7 +636,6 @@ const CreateRedditPostPage = () => {
                 <h1 className="text-4xl font-bold text-white mb-2" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}}>
                   Create Reddit Post
                 </h1>
-                <p className="text-gray-400 text-lg">Generate engaging Reddit posts using AI</p>
               </div>
             </div>
             
@@ -665,7 +664,7 @@ const CreateRedditPostPage = () => {
                     ) : (
                       <>
                         <Plus className="w-4 h-4 mr-2" />
-                        Find More (5)
+                        Find More
                       </>
                     )}
                   </button>
@@ -755,14 +754,14 @@ const CreateRedditPostPage = () => {
               
               {/* Add Custom Subreddit Modal */}
               {showAddSubreddit && (
-                <div className="bg-blue-900/20 border border-blue-800 rounded-xl p-6 mb-6 animate-fadeIn">
+                <div className="bg-gray-800/50 border border-gray-600 rounded-xl p-6 mb-6 animate-fadeIn backdrop-blur-md">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-blue-200">
+                    <h3 className="text-lg font-medium text-gray-200">
                       Add Custom Subreddit
                     </h3>
                     <button
                       onClick={() => setShowAddSubreddit(false)}
-                      className="text-blue-400 hover:text-blue-200 transition-colors"
+                      className="text-gray-400 hover:text-gray-200 transition-colors"
                     >
                       ✕
                     </button>
@@ -800,7 +799,7 @@ const CreateRedditPostPage = () => {
                     </button>
                   </div>
                   
-                  <p className="text-sm text-blue-300 mt-3">
+                  <p className="text-sm text-gray-300 mt-3">
                     Enter the name of any subreddit to analyze and add to your list
                   </p>
                 </div>
