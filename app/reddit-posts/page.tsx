@@ -683,25 +683,19 @@ const CreateRedditPostPage = () => {
           </div>
         </div>
 
-        {/* Enhanced Progress Steps - Card Stack Style */}
+        {/* Enhanced Progress Steps - Dynamic Card Stack Style */}
 <div className="mb-12">
- <div 
-   className="flex items-center justify-center"
-   style={{
-     marginLeft: `${-((steps.length - 1) * 50) }px`
-   }}
- >
+ <div className="flex items-center justify-center gap-2 sm:gap-4 px-2 sm:px-4 overflow-x-auto">
    {steps.map((step, index) => (
      <div 
        key={step.number} 
-       className="flex flex-col items-center"
+       className="flex flex-col items-center flex-shrink-0"
        style={{
-         transform: `translateX(${index * 50}px)`,
          zIndex: currentStep >= step.number ? 30 + index : 10 + index
        }}
      >
        <div 
-         className="relative h-24 px-12 flex flex-col items-center justify-center text-white font-bold text-lg rounded-xl"
+         className="relative h-12 sm:h-16 md:h-20 lg:h-24 px-2 sm:px-4 md:px-8 lg:px-12 flex flex-col items-center justify-center text-white font-bold rounded-lg sm:rounded-xl w-24 sm:w-32 md:w-48 lg:w-64 xl:w-80"
          style={{
            background: currentStep >= step.number 
              ? 'linear-gradient(135deg, #f97316, #ea580c)' 
@@ -710,14 +704,13 @@ const CreateRedditPostPage = () => {
              ? `0 ${20 + index * 5}px ${30 + index * 5}px -5px rgba(249, 115, 22, 0.4)`
              : `0 ${8 + index * 2}px ${16 + index * 2}px -2px rgba(0, 0, 0, 0.3)`,
            transition: 'all 500ms ease-in-out',
-           width: '280px',
            border: currentStep >= step.number ? '2px solid rgba(249, 115, 22, 0.3)' : '2px solid transparent'
          }}
        >
-         <span className="text-center font-semibold mb-1">
+         <span className="text-center font-semibold mb-0 sm:mb-1 text-xs sm:text-sm md:text-base lg:text-lg truncate">
            {step.title}
          </span>
-         <span className="text-xs text-center opacity-80">
+         <span className="text-xs text-center opacity-80 hidden md:block">
            {step.description}
          </span>
        </div>
@@ -779,7 +772,7 @@ const CreateRedditPostPage = () => {
                           onChange={(e) => setCustomSubredditName(e.target.value)}
                           placeholder="programming"
                           className="flex-1 px-4 py-3 border border-gray-600 rounded-r-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800 text-white"
-                          onKeyPress={(e) => e.key === 'Enter' && addCustomSubreddit()}
+                          onKeyDown={(e) => e.key === 'Enter' && addCustomSubreddit()}
                         />
                       </div>
                     </div>
