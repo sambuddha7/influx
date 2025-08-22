@@ -717,7 +717,7 @@ useEffect(() => {
       try {
         const response = await fetch(`${apiUrl}/reddit-posts/post-history`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             user_id: user.uid,
             limit: 50
@@ -1035,7 +1035,7 @@ useEffect(() => {
     try {
       const response = await fetch(`${apiUrl}/update-reddit-roi`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: redditUsername,
           user_id: user.uid
@@ -1084,7 +1084,7 @@ const loadGeneratedPostsForAnalytics = async () => {
   try {
     const response = await fetch(`${apiUrl}/reddit-posts/post-history`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
         user_id: user.uid,
         limit: 50
@@ -1182,7 +1182,7 @@ const loadGeneratedPostsForAnalytics = async () => {
       console.log('Fetching Reddit posts...');
       const fetchResponse = await fetch(`${apiUrl}/fetch-reddit-posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           username: username,
           user_id: user!.uid 
@@ -1993,8 +1993,8 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                         <FileText size={64} className="mx-auto text-gray-600 mb-4" />
                         <h3 className="text-white text-lg font-medium mb-2">No Posts Found</h3>
                         <p className="text-gray-400 mb-4">
-                          We couldn't find any posts from your Reddit account. 
-                          Try refreshing the data or make sure you've posted on Reddit recently.
+                          We couldn&apos;t find any posts from your Reddit account. 
+                          Try refreshing the data or make sure you&apos;ve posted on Reddit recently.
                         </p>
                         <button
                           onClick={() => loadPostsAnalytics(redditUsername)}

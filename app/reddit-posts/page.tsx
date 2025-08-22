@@ -1166,7 +1166,7 @@ const CreateRedditPostPage = () => {
             <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
             <h3 className="text-xl font-semibold text-white mb-4">Did you make that post?</h3>
             <p className="text-gray-300 text-sm mb-6">
-                We opened Reddit for you. If you posted your content, click "Yes" to track it in your analytics. 
+                We opened Reddit for you. If you posted your content, click &quot;Yes&quot; to track it in your analytics. 
                 This helps us measure your Reddit marketing performance.
             </p>
             
@@ -1181,7 +1181,7 @@ const CreateRedditPostPage = () => {
                 onClick={handlePostNotMade}
                 className="w-full px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
                 >
-                No, I didn't post
+                No, I didn&apos;t post
                 </button>
             </div>
             </div>
