@@ -100,7 +100,7 @@ const checkAndUpdatePostMetrics = async (userId: string, setUpdatingMetrics?: (l
       const lastUpdated = new Date(metricsSnap.data().lastUpdated);
       const hoursSinceUpdate = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60); 
       
-      if (hoursSinceUpdate >= 0.01) {
+      if (hoursSinceUpdate >= 1) {
         shouldUpdate = true;
         // Update the timestamp
         await updateDoc(metricsRef, {
