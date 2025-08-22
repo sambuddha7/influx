@@ -942,22 +942,24 @@ const CreateRedditPostPage = () => {
                       return (
                         <div
                           key={key}
-                          className={`border-2 rounded-xl p-6 transition-all duration-200 animate-slideUp ${
+                          className={`border-2 rounded-xl p-6 transition-all duration-200 animate-slideUp backdrop-blur-md ${
                             isSelected
                               ? 'border-orange-500 bg-orange-900/20 shadow-lg shadow-orange-500/20'
                               : canSelect
-                              ? `${getCardBorderColor(status, isSelected)} cursor-pointer hover:shadow-lg hover:shadow-gray-900/20`
+                              ? `${getCardBorderColor(status, isSelected)} cursor-pointer hover:shadow-lg hover:shadow-gray-900/20 bg-gray-900/30`
                               : 'border-gray-700 bg-gray-900/50 opacity-60 cursor-not-allowed'
                           }`}
                           style={{ animationDelay: `${index * 100}ms` }}
                           onClick={() => canSelect && setSelectedPostType(key)}
                         >
                           <div className="flex items-start justify-between mb-3">
-                            <h3 className="font-semibold text-lg text-white">{postType.name}</h3>
                             <div className="flex items-center space-x-2">
+                              <h3 className="font-semibold text-lg text-white">{postType.name}</h3>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRiskBadgeColor(postType.risk_level)}`}>
                                 {postType.risk_level} risk
                               </span>
+                            </div>
+                            <div className="flex items-center">
                               {getStatusBadge(status)}
                             </div>
                           </div>
