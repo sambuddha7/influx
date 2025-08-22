@@ -15,6 +15,25 @@ import { formatDistanceToNow } from 'date-fns';
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import * as d3 from 'd3';
 
+interface RedditPostData {
+  id?: string;
+  subreddit?: string;
+  title?: string;
+  selftext?: string;
+  score?: number;
+  num_comments?: number;
+  permalink?: string;
+  post_title?: string;
+  comment_text?: string;
+  upvotes?: number;
+  comments?: number;
+  created_utc?: number | string;
+  date?: string;
+  replies?: number | RedditPostData[];
+  reply_count?: number;
+  last_updated?: string;
+}
+
 interface ArchivedPost {
   id: string;
   subreddit: string;
@@ -24,7 +43,7 @@ interface ArchivedPost {
   url: string;
   date_created: string;
   date_archived: string;
-  roiData?: any;
+  roiData?: RedditPostData;
 }
 
 interface GeneratedPost {
@@ -39,10 +58,22 @@ interface GeneratedPost {
   status?: string;
   created_at?: string;
   saved_at?: string;
-  roiData?: any;
+  roiData?: RedditPostData;
 }
 
-const D3CommentsChart = ({ data }: { data: any[] }) => {
+interface ChartDataPoint {
+  date: string;
+  karma: number;
+  comments: number;
+}
+
+interface ProcessedChartData {
+  date: Date | null;
+  karma: number;
+  comments: number;
+}
+
+const D3CommentsChart = ({ data }: { data: ChartDataPoint[] }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -62,37 +93,37 @@ const D3CommentsChart = ({ data }: { data: any[] }) => {
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const parseDate = d3.timeParse("%Y-%m-%d");
-    const processedData = data.map(d => ({
+    const processedData = data.map((d: ChartDataPoint): ProcessedChartData => ({
       ...d,
       date: parseDate(d.date)
-    })).filter(d => d.date);
+    })).filter((d: ProcessedChartData): d is ProcessedChartData & { date: Date } => d.date !== null);
 
     if (processedData.length === 0) return;
 
     const xScale = d3.scaleTime()
-      .domain(d3.extent(processedData, d => d.date) as [Date, Date])
+      .domain(d3.extent(processedData, (d: ProcessedChartData & { date: Date }) => d.date) as [Date, Date])
       .range([0, width]);
 
     const yScaleKarma = d3.scaleLinear()
-      .domain([0, d3.max(processedData, d => d.karma) || 0])
+      .domain([0, d3.max(processedData, (d: ProcessedChartData & { date: Date }) => d.karma) || 0])
       .range([height, 0]);
 
     const yScaleComments = d3.scaleLinear()
-      .domain([0, d3.max(processedData, d => d.comments) || 0])
+      .domain([0, d3.max(processedData, (d: ProcessedChartData & { date: Date }) => d.comments) || 0])
       .range([height, 0]);
 
     // Add grid
     g.append("g")
       .attr("class", "grid")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickSize(-height).tickFormat("" as any))
+      .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(() => ""))
       .style("stroke", "#374151")
       .style("stroke-dasharray", "3,3")
       .style("opacity", 0.3);
 
     g.append("g")
       .attr("class", "grid")
-      .call(d3.axisLeft(yScaleKarma).tickSize(-width).tickFormat("" as any))
+      .call(d3.axisLeft(yScaleKarma).tickSize(-width).tickFormat(() => ""))
       .style("stroke", "#374151")
       .style("stroke-dasharray", "3,3")
       .style("opacity", 0.3);
@@ -114,14 +145,14 @@ const D3CommentsChart = ({ data }: { data: any[] }) => {
       .attr("dx", "-0.5em");
 
     // Create lines
-    const karmaLine = d3.line<any>()
-      .x(d => xScale(d.date))
-      .y(d => yScaleKarma(d.karma))
+    const karmaLine = d3.line<ProcessedChartData & { date: Date }>()
+      .x((d: ProcessedChartData & { date: Date }) => xScale(d.date))
+      .y((d: ProcessedChartData & { date: Date }) => yScaleKarma(d.karma))
       .curve(d3.curveMonotoneX);
 
-    const commentsLine = d3.line<any>()
-      .x(d => xScale(d.date))
-      .y(d => yScaleComments(d.comments))
+    const commentsLine = d3.line<ProcessedChartData & { date: Date }>()
+      .x((d: ProcessedChartData & { date: Date }) => xScale(d.date))
+      .y((d: ProcessedChartData & { date: Date }) => yScaleComments(d.comments))
       .curve(d3.curveMonotoneX);
 
     // Add karma area with gradient
@@ -142,10 +173,10 @@ const D3CommentsChart = ({ data }: { data: any[] }) => {
       .attr("stop-color", "#F59E0B")
       .attr("stop-opacity", 0.6);
 
-    const karmaArea = d3.area<any>()
-      .x(d => xScale(d.date))
+    const karmaArea = d3.area<ProcessedChartData & { date: Date }>()
+      .x((d: ProcessedChartData & { date: Date }) => xScale(d.date))
       .y0(height)
-      .y1(d => yScaleKarma(d.karma))
+      .y1((d: ProcessedChartData & { date: Date }) => yScaleKarma(d.karma))
       .curve(d3.curveMonotoneX);
 
     g.append("path")
@@ -190,46 +221,46 @@ const D3CommentsChart = ({ data }: { data: any[] }) => {
       .data(processedData)
       .join("circle")
       .attr("class", "karma-dot")
-      .attr("cx", d => xScale(d.date))
-      .attr("cy", d => yScaleKarma(d.karma))
+      .attr("cx", (d: ProcessedChartData & { date: Date }) => xScale(d.date))
+      .attr("cy", (d: ProcessedChartData & { date: Date }) => yScaleKarma(d.karma))
       .attr("r", 4)
       .attr("fill", "#F59E0B")
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(event, d) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
         tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Karma: ${d.karma}<br/>Comments: ${d.comments}`)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-        d3.select(this).attr("r", 6);
+          .style("left", ((event as MouseEvent).pageX + 10) + "px")
+          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+        d3.select(this as SVGCircleElement).attr("r", 6);
       })
-      .on("mouseout", function() {
+      .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
         tooltip.transition().duration(500).style("opacity", 0);
-        d3.select(this).attr("r", 4);
+        d3.select(this as SVGCircleElement).attr("r", 4);
       });
 
     g.selectAll(".comments-dot")
       .data(processedData)
       .join("circle")
       .attr("class", "comments-dot")
-      .attr("cx", d => xScale(d.date))
-      .attr("cy", d => yScaleComments(d.comments))
+      .attr("cx", (d: ProcessedChartData & { date: Date }) => xScale(d.date))
+      .attr("cy", (d: ProcessedChartData & { date: Date }) => yScaleComments(d.comments))
       .attr("r", 4)
       .attr("fill", "#3B82F6")
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(event, d) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
         tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Karma: ${d.karma}<br/>Comments: ${d.comments}`)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-        d3.select(this).attr("r", 6);
+          .style("left", ((event as MouseEvent).pageX + 10) + "px")
+          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+        d3.select(this as SVGCircleElement).attr("r", 6);
       })
-      .on("mouseout", function() {
+      .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
         tooltip.transition().duration(500).style("opacity", 0);
-        d3.select(this).attr("r", 4);
+        d3.select(this as SVGCircleElement).attr("r", 4);
       });
 
     // Add legend
@@ -263,8 +294,20 @@ const D3CommentsChart = ({ data }: { data: any[] }) => {
   return <svg ref={svgRef}></svg>;
 };
 
+interface PostChartDataPoint {
+  date: string;
+  upvotes: number;
+  comments: number;
+}
+
+interface ProcessedPostChartData {
+  date: Date | null;
+  upvotes: number;
+  comments: number;
+}
+
 // D3 Posts Chart Component
-const D3PostsChart = ({ data }: { data: any[] }) => {
+const D3PostsChart = ({ data }: { data: PostChartDataPoint[] }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -284,37 +327,37 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const parseDate = d3.timeParse("%Y-%m-%d");
-    const processedData = data.map(d => ({
+    const processedData = data.map((d: PostChartDataPoint): ProcessedPostChartData => ({
       ...d,
       date: parseDate(d.date)
-    })).filter(d => d.date);
+    })).filter((d: ProcessedPostChartData): d is ProcessedPostChartData & { date: Date } => d.date !== null);
 
     if (processedData.length === 0) return;
 
     const xScale = d3.scaleTime()
-      .domain(d3.extent(processedData, d => d.date) as [Date, Date])
+      .domain(d3.extent(processedData, (d: ProcessedPostChartData & { date: Date }) => d.date) as [Date, Date])
       .range([0, width]);
 
     const yScaleUpvotes = d3.scaleLinear()
-      .domain([0, d3.max(processedData, d => d.upvotes) || 0])
+      .domain([0, d3.max(processedData, (d: ProcessedPostChartData & { date: Date }) => d.upvotes) || 0])
       .range([height, 0]);
 
     const yScaleComments = d3.scaleLinear()
-      .domain([0, d3.max(processedData, d => d.comments) || 0])
+      .domain([0, d3.max(processedData, (d: ProcessedPostChartData & { date: Date }) => d.comments) || 0])
       .range([height, 0]);
 
     // Add grid
     g.append("g")
       .attr("class", "grid")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickSize(-height).tickFormat("" as any))
+      .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(() => ""))
       .style("stroke", "#374151")
       .style("stroke-dasharray", "3,3")
       .style("opacity", 0.3);
 
     g.append("g")
       .attr("class", "grid")
-      .call(d3.axisLeft(yScaleUpvotes).tickSize(-width).tickFormat("" as any))
+      .call(d3.axisLeft(yScaleUpvotes).tickSize(-width).tickFormat(() => ""))
       .style("stroke", "#374151")
       .style("stroke-dasharray", "3,3")
       .style("opacity", 0.3);
@@ -336,14 +379,14 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
       .attr("dx", "-0.5em");
 
     // Create lines
-    const upvotesLine = d3.line<any>()
-      .x(d => xScale(d.date))
-      .y(d => yScaleUpvotes(d.upvotes))
+    const upvotesLine = d3.line<ProcessedPostChartData & { date: Date }>()
+      .x((d: ProcessedPostChartData & { date: Date }) => xScale(d.date))
+      .y((d: ProcessedPostChartData & { date: Date }) => yScaleUpvotes(d.upvotes))
       .curve(d3.curveMonotoneX);
 
-    const commentsLine = d3.line<any>()
-      .x(d => xScale(d.date))
-      .y(d => yScaleComments(d.comments))
+    const commentsLine = d3.line<ProcessedPostChartData & { date: Date }>()
+      .x((d: ProcessedPostChartData & { date: Date }) => xScale(d.date))
+      .y((d: ProcessedPostChartData & { date: Date }) => yScaleComments(d.comments))
       .curve(d3.curveMonotoneX);
 
     // Add upvotes area with gradient
@@ -364,10 +407,10 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
       .attr("stop-color", "#10B981")
       .attr("stop-opacity", 0.6);
 
-    const upvotesArea = d3.area<any>()
-      .x(d => xScale(d.date))
+    const upvotesArea = d3.area<ProcessedPostChartData & { date: Date }>()
+      .x((d: ProcessedPostChartData & { date: Date }) => xScale(d.date))
       .y0(height)
-      .y1(d => yScaleUpvotes(d.upvotes))
+      .y1((d: ProcessedPostChartData & { date: Date }) => yScaleUpvotes(d.upvotes))
       .curve(d3.curveMonotoneX);
 
     g.append("path")
@@ -412,46 +455,46 @@ const D3PostsChart = ({ data }: { data: any[] }) => {
       .data(processedData)
       .join("circle")
       .attr("class", "upvotes-dot")
-      .attr("cx", d => xScale(d.date))
-      .attr("cy", d => yScaleUpvotes(d.upvotes))
+      .attr("cx", (d: ProcessedPostChartData & { date: Date }) => xScale(d.date))
+      .attr("cy", (d: ProcessedPostChartData & { date: Date }) => yScaleUpvotes(d.upvotes))
       .attr("r", 4)
       .attr("fill", "#F59E0B")
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(event, d) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedPostChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
-        tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Upvotes: ${d.upvotes}<br/>Comments: ${d.comments}<br/>Posts: ${d.posts || 0}`)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-        d3.select(this).attr("r", 6);
+        tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Upvotes: ${d.upvotes}<br/>Comments: ${d.comments}`)
+          .style("left", ((event as MouseEvent).pageX + 10) + "px")
+          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+        d3.select(this as SVGCircleElement).attr("r", 6);
       })
-      .on("mouseout", function() {
+      .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
         tooltip.transition().duration(500).style("opacity", 0);
-        d3.select(this).attr("r", 4);
+        d3.select(this as SVGCircleElement).attr("r", 4);
       });
 
     g.selectAll(".comments-dot")
       .data(processedData)
       .join("circle")
       .attr("class", "comments-dot")
-      .attr("cx", d => xScale(d.date))
-      .attr("cy", d => yScaleComments(d.comments))
+      .attr("cx", (d: ProcessedPostChartData & { date: Date }) => xScale(d.date))
+      .attr("cy", (d: ProcessedPostChartData & { date: Date }) => yScaleComments(d.comments))
       .attr("r", 4)
       .attr("fill", "#3B82F6")
       .attr("stroke", "#1F2937")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
-      .on("mouseover", function(event, d) {
+      .on("mouseover", function(this: SVGCircleElement | d3.BaseType, event: any, d: ProcessedPostChartData & { date: Date }) {
         tooltip.transition().duration(200).style("opacity", 0.9);
-        tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Upvotes: ${d.upvotes}<br/>Comments: ${d.comments}<br/>Posts: ${d.posts || 0}`)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-        d3.select(this).attr("r", 6);
+        tooltip.html(`${d3.timeFormat("%m/%d/%Y")(d.date)}<br/>Upvotes: ${d.upvotes}<br/>Comments: ${d.comments}`)
+          .style("left", ((event as MouseEvent).pageX + 10) + "px")
+          .style("top", ((event as MouseEvent).pageY - 28) + "px");
+        d3.select(this as SVGCircleElement).attr("r", 6);
       })
-      .on("mouseout", function() {
+      .on("mouseout", function(this: SVGCircleElement | d3.BaseType) {
         tooltip.transition().duration(500).style("opacity", 0);
-        d3.select(this).attr("r", 4);
+        d3.select(this as SVGCircleElement).attr("r", 4);
       });
 
     // Add legend
@@ -696,8 +739,8 @@ useEffect(() => {
 
   // ROI-related functions
   // Function to match archived content with Reddit profile content
-  const matchArchivedWithProfile = useCallback((archivedData: ArchivedPost[], profileData: any[]) => {
-    const matched: (ArchivedPost & { roiData?: any })[] = [];
+  const matchArchivedWithProfile = useCallback((archivedData: ArchivedPost[], profileData: RedditPostData[]) => {
+    const matched: (ArchivedPost & { roiData?: RedditPostData })[] = [];
     
     archivedData.forEach(archivedItem => {
       // For comments: match by URL or title + subreddit combination
@@ -730,8 +773,8 @@ useEffect(() => {
   }, []);
 
   // Function to match generated posts with Reddit profile posts
-  const matchGeneratedWithProfile = useCallback((generatedData: GeneratedPost[], profileData: any[]) => {
-    const matched: (GeneratedPost & { roiData?: any })[] = [];
+  const matchGeneratedWithProfile = useCallback((generatedData: GeneratedPost[], profileData: RedditPostData[]) => {
+    const matched: (GeneratedPost & { roiData?: RedditPostData })[] = [];
     
     generatedData.forEach(generatedItem => {
       const foundProfile = profileData.find(profileItem => {
@@ -1169,7 +1212,7 @@ const loadGeneratedPostsForAnalytics = async () => {
 
         
         // Get the Reddit posts that match the generated posts
-        const matchedRedditPosts = postsData.filter((redditPost: any) => 
+        const matchedRedditPosts = postsData.filter((redditPost: RedditPostData) => 
           matched.some(generatedItem => {
             return (
               generatedItem.subreddit === (redditPost.subreddit || '') &&
@@ -1198,7 +1241,7 @@ const loadGeneratedPostsForAnalytics = async () => {
     }
   };
 
-const calculatePostsMetrics = (postsData: any[]) => {
+const calculatePostsMetrics = (postsData: RedditPostData[]) => {
   if (postsData.length === 0) {
     setPostsMetrics(null);
     return;
@@ -1622,7 +1665,7 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                                 </div>
                                 <div className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 border border-orange-500/30 rounded-md">
                                   <MessageSquare size={12} className="text-orange-400" />
-                                  <span className="text-orange-300 text-xs font-medium">{comment.roiData?.replies || 0} replies</span>
+                                  <span className="text-orange-300 text-xs font-medium">{comment.roiData?.reply_count || 0} replies</span>
                                 </div>
                               </div>
                             </div>
@@ -1643,12 +1686,12 @@ const toggleCommentsView = (viewMode: 'analytics' | 'archive') => {
                           </p>
                           <div className="flex justify-between items-center text-xs text-gray-400">
                             <span>Posted: {formatDistanceToNow(new Date(comment.date_created), { addSuffix: true })}</span>
-                            {(comment.roiData?.replies || 0) > 0 && (
+                            {(comment.roiData?.reply_count || 0) > 0 && (
                               <button 
                                 onClick={() => window.open(`https://reddit.com${comment.roiData?.permalink}`, '_blank')}
                                 className="px-2 py-1 bg-blue-500/20 border border-blue-500/30 rounded-md text-blue-300 hover:bg-blue-500/30 transition-colors text-xs"
                               >
-                                View Replies ({comment.roiData?.replies})
+                                View Replies ({comment.roiData?.reply_count})
                               </button>
                             )}
                           </div>
