@@ -4,7 +4,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle, Search } from 'lucide-react';
 
 // Types (keep existing)
 interface PostType {
@@ -658,7 +658,7 @@ const CreateRedditPostPage = () => {
                   <button
                     onClick={findMoreSubreddits}
                     disabled={isLoadingMore}
-                    className="flex items-center px-5 py-3 text-sm bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                    className="flex items-center px-5 py-3 text-sm bg-gray-700 text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium"
                   >
                     {isLoadingMore ? (
                       <>
@@ -667,7 +667,7 @@ const CreateRedditPostPage = () => {
                       </>
                     ) : (
                       <>
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Search className="w-4 h-4 mr-2" />
                         Find More
                       </>
                     )}
