@@ -4,7 +4,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle, Search, Copy } from 'lucide-react';
 
 // Types (keep existing)
 interface PostType {
@@ -70,6 +70,8 @@ const CreateRedditPostPage = () => {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showPostSuccessModal, setShowPostSuccessModal] = useState(false);
   const [showNextStepsModal, setShowNextStepsModal] = useState(false);
+  const [copiedTitle, setCopiedTitle] = useState(false);
+  const [copiedContent, setCopiedContent] = useState(false);
   
   // Data
   const api_url = process.env.NEXT_PUBLIC_API_URL;
@@ -595,6 +597,22 @@ const CreateRedditPostPage = () => {
     }
   };
 
+  const copyToClipboard = async (text: string, type: 'title' | 'content') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      
+      if (type === 'title') {
+        setCopiedTitle(true);
+        setTimeout(() => setCopiedTitle(false), 2000);
+      } else {
+        setCopiedContent(true);
+        setTimeout(() => setCopiedContent(false), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -1051,9 +1069,18 @@ const CreateRedditPostPage = () => {
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-lg font-medium text-white mb-3">
-                    Post Title
-                  </label>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-lg font-medium text-white">
+                      Post Title
+                    </label>
+                    <button
+                      onClick={() => copyToClipboard(generatedPost.title, 'title')}
+                      className="flex items-center px-3 py-1 text-sm text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    >
+                      <Copy className="w-4 h-4 mr-1" />
+                      {copiedTitle ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={generatedPost.title}
@@ -1063,9 +1090,18 @@ const CreateRedditPostPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-lg font-medium text-white mb-3">
-                    Post Content
-                  </label>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-lg font-medium text-white">
+                      Post Content
+                    </label>
+                    <button
+                      onClick={() => copyToClipboard(generatedPost.body, 'content')}
+                      className="flex items-center px-3 py-1 text-sm text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    >
+                      <Copy className="w-4 h-4 mr-1" />
+                      {copiedContent ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
                   <textarea
                     value={generatedPost.body}
                     onChange={(e) => setGeneratedPost({...generatedPost, body: e.target.value})}
