@@ -103,6 +103,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackType, setFeedbackType] = useState("");
   const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [showPostReplyModal, setShowPostReplyModal] = useState(false);
 
   const CONTENT_TRUNCATE_LENGTH = 1000;
   
@@ -200,10 +201,20 @@ const PostCard: React.FC<PostCardProps> = ({
     setFeedbackType("");
   };
 
-  // Modified handleApprove to also use formatted text
+  // Modified handleApprove to show popup instead of directly approving
   const handleApproveClick = () => {
     const formattedReply = formatTextForCopy(post.suggestedReply);
     handleApprove(post.id, formattedReply);
+    setShowPostReplyModal(true);
+  };
+
+  const handlePostReplyConfirmed = () => {
+    handleArchive(post.id);
+    setShowPostReplyModal(false);
+  };
+
+  const handlePostReplyNotMade = () => {
+    setShowPostReplyModal(false);
   };
 
   return (
@@ -577,6 +588,44 @@ const PostCard: React.FC<PostCardProps> = ({
               >
                 <Zap className="h-3.5 w-3.5" />
                 Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Post Reply Confirmation Modal */}
+      {showPostReplyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-medium text-white">Did you post the reply?</h3>
+              <button 
+                onClick={handlePostReplyNotMade}
+                className="text-gray-400 hover:text-orange-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-200 text-sm">
+                We copied your reply to the clipboard and opened the Reddit post. Did you successfully post your reply?
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={handlePostReplyConfirmed}
+                className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all font-medium"
+              >
+                Yes, I posted it
+              </button>
+              <button 
+                onClick={handlePostReplyNotMade}
+                className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-all font-medium"
+              >
+                No, I didn&apos;t post
               </button>
             </div>
           </div>
