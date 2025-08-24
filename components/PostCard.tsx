@@ -625,7 +625,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 onClick={handlePostReplyNotMade}
                 className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-all font-medium"
               >
-                No, I didn't post
+                No, I didn&apos;t post
               </button>
             </div>
           </div>
