@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { doc, setDoc, getDoc, collection, query, orderBy, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
-import { RedditPostData, ArchivedPost, GeneratedPost, ROIMetrics, PostsMetrics } from '@/types/archive';
+import { RedditPostData, ArchivedPost, GeneratedPost, ROIMetrics, PostsMetrics, ChartDataPoint, PostChartDataPoint } from '@/types/archive';
 import * as d3 from 'd3';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-// ROI Comment type definition
+// ROI Comment type definition (specific to this hook)
 type ROIComment = {
   id: string;
   score: number;
@@ -315,8 +315,8 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
       
       if (!postsSnap.empty) {
         const postsData = postsSnap.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          id: doc.id,
-          ...(doc.data() as RedditPostData)
+          ...(doc.data() as RedditPostData),
+          id: doc.id // Override with Firestore document ID
         }));
         
         setUserRedditPosts(postsData);
@@ -385,7 +385,7 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
     return matched;
   }, []);
 
-  const getROIChartData = (matchedComments: ROIComment[] = []) => {
+  const getROIChartData = (matchedComments: ROIComment[] = []): ChartDataPoint[] => {
     // Use matchedComments if provided, otherwise fall back to all roiComments
     const commentsToUse = matchedComments.length > 0 ? matchedComments : roiComments;
     if (!commentsToUse.length) return [];
@@ -447,7 +447,7 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
       }));
   };
 
-  const getPostsChartData = (matchedPosts: RedditPostData[] = []) => {
+  const getPostsChartData = (matchedPosts: RedditPostData[] = []): PostChartDataPoint[] => {
     // Use matchedPosts if provided, otherwise fall back to all userRedditPosts
     const postsToUse = matchedPosts.length > 0 ? matchedPosts : userRedditPosts;
     if (!postsToUse.length) return [];

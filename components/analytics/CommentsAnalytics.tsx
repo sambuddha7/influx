@@ -2,17 +2,9 @@ import React from 'react';
 import { MessageSquare, TrendingUp, Eye, BarChart3, ArrowUpRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentsChart } from '@/components/charts/CommentsChart';
-import { ArchivedPost, ROIMetrics } from '@/types/archive';
+import { ArchivedPost, ROIMetrics, ChartDataPoint } from '@/types/archive';
 
-// Chart data type definition
-type CommentsChartData = {
-  date: string;
-  karma: number;
-  comments: number;
-  engagement: number;
-};
-
-// ROI Comment type definition
+// ROI Comment type definition (specific to analytics component)
 type ROIComment = {
   id: string;
   score: number;
@@ -34,7 +26,7 @@ interface CommentsAnalyticsProps {
   hasMoreMatchedComments: boolean;
   isLoadingMoreAnalytics: boolean;
   onLoadMore: () => void;
-  getROIChartData: () => CommentsChartData[];
+  getROIChartData: () => ChartDataPoint[];
 }
 
 export const CommentsAnalytics: React.FC<CommentsAnalyticsProps> = ({

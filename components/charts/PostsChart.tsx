@@ -26,10 +26,13 @@ export const PostsChart: React.FC<PostsChartProps> = ({ data }) => {
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const parseDate = d3.timeParse("%Y-%m-%d");
-    const processedData = data.map((d: PostChartDataPoint): ProcessedPostChartData => ({
+    const processedData = data.map((d: PostChartDataPoint) => ({
       ...d,
       date: parseDate(d.date)
-    })).filter((d: ProcessedPostChartData): d is ProcessedPostChartData & { date: Date } => d.date !== null);
+    })).filter((d): d is ProcessedPostChartData => d.date !== null).map((d) => ({
+      ...d,
+      date: d.date as Date // Type assertion after null check
+    }));
 
     if (processedData.length === 0) return;
 

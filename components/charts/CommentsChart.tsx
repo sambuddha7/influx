@@ -26,10 +26,13 @@ export const CommentsChart: React.FC<CommentsChartProps> = ({ data }) => {
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const parseDate = d3.timeParse("%Y-%m-%d");
-    const processedData = data.map((d: ChartDataPoint): ProcessedChartData => ({
+    const processedData = data.map((d: ChartDataPoint) => ({
       ...d,
       date: parseDate(d.date)
-    })).filter((d: ProcessedChartData): d is ProcessedChartData & { date: Date } => d.date !== null);
+    })).filter((d): d is ProcessedChartData => d.date !== null).map((d) => ({
+      ...d,
+      date: d.date as Date // Type assertion after null check
+    }));
 
     if (processedData.length === 0) return;
 

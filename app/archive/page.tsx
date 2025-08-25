@@ -294,9 +294,7 @@ export default function ArchivePage() {
                 hasMoreMatchedComments={archiveData.hasMoreMatchedComments}
                 isLoadingMoreAnalytics={archiveData.isLoadingMoreAnalytics}
                 onLoadMore={archiveData.loadMoreMatchedComments}
-                getROIChartData={() => analytics.getROIChartData(
-                  archiveData.matchedComments.map(mc => mc.roiData).filter(Boolean)
-                )}
+                getROIChartData={() => analytics.getROIChartData()}
               />
             ) : (
               <CommentsArchive
@@ -322,9 +320,7 @@ export default function ArchivePage() {
                 isLoadingPostsAnalytics={analytics.isLoadingPostsAnalytics}
                 isLoadingMoreAnalytics={archiveData.isLoadingMoreAnalytics}
                 onLoadMore={archiveData.loadMoreMatchedPosts}
-                getPostsChartData={() => analytics.getPostsChartData(
-                  archiveData.matchedPosts.map(mp => mp.roiData).filter(Boolean)
-                )}
+                getPostsChartData={() => analytics.getPostsChartData()}
                 onRefresh={() => analytics.loadPostsAnalytics(analytics.redditUsername, true)}
               />
             ) : (

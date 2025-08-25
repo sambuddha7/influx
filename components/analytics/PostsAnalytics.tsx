@@ -2,17 +2,8 @@ import React from 'react';
 import { FileText, TrendingUp, MessageSquare, BarChart3 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { PostsChart } from '@/components/charts/PostsChart';
-import { GeneratedPost, PostsMetrics, RedditPostData } from '@/types/archive';
+import { GeneratedPost, PostsMetrics, RedditPostData, PostChartDataPoint } from '@/types/archive';
 import Loading from '@/components/Loading';
-
-// Chart data type definition
-type PostsChartData = {
-  date: string;
-  upvotes: number;
-  posts: number;
-  comments: number;
-  engagement: number;
-};
 
 interface PostsAnalyticsProps {
   postsMetrics: PostsMetrics | null;
@@ -23,7 +14,7 @@ interface PostsAnalyticsProps {
   isLoadingPostsAnalytics: boolean;
   isLoadingMoreAnalytics: boolean;
   onLoadMore: () => void;
-  getPostsChartData: () => PostsChartData[];
+  getPostsChartData: () => PostChartDataPoint[];
   onRefresh: () => void;
 }
 
