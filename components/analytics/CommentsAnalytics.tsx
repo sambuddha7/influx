@@ -12,9 +12,23 @@ type CommentsChartData = {
   engagement: number;
 };
 
+// ROI Comment type definition
+type ROIComment = {
+  id: string;
+  score: number;
+  replies: number;
+  created_utc: string;
+  subreddit: string;
+  permalink: string;
+  post_title: string;
+  comment_text: string;
+  last_updated?: string;
+  reply_count?: number;
+};
+
 interface CommentsAnalyticsProps {
   roiMetrics: ROIMetrics | null;
-  roiComments: any[];
+  roiComments: ROIComment[];
   matchedComments: ArchivedPost[];
   displayedMatchedComments: ArchivedPost[];
   hasMoreMatchedComments: boolean;

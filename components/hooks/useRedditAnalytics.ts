@@ -1,12 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, setDoc, getDoc, collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, orderBy, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
 import { RedditPostData, ArchivedPost, GeneratedPost, ROIMetrics, PostsMetrics } from '@/types/archive';
 import * as d3 from 'd3';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-export const useRedditAnalytics = (user: any) => {
+// ROI Comment type definition
+type ROIComment = {
+  id: string;
+  score: number;
+  replies: number;
+  created_utc: string;
+  subreddit: string;
+  permalink: string;
+  post_title: string;
+  comment_text: string;
+  last_updated?: string;
+  reply_count?: number;
+};
+
+export const useRedditAnalytics = (user: User | null | undefined) => {
   // Username management
   const [redditUsername, setRedditUsername] = useState('');
   const [inputUsername, setInputUsername] = useState('');
@@ -14,18 +29,7 @@ export const useRedditAnalytics = (user: any) => {
   const [isSetupLoading, setIsSetupLoading] = useState(false);
 
   // ROI data
-  const [roiComments, setRoiComments] = useState<Array<{
-    id: string;
-    score: number;
-    replies: number;
-    created_utc: string;
-    subreddit: string;
-    permalink: string;
-    post_title: string;
-    comment_text: string;
-    last_updated?: string;
-    reply_count?: number;
-  }>>([]);
+  const [roiComments, setRoiComments] = useState<ROIComment[]>([]);
   
   const [roiMetrics, setRoiMetrics] = useState<ROIMetrics | null>(null);
   const [isUpdatingRoi, setIsUpdatingRoi] = useState(false);
@@ -97,7 +101,7 @@ export const useRedditAnalytics = (user: any) => {
       const commentsSnap = await getDocs(commentsQuery);
       
       if (!commentsSnap.empty) {
-        const commentsData = commentsSnap.docs.map((doc: { data: () => { score?: number | undefined; replies?: number | undefined; subreddit?: string | undefined; created_utc?: string | undefined; permalink?: string | undefined; post_title?: string | undefined; comment_text?: string | undefined; last_updated?: string | undefined; reply_count?: number | undefined; }; id: any; }) => {
+        const commentsData = commentsSnap.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
           const data = doc.data() as {
             score?: number;
             replies?: number;
@@ -310,9 +314,9 @@ export const useRedditAnalytics = (user: any) => {
       const postsSnap = await getDocs(postsQuery);
       
       if (!postsSnap.empty) {
-        const postsData = postsSnap.docs.map((doc: { id: any; data: () => any; }) => ({
+        const postsData = postsSnap.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
           id: doc.id,
-          ...doc.data()
+          ...(doc.data() as RedditPostData)
         }));
         
         setUserRedditPosts(postsData);
@@ -381,7 +385,7 @@ export const useRedditAnalytics = (user: any) => {
     return matched;
   }, []);
 
-  const getROIChartData = (matchedComments = []) => {
+  const getROIChartData = (matchedComments: ROIComment[] = []) => {
     // Use matchedComments if provided, otherwise fall back to all roiComments
     const commentsToUse = matchedComments.length > 0 ? matchedComments : roiComments;
     if (!commentsToUse.length) return [];
@@ -443,7 +447,7 @@ export const useRedditAnalytics = (user: any) => {
       }));
   };
 
-  const getPostsChartData = (matchedPosts = []) => {
+  const getPostsChartData = (matchedPosts: RedditPostData[] = []) => {
     // Use matchedPosts if provided, otherwise fall back to all userRedditPosts
     const postsToUse = matchedPosts.length > 0 ? matchedPosts : userRedditPosts;
     if (!postsToUse.length) return [];
