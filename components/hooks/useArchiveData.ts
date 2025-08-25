@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
 import { ArchivedPost, GeneratedPost } from '@/types/archive';
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
@@ -8,7 +9,7 @@ const POSTS_PER_PAGE = 6;
 const ANALYTICS_ITEMS_PER_PAGE = 5;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-export const useArchiveData = (user: any, activeTab: string) => {
+export const useArchiveData = (user: User | null | undefined, activeTab: string) => {
   // Archived comments state
   const [archivedPosts, setArchivedPosts] = useState<ArchivedPost[]>([]);
   const [displayedPosts, setDisplayedPosts] = useState<ArchivedPost[]>([]);

@@ -4,6 +4,14 @@ import { formatDistanceToNow } from 'date-fns';
 import { CommentsChart } from '@/components/charts/CommentsChart';
 import { ArchivedPost, ROIMetrics } from '@/types/archive';
 
+// Chart data type definition
+type CommentsChartData = {
+  date: string;
+  karma: number;
+  comments: number;
+  engagement: number;
+};
+
 interface CommentsAnalyticsProps {
   roiMetrics: ROIMetrics | null;
   roiComments: any[];
@@ -12,7 +20,7 @@ interface CommentsAnalyticsProps {
   hasMoreMatchedComments: boolean;
   isLoadingMoreAnalytics: boolean;
   onLoadMore: () => void;
-  getROIChartData: () => any[];
+  getROIChartData: () => CommentsChartData[];
 }
 
 export const CommentsAnalytics: React.FC<CommentsAnalyticsProps> = ({
@@ -103,7 +111,7 @@ export const CommentsAnalytics: React.FC<CommentsAnalyticsProps> = ({
           {roiMetrics && Object.keys(roiMetrics.top_performing_subreddits).length > 0 ? (
             <div className="space-y-3">
               {Object.entries(roiMetrics.top_performing_subreddits)
-                .sort(([,a], [,b]) => b - a)
+                .sort(([,a], [,b]) => (b as number) - (a as number))
                 .slice(0, 8)
                 .map(([subreddit, score], index) => (
                   <div key={subreddit} className="flex justify-between items-center p-3 bg-gray-800 rounded-lg">

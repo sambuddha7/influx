@@ -5,6 +5,15 @@ import { PostsChart } from '@/components/charts/PostsChart';
 import { GeneratedPost, PostsMetrics, RedditPostData } from '@/types/archive';
 import Loading from '@/components/Loading';
 
+// Chart data type definition
+type PostsChartData = {
+  date: string;
+  upvotes: number;
+  posts: number;
+  comments: number;
+  engagement: number;
+};
+
 interface PostsAnalyticsProps {
   postsMetrics: PostsMetrics | null;
   userRedditPosts: RedditPostData[];
@@ -14,7 +23,7 @@ interface PostsAnalyticsProps {
   isLoadingPostsAnalytics: boolean;
   isLoadingMoreAnalytics: boolean;
   onLoadMore: () => void;
-  getPostsChartData: () => any[];
+  getPostsChartData: () => PostsChartData[];
   onRefresh: () => void;
 }
 

@@ -97,8 +97,18 @@ export const useRedditAnalytics = (user: any) => {
       const commentsSnap = await getDocs(commentsQuery);
       
       if (!commentsSnap.empty) {
-        const commentsData = commentsSnap.docs.map(doc => {
-          const data = doc.data();
+        const commentsData = commentsSnap.docs.map((doc: { data: () => { score?: number | undefined; replies?: number | undefined; subreddit?: string | undefined; created_utc?: string | undefined; permalink?: string | undefined; post_title?: string | undefined; comment_text?: string | undefined; last_updated?: string | undefined; reply_count?: number | undefined; }; id: any; }) => {
+          const data = doc.data() as {
+            score?: number;
+            replies?: number;
+            subreddit?: string;
+            created_utc?: string;
+            permalink?: string;
+            post_title?: string;
+            comment_text?: string;
+            last_updated?: string;
+            reply_count?: number;
+          };
           return {
             id: doc.id,
             score: data.score || 0,
@@ -300,7 +310,7 @@ export const useRedditAnalytics = (user: any) => {
       const postsSnap = await getDocs(postsQuery);
       
       if (!postsSnap.empty) {
-        const postsData = postsSnap.docs.map(doc => ({
+        const postsData = postsSnap.docs.map((doc: { id: any; data: () => any; }) => ({
           id: doc.id,
           ...doc.data()
         }));
