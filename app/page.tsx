@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import Hero from "@/components/new_hero";
 import Navbar from "@/components/navbar";
 import Features from "@/components/features"
@@ -9,6 +10,20 @@ import { GlowingEffectDemo } from "@/components/use-cases";
 export default function Home() {
   return (
     <div>
+      {/* Google Analytics */}
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=G-08L2PKFTGY"
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-08L2PKFTGY');
+        `}
+      </Script>
+
       <Navbar />
         {/* hero section */}
         <Hero />
@@ -35,8 +50,6 @@ export default function Home() {
         {/* last cta section */}
         <div id="waitlist" className="h-[50rem] w-full dark:bg-black bg-white  dark:bg-dot-white/[0.2] bg-dot-black/[0.2] relative flex items-center justify-center">
             <WaitlistComponent />
-            {/* <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
-            <TypewriterEffectSmoothDemo /> */}
         </div>
             <Footer />  
     </div>
