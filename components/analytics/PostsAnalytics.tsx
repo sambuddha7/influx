@@ -213,8 +213,8 @@ export const PostsAnalytics: React.FC<PostsAnalyticsProps> = ({
           <FileText size={64} className="mx-auto text-gray-600 mb-4" />
           <h3 className="text-white text-lg font-medium mb-2">No Posts Found</h3>
           <p className="text-gray-400 mb-4">
-            We couldn't find any posts from your Reddit account. 
-            Try refreshing the data or make sure you've posted on Reddit recently.
+            We couldn&apos;t find any posts from your Reddit account. 
+            Try refreshing the data or make sure you&apos;ve posted on Reddit recently.
           </p>
           <button
             onClick={onRefresh}

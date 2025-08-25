@@ -212,8 +212,8 @@ export const CommentsAnalytics: React.FC<CommentsAnalyticsProps> = ({
           <MessageSquare size={64} className="mx-auto text-gray-600 mb-4" />
           <h3 className="text-white text-lg font-medium mb-2">No Comments Found</h3>
           <p className="text-gray-400 mb-4">
-            We couldn't find any recent comments for your Reddit account. 
-            Try updating your data or make sure you're actively commenting.
+            We couldn&apos;t find any recent comments for your Reddit account. 
+            Try updating your data or make sure you&apos;re actively commenting.
           </p>
         </div>
       )}
