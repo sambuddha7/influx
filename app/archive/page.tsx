@@ -280,6 +280,7 @@ export default function ArchivePage() {
           onInputChange={analytics.setInputUsername}
           onSetupUsername={analytics.handleSetupUsername}
           onUpdateROI={analytics.handleUpdateROI}
+          onUsernameChange={analytics.handleUsernameChange}
         />
 
         {/* Comments Tab */}

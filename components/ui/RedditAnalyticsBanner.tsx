@@ -1,5 +1,5 @@
-import React from 'react';
-import { BarChart3, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { BarChart3, RefreshCw, Edit2, X, Check } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RedditAnalyticsBannerProps {
@@ -13,6 +13,7 @@ interface RedditAnalyticsBannerProps {
   onInputChange: (value: string) => void;
   onSetupUsername: () => void;
   onUpdateROI: () => void;
+  onUsernameChange?: (newUsername: string) => void;
 }
 
 export const RedditAnalyticsBanner: React.FC<RedditAnalyticsBannerProps> = ({
@@ -26,11 +27,40 @@ export const RedditAnalyticsBanner: React.FC<RedditAnalyticsBannerProps> = ({
   onInputChange,
   onSetupUsername,
   onUpdateROI,
+  onUsernameChange,
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editUsername, setEditUsername] = useState('');
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onSetupUsername();
     }
+  };
+
+  const handleEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
+
+  const handleStartEdit = () => {
+    setEditUsername(redditUsername);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditUsername('');
+  };
+
+  const handleSaveEdit = () => {
+    if (editUsername.trim() && editUsername.trim() !== redditUsername && onUsernameChange) {
+      onUsernameChange(editUsername.trim());
+    }
+    setIsEditing(false);
+    setEditUsername('');
   };
 
   return (
@@ -71,7 +101,49 @@ export const RedditAnalyticsBanner: React.FC<RedditAnalyticsBannerProps> = ({
               <span className="text-white font-bold">{redditUsername.charAt(0).toUpperCase()}</span>
             </div>
             <div>
-              <h3 className="font-medium text-orange-900 dark:text-orange-100">u/{redditUsername}</h3>
+              {isEditing ? (
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium text-orange-900 dark:text-orange-100">u/</span>
+                  <input
+                    type="text"
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value)}
+                    onKeyDown={handleEditKeyPress}
+                    className="px-2 py-1 text-sm rounded border border-orange-300 dark:border-orange-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    autoFocus
+                  />
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={!editUsername.trim() || editUsername.trim() === redditUsername}
+                      className="p-1 text-green-600 hover:text-green-700 disabled:text-gray-400"
+                      title="Save changes"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="p-1 text-gray-500 hover:text-gray-700"
+                      title="Cancel"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-medium text-orange-900 dark:text-orange-100">u/{redditUsername}</h3>
+                  {onUsernameChange && (
+                    <button
+                      onClick={handleStartEdit}
+                      className="p-1 text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
+                      title="Edit username"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              )}
               <p className="text-sm text-orange-700 dark:text-orange-300">
                 {lastRoiUpdate ? `Last updated ${formatDistanceToNow(new Date(lastRoiUpdate))} ago` : 'Analytics connected'}
                 {isAutoRefreshing && (

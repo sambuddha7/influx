@@ -185,6 +185,39 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
     }
   };
 
+  const handleUsernameChange = async (newUsername: string) => {
+    if (!newUsername.trim() || !user || newUsername.trim() === redditUsername) return;
+
+    setIsSetupLoading(true);
+    try {
+      // Update the username in Firestore
+      await setDoc(doc(db, 'reddit-username', user.uid), {
+        username: newUsername.trim(),
+        created_at: new Date().toISOString(),
+        user_id: user.uid
+      });
+
+      // Update local state
+      setRedditUsername(newUsername.trim());
+      
+      // Clear existing data since we're switching to a new username
+      setRoiComments([]);
+      setRoiMetrics(null);
+      setUserRedditPosts([]);
+      setPostsMetrics(null);
+      setLastRoiUpdate('');
+      setLastCommentsRefresh('');
+      setLastPostsRefresh('');
+      
+      // Fetch new data for the new username
+      await handleUpdateROI();
+    } catch (error) {
+      console.error('Error changing Reddit username:', error);
+    } finally {
+      setIsSetupLoading(false);
+    }
+  };
+
   const calculateROIMetrics = useCallback((commentsData: Array<{score: number; replies: number; subreddit: string}>) => {
     if (commentsData.length === 0) {
       setRoiMetrics(null);
@@ -530,6 +563,7 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
     isSetupLoading,
     setInputUsername,
     handleSetupUsername,
+    handleUsernameChange,
     
     // ROI data
     roiComments,
