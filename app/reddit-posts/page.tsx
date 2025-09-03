@@ -102,6 +102,25 @@ const CreateRedditPostPage = () => {
   const [isStepTransitioning, setIsStepTransitioning] = useState(false);
   const [showSubreddits, setShowSubreddits] = useState(false);
 
+  // Prevent body scrolling when modals are open
+  useEffect(() => {
+    if (showPostSuccessModal || showNextStepsModal || showRegenerateModal) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [showPostSuccessModal, showNextStepsModal, showRegenerateModal]);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!loading && !user) {
@@ -502,49 +521,31 @@ const CreateRedditPostPage = () => {
     if (!user || !generatedPost) return;
     
     try {
-      console.log('🔍 DEBUG: Starting handlePostConfirmed with:', {
-        user_id: user.uid,
-        post_id: generatedPost.post_id,
-        generatedPost: generatedPost
+      console.log('🔍 DEBUG: Starting handlePostConfirmed - saving post to archive');
+      
+      // Save the post to archive with 'posted' status
+      const saveResponse = await fetch(`${api_url}/reddit-posts/save-generated-post`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.uid,
+          post_data: {
+            ...generatedPost,
+            status: 'posted',
+            posted_at: new Date().toISOString()
+          }
+        })
       });
       
-      // Simply update the existing post's status to 'posted' and include any edits
-      if (generatedPost.post_id) {
-        console.log('🔍 DEBUG: Updating existing post status for post_id:', generatedPost.post_id);
-        console.log('🔍 DEBUG: Current generatedPost content:', {
-          title: generatedPost.title,
-          body: generatedPost.body,
-          target_audience: generatedPost.target_audience
-        });
-        
-        const updateResponse = await fetch(`${api_url}/reddit-posts/update-post-status`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            post_id: generatedPost.post_id,
-            status: 'posted',
-            updated_content: {
-              title: generatedPost.title,
-              body: generatedPost.body,
-              target_audience: generatedPost.target_audience
-            }
-          })
-        });
-        
-        console.log('🔍 DEBUG: Update response status:', updateResponse.status);
-        
-        if (updateResponse.ok) {
-          const updateData = await updateResponse.json();
-          console.log('🔍 DEBUG: Successfully updated post status:', updateData);
-        } else {
-          const errorData = await updateResponse.text();
-          console.error('🔍 DEBUG: Failed to update post status:', errorData);
-        }
+      if (saveResponse.ok) {
+        const saveData = await saveResponse.json();
+        console.log('🔍 DEBUG: Successfully saved post to archive:', saveData);
       } else {
-        console.log('🔍 DEBUG: No post_id found, cannot update status');
+        const errorData = await saveResponse.text();
+        console.error('🔍 DEBUG: Failed to save post to archive:', errorData);
       }
     } catch (err) {
-      console.error('🔍 DEBUG: Failed to track posted status:', err);
+      console.error('🔍 DEBUG: Failed to save posted status:', err);
     }
     
     // Close first modal and show second modal
@@ -626,6 +627,7 @@ const CreateRedditPostPage = () => {
   }
 
   return (
+    <>
     <div className="flex">
         <Sidebar />
 
@@ -958,7 +960,21 @@ const CreateRedditPostPage = () => {
                               : 'border-gray-700 bg-gray-900/50 opacity-60 cursor-not-allowed'
                           }`}
                           style={{ animationDelay: `${index * 100}ms` }}
-                          onClick={() => canSelect && setSelectedPostType(key)}
+                          onClick={() => {
+                            if (canSelect) {
+                              setSelectedPostType(key);
+                              // Auto-scroll to Generate Post button
+                              setTimeout(() => {
+                                const generateButton = document.getElementById('generate-post-button');
+                                if (generateButton) {
+                                  generateButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                } else {
+                                  // Fallback: scroll to bottom of page
+                                  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                                }
+                              }, 200);
+                            }
+                          }}
                         >
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center space-x-2">
@@ -1018,6 +1034,7 @@ const CreateRedditPostPage = () => {
 
               <div className="flex justify-end mt-8">
                 <button
+                  id="generate-post-button"
                   onClick={handleGeneratePost}
                   disabled={!selectedPostType || isGenerating}
                   className="px-8 py-4 bg-orange-500 text-white rounded-xl hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center text-lg font-medium transition-all duration-200"
@@ -1184,60 +1201,6 @@ const CreateRedditPostPage = () => {
         </div>
         )}
 
-        {/* Post Success Modal */}
-        {showPostSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
-            <h3 className="text-xl font-semibold text-white mb-4">Did you make that post?</h3>
-            <p className="text-gray-300 text-sm mb-6">
-                We opened Reddit for you. If you posted your content, click &quot;Yes&quot; to track it in your analytics. 
-                This helps us measure your Reddit marketing performance.
-            </p>
-            
-            <div className="space-y-3">
-                <button
-                onClick={handlePostConfirmed}
-                className="w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
-                >
-                Yes, I posted it
-                </button>
-                <button
-                onClick={handlePostNotMade}
-                className="w-full px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-                >
-                No, I didn&apos;t post
-                </button>
-            </div>
-            </div>
-        </div>
-        )}
-
-        {/* Next Steps Modal */}
-        {showNextStepsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
-            <h3 className="text-xl font-semibold text-white mb-4">What would you like to do next?</h3>
-            <p className="text-gray-300 text-sm mb-6">
-                Great! Your post has been tracked. Choose your next action:
-            </p>
-            
-            <div className="space-y-3">
-                <button
-                onClick={handleCreateAnotherPost}
-                className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
-                >
-                Create Another Post
-                </button>
-                <button
-                onClick={handleReturnToDashboard}
-                className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-                >
-                Return to Dashboard
-                </button>
-            </div>
-            </div>
-        </div>
-        )}
 
 
 
@@ -1260,6 +1223,84 @@ const CreateRedditPostPage = () => {
       `}</style>
     </div>
     </div>
+
+    {/* Post Success Modal - Outside main container */}
+    {showPostSuccessModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-medium text-white">Did you make that post?</h3>
+            <button 
+              onClick={handlePostNotMade}
+              className="text-gray-400 hover:text-orange-500 transition-colors"
+            >
+              <span className="text-xl">✕</span>
+            </button>
+          </div>
+          
+          <div className="mb-6">
+            <p className="text-gray-200 text-sm">
+              We opened Reddit for you. If you posted your content, click "Yes" to track it in your analytics. 
+              This helps us measure your Reddit marketing performance.
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+            <button 
+              onClick={handlePostConfirmed}
+              className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all font-medium"
+            >
+              Yes, I posted it
+            </button>
+            <button 
+              onClick={handlePostNotMade}
+              className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-all font-medium"
+            >
+              No, I didn&apos;t post
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Next Steps Modal - Outside main container */}
+    {showNextStepsModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-lg font-medium text-white">What would you like to do next?</h3>
+            <button 
+              onClick={() => setShowNextStepsModal(false)}
+              className="text-gray-400 hover:text-orange-500 transition-colors"
+            >
+              <span className="text-xl">✕</span>
+            </button>
+          </div>
+          
+          <div className="mb-6">
+            <p className="text-gray-200 text-sm">
+              Great! Your post has been tracked. Choose your next action:
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+            <button 
+              onClick={handleCreateAnotherPost}
+              className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all font-medium"
+            >
+              Create Another Post
+            </button>
+            <button 
+              onClick={handleReturnToDashboard}
+              className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-all font-medium"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
