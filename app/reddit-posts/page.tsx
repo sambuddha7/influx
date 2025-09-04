@@ -4,6 +4,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
+import PostToRedditModal from '@/components/PostToRedditModal';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, Plus, Tag, ExternalLink, RefreshCw, Shield, AlertCircle, XCircle, Search, Copy } from 'lucide-react';
 
 // Types (keep existing)
@@ -72,6 +73,7 @@ const CreateRedditPostPage = () => {
   const [showNextStepsModal, setShowNextStepsModal] = useState(false);
   const [copiedTitle, setCopiedTitle] = useState(false);
   const [copiedContent, setCopiedContent] = useState(false);
+  const [showPostToRedditModal, setShowPostToRedditModal] = useState(false);
   
   // Data
   const api_url = process.env.NEXT_PUBLIC_API_URL;
@@ -104,7 +106,7 @@ const CreateRedditPostPage = () => {
 
   // Prevent body scrolling when modals are open
   useEffect(() => {
-    if (showPostSuccessModal || showNextStepsModal || showRegenerateModal) {
+    if (showPostSuccessModal || showNextStepsModal || showRegenerateModal || showPostToRedditModal) {
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
@@ -119,7 +121,7 @@ const CreateRedditPostPage = () => {
       document.body.style.position = '';
       document.body.style.width = '';
     };
-  }, [showPostSuccessModal, showNextStepsModal, showRegenerateModal]);
+  }, [showPostSuccessModal, showNextStepsModal, showRegenerateModal, showPostToRedditModal]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -260,15 +262,10 @@ const CreateRedditPostPage = () => {
   };
 
   const handlePostToReddit = () => {
-    if (!generatedPost) return;
-    
-    // Open Reddit's submit page for the specific subreddit
-    const redditUrl = `https://www.reddit.com/r/${generatedPost.subreddit}/submit`;
-    window.open(redditUrl, '_blank');
-    
-    // Show success modal
-    setShowPostSuccessModal(true);
+    setShowPostToRedditModal(true);
   };
+  
+
   
 
   const findMoreSubreddits = async () => {
@@ -1224,44 +1221,6 @@ const CreateRedditPostPage = () => {
     </div>
     </div>
 
-    {/* Post Success Modal - Outside main container */}
-    {showPostSuccessModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-        <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-800">
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="text-lg font-medium text-white">Did you make that post?</h3>
-            <button 
-              onClick={handlePostNotMade}
-              className="text-gray-400 hover:text-orange-500 transition-colors"
-            >
-              <span className="text-xl">✕</span>
-            </button>
-          </div>
-          
-          <div className="mb-6">
-            <p className="text-gray-200 text-sm">
-              We opened Reddit for you. If you posted your content, click "Yes" to track it in your analytics. 
-              This helps us measure your Reddit marketing performance.
-            </p>
-          </div>
-          
-          <div className="flex gap-3">
-            <button 
-              onClick={handlePostConfirmed}
-              className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition-all font-medium"
-            >
-              Yes, I posted it
-            </button>
-            <button 
-              onClick={handlePostNotMade}
-              className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-all font-medium"
-            >
-              No, I didn&apos;t post
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
 
     {/* Next Steps Modal - Outside main container */}
     {showNextStepsModal && (
@@ -1300,6 +1259,20 @@ const CreateRedditPostPage = () => {
         </div>
       </div>
     )}
+    {/* Add this before the final </> closing tag */}
+    <PostToRedditModal
+    isOpen={showPostToRedditModal}
+    onClose={() => setShowPostToRedditModal(false)}
+    onPostConfirmed={() => {
+        setShowPostToRedditModal(false);
+        handlePostConfirmed();
+    }}
+    onPostNotMade={() => {
+        setShowPostToRedditModal(false);
+        handlePostNotMade();
+    }}
+    generatedPost={generatedPost || { title: '', body: '', subreddit: '' }}
+    />
     </>
   );
 };
