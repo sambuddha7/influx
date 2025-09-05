@@ -109,7 +109,7 @@ const PostToRedditModal: React.FC<PostToRedditModalProps> = ({
             
             <div className="flex items-center space-x-2 text-sm text-gray-400">
               <span className="bg-orange-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-              <span>Click "Go to Reddit" to open the submission page</span>
+              <span>Click &quot;Go to Reddit&quot; to open the submission page</span>
             </div>
             
             <button
@@ -131,7 +131,7 @@ const PostToRedditModal: React.FC<PostToRedditModalProps> = ({
         <div className="border-t border-gray-700 pt-6">
           <h4 className="text-lg font-medium text-white mb-3">Did you make that post?</h4>
           <p className="text-gray-300 text-sm mb-4">
-            If you posted your content, click "Yes" to track it in your analytics. 
+            If you posted your content, click &quot;Yes&quot; to track it in your analytics. 
             This helps us measure your Reddit marketing performance.
           </p>
           
@@ -146,7 +146,7 @@ const PostToRedditModal: React.FC<PostToRedditModalProps> = ({
               onClick={onPostNotMade}
               className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-all font-medium"
             >
-              No, I didn't post
+              No, I didn&apos;t post
             </button>
           </div>
         </div>
