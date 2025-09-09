@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp, Shield, ShieldCheck, ShieldAlert, ShieldX, HelpCircle } from 'lucide-react';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp, Shield, ShieldCheck, ShieldAlert, ShieldX, HelpCircle, Info, Clock, Users } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -116,6 +116,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showPostReplyModal, setShowPostReplyModal] = useState(false);
   const [subredditClassification, setSubredditClassification] = useState<SubredditClassification | null>(null);
   const [isLoadingClassification, setIsLoadingClassification] = useState(false);
+  const [showClassificationDetails, setShowClassificationDetails] = useState(false);
+  const [classificationDetails, setClassificationDetails] = useState<any>(null);
 
   const CONTENT_TRUNCATE_LENGTH = 1000;
 
@@ -137,6 +139,16 @@ const PostCard: React.FC<PostCardProps> = ({
             confidence: 'medium', // Default confidence
             success: true
           });
+        }
+        
+        // Also fetch detailed classification data
+        const detailsResponse = await fetch(`${apiUrl}/user/${userId}/subreddit_classifications`);
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          const subredditDetails = detailsData.classifications[post.subreddit];
+          if (subredditDetails) {
+            setClassificationDetails(subredditDetails);
+          }
         }
       } catch (error) {
         console.error('Error fetching subreddit classification:', error);
@@ -216,13 +228,143 @@ const PostCard: React.FC<PostCardProps> = ({
 
     return (
       <div 
-        className={`flex items-center gap-1.5 ${config.bgColor} border ${config.borderColor} rounded-full px-2.5 py-1 cursor-help`}
-        title={config.tooltip}
+        className={`flex items-center gap-1.5 ${config.bgColor} border ${config.borderColor} rounded-full px-2.5 py-1 cursor-pointer hover:opacity-80 transition-opacity`}
+        title={`Click to ${showClassificationDetails ? 'hide' : 'show'} details - ${config.tooltip}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowClassificationDetails(!showClassificationDetails);
+        }}
       >
         <IconComponent className={`w-3 h-3 ${config.color}`} />
         <span className={`text-xs font-medium ${config.color}`}>
           {config.text}
         </span>
+        <ChevronDown className={`w-3 h-3 ${config.color} transition-transform ${showClassificationDetails ? 'rotate-180' : ''}`} />
+      </div>
+    );
+  };
+
+  // Component to render detailed classification information
+  const ClassificationDetails = () => {
+    if (!showClassificationDetails || !classificationDetails) return null;
+
+    const formatDate = (dateString: string) => {
+      try {
+        return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+      } catch {
+        return 'Recently';
+      }
+    };
+
+    const getScoreColor = (score: number) => {
+      if (score >= 0.7) return 'text-green-600 dark:text-green-400';
+      if (score >= 0.5) return 'text-blue-600 dark:text-blue-400';
+      if (score >= 0.3) return 'text-yellow-600 dark:text-yellow-400';
+      return 'text-red-600 dark:text-red-400';
+    };
+
+    const getConfidenceColor = (confidence: string) => {
+      switch (confidence) {
+        case 'high': return 'text-green-600 dark:text-green-400';
+        case 'medium': return 'text-yellow-600 dark:text-yellow-400';
+        case 'low': return 'text-red-600 dark:text-red-400';
+        default: return 'text-gray-600 dark:text-gray-400';
+      }
+    };
+
+    return (
+      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            Classification Details
+          </h4>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowClassificationDetails(false);
+            }}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {/* Score and Confidence */}
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <Target className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Score:</span>
+              <span className={`font-medium ${getScoreColor(classificationDetails.score || 0)}`}>
+                {((classificationDetails.score || 0) * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Confidence:</span>
+              <span className={`font-medium capitalize ${getConfidenceColor(classificationDetails.confidence || 'medium')}`}>
+                {classificationDetails.confidence || 'Medium'}
+              </span>
+            </div>
+          </div>
+
+          {/* Analyzed timestamp */}
+          {classificationDetails.analyzed_at && (
+            <div className="flex items-center gap-2 text-xs">
+              <Clock className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Analyzed:</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                {formatDate(classificationDetails.analyzed_at)}
+              </span>
+            </div>
+          )}
+
+          {/* Subscriber count if available */}
+          {classificationDetails.subscriber_count !== undefined && (
+            <div className="flex items-center gap-2 text-xs">
+              <Users className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Members:</span>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">
+                {classificationDetails.subscriber_count.toLocaleString()}
+              </span>
+            </div>
+          )}
+
+          {/* Key factors */}
+          {classificationDetails.factors && classificationDetails.factors.length > 0 && (
+            <div className="mt-3">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Key factors:</div>
+              <div className="space-y-1">
+                {classificationDetails.factors.slice(0, 3).map((factor: string, index: number) => (
+                  <div key={index} className="flex items-start gap-2 text-xs">
+                    <div className="w-1 h-1 rounded-full bg-gray-400 mt-2 flex-shrink-0"></div>
+                    <span className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {factor}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rules analysis if available */}
+          {classificationDetails.rules_analysis && (
+            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Rules analysis:</div>
+              <div className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                <span className="font-medium capitalize">
+                  {classificationDetails.rules_analysis.policy}
+                </span>
+                {classificationDetails.rules_analysis.reason && (
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {' - '}{classificationDetails.rules_analysis.reason}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -350,6 +492,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 </div>
                 <PromotionalStatusBadge />
               </div>
+              <ClassificationDetails />
               <h2 className="card-title dark:text-white flex items-center gap-2 leading-tight">
                 {post.title}
                 {post.promotional && (
