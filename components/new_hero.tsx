@@ -47,10 +47,12 @@ const Hero = () => {
       {/* Centered Content */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen px-4">
         <h1 className="text-5xl md:text-8xl font-bold leading-tight text-gray-900 dark:text-white">
+        AI Copilot for
+        <br></br>
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-red-500">
-            AI Agents <br />
-          </span>{' '}
-          for Reddit Marketing
+            Reddit Marketing <br />
+          </span>{' '} 
+          
         </h1>
 
         <p className="mt-6 max-w-2xl text-xl font-light text-gray-700 dark:text-gray-400">
