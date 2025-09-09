@@ -26,6 +26,21 @@ interface SubredditClassification {
   success: boolean;
 }
 
+// Define type for detailed classification data
+interface ClassificationDetails {
+  classification: string;
+  score: number;
+  confidence: string;
+  success: boolean;
+  factors?: string[];
+  analyzed_at?: string;
+  subscriber_count?: number;
+  rules_analysis?: {
+    policy: string;
+    reason?: string;
+  };
+}
+
 // Define the type for alert state
 interface AlertState {
   visible: boolean;
@@ -117,7 +132,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [subredditClassification, setSubredditClassification] = useState<SubredditClassification | null>(null);
   const [isLoadingClassification, setIsLoadingClassification] = useState(false);
   const [showClassificationDetails, setShowClassificationDetails] = useState(false);
-  const [classificationDetails, setClassificationDetails] = useState<any>(null);
+  const [classificationDetails, setClassificationDetails] = useState<ClassificationDetails | null>(null);
 
   const CONTENT_TRUNCATE_LENGTH = 1000;
 
