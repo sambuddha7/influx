@@ -135,7 +135,7 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
     } catch (error) {
       console.error('Error loading ROI data:', error);
     }
-  }, [user, shouldRefreshData, lastCommentsRefresh, refreshROIFromReddit]);
+  }, [user, shouldRefreshData, refreshROIFromReddit]);
 
   // Check for Reddit username and auto-load data
   useEffect(() => {
@@ -362,7 +362,7 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
     } finally {
       setIsLoadingPostsAnalytics(false);
     }
-  }, [user, shouldRefreshData, lastPostsRefresh, refreshPostsFromReddit]);
+  }, [user, shouldRefreshData, refreshPostsFromReddit]);
 
   const matchArchivedWithProfile = useCallback((archivedData: ArchivedPost[], profileData: RedditPostData[]) => {
     const matched: (ArchivedPost & { roiData?: RedditPostData })[] = [];
@@ -395,26 +395,51 @@ export const useRedditAnalytics = (user: User | null | undefined) => {
   }, []);
 
   const matchGeneratedWithProfile = useCallback((generatedData: GeneratedPost[], profileData: RedditPostData[]) => {
+    console.log('🔍 MATCHING DEBUG:');
+    console.log('Generated posts count:', generatedData.length);
+    console.log('Profile posts count:', profileData.length);
+    
     const matched: (GeneratedPost & { roiData?: RedditPostData })[] = [];
     
-    generatedData.forEach(generatedItem => {
+    generatedData.forEach((generatedItem, index) => {
+      console.log(`\n📝 Checking generated post ${index + 1}:`, {
+        title: generatedItem.title?.substring(0, 50) + '...',
+        subreddit: generatedItem.subreddit
+      });
+      
       const foundProfile = profileData.find(profileItem => {
-        return (
-          generatedItem.subreddit === profileItem.subreddit &&
-          (generatedItem.title.toLowerCase().includes(profileItem.title?.toLowerCase() || '') ||
-           profileItem.title?.toLowerCase().includes(generatedItem.title.toLowerCase() || '') ||
-           (generatedItem.body || generatedItem.content || '').toLowerCase().includes(profileItem.selftext?.toLowerCase().substring(0, 100) || ''))
-        );
+        // Case-insensitive subreddit comparison
+        const sameSubreddit = generatedItem.subreddit?.toLowerCase() === profileItem.subreddit?.toLowerCase();
+        const titleMatch = generatedItem.title.toLowerCase().includes(profileItem.title?.toLowerCase() || '') ||
+                          profileItem.title?.toLowerCase().includes(generatedItem.title.toLowerCase() || '');
+        const contentMatch = (generatedItem.body || generatedItem.content || '').toLowerCase().includes(profileItem.selftext?.toLowerCase().substring(0, 100) || '');
+        
+        const isMatch = sameSubreddit && (titleMatch || contentMatch);
+        
+        if (sameSubreddit) {
+          console.log(`  🎯 Same subreddit (${generatedItem.subreddit} vs ${profileItem.subreddit}):`, {
+            profileTitle: profileItem.title?.substring(0, 30) + '...',
+            titleMatch,
+            contentMatch,
+            finalMatch: isMatch
+          });
+        }
+        
+        return isMatch;
       });
       
       if (foundProfile) {
+        console.log(`  ✅ MATCHED with profile post`);
         matched.push({
           ...generatedItem,
           roiData: foundProfile
         });
+      } else {
+        console.log(`  ❌ NO MATCH found`);
       }
     });
     
+    console.log(`\n🎉 Final matched count: ${matched.length}`);
     return matched;
   }, []);
 
