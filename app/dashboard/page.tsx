@@ -74,8 +74,55 @@ export default function Dashboard() {
   const [currentPendingPost, setCurrentPendingPost] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
+  const [isCheckingClassifications, setIsCheckingClassifications] = useState(false);
 
 
+
+  // Function to check and ensure user has subreddit classifications
+  const checkAndEnsureSubredditClassifications = async (userId: string) => {
+    try {
+      setIsCheckingClassifications(true);
+      
+      // Check if user has subreddit classifications in onboarding collection
+      const onboardingRef = doc(db, 'onboarding', userId);
+      const onboardingSnap = await getDoc(onboardingRef);
+      
+      if (onboardingSnap.exists()) {
+        const onboardingData = onboardingSnap.data();
+        
+        // Check if subreddit_classifications field exists and has data
+        if (!onboardingData.subreddit_classifications || 
+            Object.keys(onboardingData.subreddit_classifications).length === 0) {
+          
+          console.log('No subreddit classifications found, triggering creation...');
+          
+          // Trigger classification creation
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const response = await fetch(`${apiUrl}/ensure_user_classifications`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: userId
+            })
+          });
+          
+          if (response.ok) {
+            console.log('Subreddit classification creation triggered successfully');
+          } else {
+            console.warn('Failed to trigger subreddit classification creation');
+          }
+        } else {
+          console.log('User already has subreddit classifications');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking subreddit classifications:', error);
+    } finally {
+      setIsCheckingClassifications(false);
+    }
+  };
 
   // Add this function after the RedditPost interface definition
 const checkAndUpdatePostMetrics = async (userId: string, setUpdatingMetrics?: (loading: boolean) => void) => {
@@ -310,6 +357,9 @@ const checkAndRefreshPosts = async (userId: string) => {
 
         if (!docSnap.exists()) {
           router.push('/onboarding');
+        } else {
+          // User exists, check and ensure they have subreddit classifications
+          checkAndEnsureSubredditClassifications(user.uid);
         } 
         const accountRef = doc(db, 'account-details', user.uid);
         const accountSnap = await getDoc(accountRef);
@@ -859,12 +909,19 @@ const checkAndRefreshPosts = async (userId: string) => {
     setDisplayedPosts(sortedPosts.slice(0, displayedPosts.length));
   };
 
-  if (isLoading) {
+  if (isLoading || isCheckingClassifications) {
     return (
       <div className='flex'>
         <Sidebar />
         <div className="flex-1 p-6 space-y-6">
           <Loading />
+          {isCheckingClassifications && (
+            <div className="text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Setting up promotional guidelines...
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -931,6 +988,7 @@ const checkAndRefreshPosts = async (userId: string) => {
           handleApprove={handleApprove}
           handleArchive={handleArchive} 
           setDisplayedPosts={setDisplayedPosts}
+          userId={user?.uid}
         />
         ))}
         

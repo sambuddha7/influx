@@ -279,8 +279,39 @@ const Settings: React.FC = () => {
         await clearPosts();
       }
       
+      // Check if subreddits changed and update classifications
+      const originalSubreddits = originalData.subreddits || '';
+      const currentSubreddits = userData.subreddits || '';
+      
       const userRef = doc(db, 'onboarding', user.uid);
       await setDoc(userRef, userData, { merge: true });
+      
+      // Update subreddit classifications if subreddits changed
+      if (originalSubreddits !== currentSubreddits) {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const response = await fetch(`${apiUrl}/update_subreddit_classifications`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: user.uid,
+              subreddits: subreddits
+            })
+          });
+          
+          if (response.ok) {
+            console.log('Subreddit classification update started successfully');
+          } else {
+            console.warn('Failed to start subreddit classification update');
+          }
+        } catch (error) {
+          console.error('Error starting subreddit classification update:', error);
+          // Don't block the save flow if classification update fails
+        }
+      }
+      
       setShowAlert(true);
       
       // Hide alert after 3 seconds

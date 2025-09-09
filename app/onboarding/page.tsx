@@ -361,6 +361,31 @@ export default function OnboardingForm() {
 
   const handleComplete = async () => {
     await saveToFirestore();
+    
+    // Trigger subreddit classification in background
+    if (user) {
+      try {
+        const response = await fetch(`${apiUrl}/classify_user_subreddits`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: user.uid
+          })
+        });
+        
+        if (response.ok) {
+          console.log('Subreddit classification started successfully');
+        } else {
+          console.warn('Failed to start subreddit classification');
+        }
+      } catch (error) {
+        console.error('Error starting subreddit classification:', error);
+        // Don't block the user flow if classification fails
+      }
+    }
+    
     router.push('/dashboard');
   };
 

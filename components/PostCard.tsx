@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp, Shield, ShieldCheck, ShieldAlert, ShieldX, HelpCircle, Info, Clock, Users } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -16,6 +16,29 @@ interface Post {
   score?: number;
   comments?: number;
   relevanceScore?: number;
+}
+
+// Define type for subreddit classification
+interface SubredditClassification {
+  classification: 'promotional_allowed' | 'promotional_likely' | 'promotional_conditional' | 'promotional_blocked' | 'error';
+  score: number;
+  confidence: 'high' | 'medium' | 'low';
+  success: boolean;
+}
+
+// Define type for detailed classification data
+interface ClassificationDetails {
+  classification: string;
+  score: number;
+  confidence: string;
+  success: boolean;
+  factors?: string[];
+  analyzed_at?: string;
+  subscriber_count?: number;
+  rules_analysis?: {
+    policy: string;
+    reason?: string;
+  };
 }
 
 // Define the type for alert state
@@ -77,6 +100,7 @@ interface PostCardProps {
   handleArchive: (id: string) => void;
   setDisplayedPosts: React.Dispatch<React.SetStateAction<Post[]>>;
   page?: 'dashboard' | 'community';
+  userId?: string; // Add userId for classification lookup
 }
 
 const PostCard: React.FC<PostCardProps> = ({ 
@@ -95,7 +119,8 @@ const PostCard: React.FC<PostCardProps> = ({
   handleApprove,
   handleArchive,
   setDisplayedPosts,
-  page = 'dashboard'
+  page = 'dashboard',
+  userId
 }) => {
   const [copied, setCopied] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(post.suggestedReply !== "Add your reply here");
@@ -104,8 +129,260 @@ const PostCard: React.FC<PostCardProps> = ({
   const [feedbackType, setFeedbackType] = useState("");
   const [isContentExpanded, setIsContentExpanded] = useState(false);
   const [showPostReplyModal, setShowPostReplyModal] = useState(false);
+  const [subredditClassification, setSubredditClassification] = useState<SubredditClassification | null>(null);
+  const [isLoadingClassification, setIsLoadingClassification] = useState(false);
+  const [showClassificationDetails, setShowClassificationDetails] = useState(false);
+  const [classificationDetails, setClassificationDetails] = useState<ClassificationDetails | null>(null);
 
   const CONTENT_TRUNCATE_LENGTH = 1000;
+
+  // Fetch subreddit classification
+  useEffect(() => {
+    const fetchSubredditClassification = async () => {
+      if (!userId || !post.subreddit) return;
+      
+      setIsLoadingClassification(true);
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const response = await fetch(`${apiUrl}/user/${userId}/subreddit/${post.subreddit}/promotional_allowance`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          setSubredditClassification({
+            classification: data.promotional_allowance,
+            score: 0, // Score not returned by this endpoint
+            confidence: 'medium', // Default confidence
+            success: true
+          });
+        }
+        
+        // Also fetch detailed classification data
+        const detailsResponse = await fetch(`${apiUrl}/user/${userId}/subreddit_classifications`);
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          const subredditDetails = detailsData.classifications[post.subreddit];
+          if (subredditDetails) {
+            setClassificationDetails(subredditDetails);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching subreddit classification:', error);
+      } finally {
+        setIsLoadingClassification(false);
+      }
+    };
+
+    fetchSubredditClassification();
+  }, [userId, post.subreddit]);
+
+  // Component to render promotional status badge
+  const PromotionalStatusBadge = () => {
+    if (isLoadingClassification) {
+      return (
+        <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-2.5 py-1">
+          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Checking...</span>
+        </div>
+      );
+    }
+
+    if (!subredditClassification) return null;
+
+    const getStatusConfig = (classification: string) => {
+      switch (classification) {
+        case 'promotional_allowed':
+          return {
+            icon: ShieldCheck,
+            color: 'text-green-600 dark:text-green-400',
+            bgColor: 'bg-green-50 dark:bg-green-900/20',
+            borderColor: 'border-green-200 dark:border-green-700',
+            text: 'Promo OK',
+            tooltip: 'Promotional content is welcome in this subreddit'
+          };
+        case 'promotional_likely':
+          return {
+            icon: Shield,
+            color: 'text-blue-600 dark:text-blue-400',
+            bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+            borderColor: 'border-blue-200 dark:border-blue-700',
+            text: 'Likely OK',
+            tooltip: 'Promotional content is likely allowed with good value'
+          };
+        case 'promotional_conditional':
+          return {
+            icon: ShieldAlert,
+            color: 'text-yellow-600 dark:text-yellow-400',
+            bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+            borderColor: 'border-yellow-200 dark:border-yellow-700',
+            text: 'Conditional',
+            tooltip: 'Promotional content allowed under specific conditions'
+          };
+        case 'promotional_blocked':
+          return {
+            icon: ShieldX,
+            color: 'text-red-600 dark:text-red-400',
+            bgColor: 'bg-red-50 dark:bg-red-900/20',
+            borderColor: 'border-red-200 dark:border-red-700',
+            text: 'No Promo',
+            tooltip: 'Promotional content is not allowed in this subreddit'
+          };
+        default:
+          return {
+            icon: HelpCircle,
+            color: 'text-gray-600 dark:text-gray-400',
+            bgColor: 'bg-gray-50 dark:bg-gray-800',
+            borderColor: 'border-gray-200 dark:border-gray-700',
+            text: 'Unknown',
+            tooltip: 'Unable to determine promotional policy'
+          };
+      }
+    };
+
+    const config = getStatusConfig(subredditClassification.classification);
+    const IconComponent = config.icon;
+
+    return (
+      <div 
+        className={`flex items-center gap-1.5 ${config.bgColor} border ${config.borderColor} rounded-full px-2.5 py-1 cursor-pointer hover:opacity-80 transition-opacity`}
+        title={`Click to ${showClassificationDetails ? 'hide' : 'show'} details - ${config.tooltip}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowClassificationDetails(!showClassificationDetails);
+        }}
+      >
+        <IconComponent className={`w-3 h-3 ${config.color}`} />
+        <span className={`text-xs font-medium ${config.color}`}>
+          {config.text}
+        </span>
+        <ChevronDown className={`w-3 h-3 ${config.color} transition-transform ${showClassificationDetails ? 'rotate-180' : ''}`} />
+      </div>
+    );
+  };
+
+  // Component to render detailed classification information
+  const ClassificationDetails = () => {
+    if (!showClassificationDetails || !classificationDetails) return null;
+
+    const formatDate = (dateString: string) => {
+      try {
+        return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+      } catch {
+        return 'Recently';
+      }
+    };
+
+    const getScoreColor = (score: number) => {
+      if (score >= 0.7) return 'text-green-600 dark:text-green-400';
+      if (score >= 0.5) return 'text-blue-600 dark:text-blue-400';
+      if (score >= 0.3) return 'text-yellow-600 dark:text-yellow-400';
+      return 'text-red-600 dark:text-red-400';
+    };
+
+    const getConfidenceColor = (confidence: string) => {
+      switch (confidence) {
+        case 'high': return 'text-green-600 dark:text-green-400';
+        case 'medium': return 'text-yellow-600 dark:text-yellow-400';
+        case 'low': return 'text-red-600 dark:text-red-400';
+        default: return 'text-gray-600 dark:text-gray-400';
+      }
+    };
+
+    return (
+      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            Classification Details
+          </h4>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowClassificationDetails(false);
+            }}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {/* Score and Confidence */}
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <Target className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Score:</span>
+              <span className={`font-medium ${getScoreColor(classificationDetails.score || 0)}`}>
+                {((classificationDetails.score || 0) * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Confidence:</span>
+              <span className={`font-medium capitalize ${getConfidenceColor(classificationDetails.confidence || 'medium')}`}>
+                {classificationDetails.confidence || 'Medium'}
+              </span>
+            </div>
+          </div>
+
+          {/* Analyzed timestamp */}
+          {classificationDetails.analyzed_at && (
+            <div className="flex items-center gap-2 text-xs">
+              <Clock className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Analyzed:</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                {formatDate(classificationDetails.analyzed_at)}
+              </span>
+            </div>
+          )}
+
+          {/* Subscriber count if available */}
+          {classificationDetails.subscriber_count !== undefined && (
+            <div className="flex items-center gap-2 text-xs">
+              <Users className="w-3 h-3 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Members:</span>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">
+                {classificationDetails.subscriber_count.toLocaleString()}
+              </span>
+            </div>
+          )}
+
+          {/* Key factors */}
+          {classificationDetails.factors && classificationDetails.factors.length > 0 && (
+            <div className="mt-3">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Key factors:</div>
+              <div className="space-y-1">
+                {classificationDetails.factors.slice(0, 3).map((factor: string, index: number) => (
+                  <div key={index} className="flex items-start gap-2 text-xs">
+                    <div className="w-1 h-1 rounded-full bg-gray-400 mt-2 flex-shrink-0"></div>
+                    <span className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {factor}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rules analysis if available */}
+          {classificationDetails.rules_analysis && (
+            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Rules analysis:</div>
+              <div className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                <span className="font-medium capitalize">
+                  {classificationDetails.rules_analysis.policy}
+                </span>
+                {classificationDetails.rules_analysis.reason && (
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {' - '}{classificationDetails.rules_analysis.reason}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
   
   const getTruncatedContent = (content: string) => {
     if (content.length <= CONTENT_TRUNCATE_LENGTH) {
@@ -224,9 +501,13 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="mb-4">
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
-              <div className="text-sm font-medium text-blue-500 dark:text-blue-400 mb-1">
-                r/{post.subreddit}
+              <div className="flex items-center gap-2 mb-1">
+                <div className="text-sm font-medium text-blue-500 dark:text-blue-400">
+                  r/{post.subreddit}
+                </div>
+                <PromotionalStatusBadge />
               </div>
+              <ClassificationDetails />
               <h2 className="card-title dark:text-white flex items-center gap-2 leading-tight">
                 {post.title}
                 {post.promotional && (
