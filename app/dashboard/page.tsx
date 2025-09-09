@@ -931,6 +931,7 @@ const checkAndRefreshPosts = async (userId: string) => {
           handleApprove={handleApprove}
           handleArchive={handleArchive} 
           setDisplayedPosts={setDisplayedPosts}
+          userId={user?.uid}
         />
         ))}
         

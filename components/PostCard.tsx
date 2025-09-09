@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowUpRight, Sparkles, Save, Pencil, Check, Clipboard, RefreshCcw, X, Zap, Archive, ArrowUp, MessageCircle, Target, ChevronDown, ChevronUp, Shield, ShieldCheck, ShieldAlert, ShieldX, HelpCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -16,6 +16,14 @@ interface Post {
   score?: number;
   comments?: number;
   relevanceScore?: number;
+}
+
+// Define type for subreddit classification
+interface SubredditClassification {
+  classification: 'promotional_allowed' | 'promotional_likely' | 'promotional_conditional' | 'promotional_blocked' | 'error';
+  score: number;
+  confidence: 'high' | 'medium' | 'low';
+  success: boolean;
 }
 
 // Define the type for alert state
@@ -77,6 +85,7 @@ interface PostCardProps {
   handleArchive: (id: string) => void;
   setDisplayedPosts: React.Dispatch<React.SetStateAction<Post[]>>;
   page?: 'dashboard' | 'community';
+  userId?: string; // Add userId for classification lookup
 }
 
 const PostCard: React.FC<PostCardProps> = ({ 
@@ -95,7 +104,8 @@ const PostCard: React.FC<PostCardProps> = ({
   handleApprove,
   handleArchive,
   setDisplayedPosts,
-  page = 'dashboard'
+  page = 'dashboard',
+  userId
 }) => {
   const [copied, setCopied] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(post.suggestedReply !== "Add your reply here");
@@ -104,8 +114,118 @@ const PostCard: React.FC<PostCardProps> = ({
   const [feedbackType, setFeedbackType] = useState("");
   const [isContentExpanded, setIsContentExpanded] = useState(false);
   const [showPostReplyModal, setShowPostReplyModal] = useState(false);
+  const [subredditClassification, setSubredditClassification] = useState<SubredditClassification | null>(null);
+  const [isLoadingClassification, setIsLoadingClassification] = useState(false);
 
   const CONTENT_TRUNCATE_LENGTH = 1000;
+
+  // Fetch subreddit classification
+  useEffect(() => {
+    const fetchSubredditClassification = async () => {
+      if (!userId || !post.subreddit) return;
+      
+      setIsLoadingClassification(true);
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const response = await fetch(`${apiUrl}/user/${userId}/subreddit/${post.subreddit}/promotional_allowance`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          setSubredditClassification({
+            classification: data.promotional_allowance,
+            score: 0, // Score not returned by this endpoint
+            confidence: 'medium', // Default confidence
+            success: true
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching subreddit classification:', error);
+      } finally {
+        setIsLoadingClassification(false);
+      }
+    };
+
+    fetchSubredditClassification();
+  }, [userId, post.subreddit]);
+
+  // Component to render promotional status badge
+  const PromotionalStatusBadge = () => {
+    if (isLoadingClassification) {
+      return (
+        <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-2.5 py-1">
+          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Checking...</span>
+        </div>
+      );
+    }
+
+    if (!subredditClassification) return null;
+
+    const getStatusConfig = (classification: string) => {
+      switch (classification) {
+        case 'promotional_allowed':
+          return {
+            icon: ShieldCheck,
+            color: 'text-green-600 dark:text-green-400',
+            bgColor: 'bg-green-50 dark:bg-green-900/20',
+            borderColor: 'border-green-200 dark:border-green-700',
+            text: 'Promo OK',
+            tooltip: 'Promotional content is welcome in this subreddit'
+          };
+        case 'promotional_likely':
+          return {
+            icon: Shield,
+            color: 'text-blue-600 dark:text-blue-400',
+            bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+            borderColor: 'border-blue-200 dark:border-blue-700',
+            text: 'Likely OK',
+            tooltip: 'Promotional content is likely allowed with good value'
+          };
+        case 'promotional_conditional':
+          return {
+            icon: ShieldAlert,
+            color: 'text-yellow-600 dark:text-yellow-400',
+            bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+            borderColor: 'border-yellow-200 dark:border-yellow-700',
+            text: 'Conditional',
+            tooltip: 'Promotional content allowed under specific conditions'
+          };
+        case 'promotional_blocked':
+          return {
+            icon: ShieldX,
+            color: 'text-red-600 dark:text-red-400',
+            bgColor: 'bg-red-50 dark:bg-red-900/20',
+            borderColor: 'border-red-200 dark:border-red-700',
+            text: 'No Promo',
+            tooltip: 'Promotional content is not allowed in this subreddit'
+          };
+        default:
+          return {
+            icon: HelpCircle,
+            color: 'text-gray-600 dark:text-gray-400',
+            bgColor: 'bg-gray-50 dark:bg-gray-800',
+            borderColor: 'border-gray-200 dark:border-gray-700',
+            text: 'Unknown',
+            tooltip: 'Unable to determine promotional policy'
+          };
+      }
+    };
+
+    const config = getStatusConfig(subredditClassification.classification);
+    const IconComponent = config.icon;
+
+    return (
+      <div 
+        className={`flex items-center gap-1.5 ${config.bgColor} border ${config.borderColor} rounded-full px-2.5 py-1 cursor-help`}
+        title={config.tooltip}
+      >
+        <IconComponent className={`w-3 h-3 ${config.color}`} />
+        <span className={`text-xs font-medium ${config.color}`}>
+          {config.text}
+        </span>
+      </div>
+    );
+  };
   
   const getTruncatedContent = (content: string) => {
     if (content.length <= CONTENT_TRUNCATE_LENGTH) {
@@ -224,8 +344,11 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="mb-4">
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
-              <div className="text-sm font-medium text-blue-500 dark:text-blue-400 mb-1">
-                r/{post.subreddit}
+              <div className="flex items-center gap-2 mb-1">
+                <div className="text-sm font-medium text-blue-500 dark:text-blue-400">
+                  r/{post.subreddit}
+                </div>
+                <PromotionalStatusBadge />
               </div>
               <h2 className="card-title dark:text-white flex items-center gap-2 leading-tight">
                 {post.title}
