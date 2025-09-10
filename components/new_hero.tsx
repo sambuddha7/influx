@@ -13,8 +13,15 @@ const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => 
   });
 };
 
-const FloatingIcon = ({ icon: Icon, delay, position, size = 'default' }) => {
-  const sizeClasses = {
+interface FloatingIconProps {
+  icon: any;
+  delay: number;
+  position: string;
+  size?: 'small' | 'default' | 'large';
+}
+
+const FloatingIcon = ({ icon: Icon, delay, position, size = 'default' }: FloatingIconProps) => {
+  const sizeClasses: Record<string, string> = {
     small: 'w-12 h-12',
     default: 'w-14 h-14',
     large: 'w-16 h-16'
@@ -22,9 +29,9 @@ const FloatingIcon = ({ icon: Icon, delay, position, size = 'default' }) => {
 
   return (
     <div
-      className={`absolute ${position} animate-float opacity-0`}
+      className={`absolute ${position} opacity-0`}
       style={{
-        animation: `float 20s ease-in-out infinite ${delay}s, fadeIn 0.5s ease-out ${delay}s forwards`,
+        animation: `fadeIn 1s ease-out ${delay}s forwards, drift-${delay % 3} 20s ease-in-out infinite ${delay + 1}s`,
       }}
     >
       <div className={`${sizeClasses[size]} rounded-full border-2 border-orange-400/50 dark:border-orange-400/30 bg-white/80 dark:bg-gray-900/50 backdrop-blur-sm shadow-xl flex items-center justify-center group hover:scale-110 hover:border-orange-500 dark:hover:border-orange-400 transition-all duration-300`}>
@@ -35,39 +42,59 @@ const FloatingIcon = ({ icon: Icon, delay, position, size = 'default' }) => {
 };
 
 const Hero = () => {
-  const floatingIcons = [
-    { icon: MessageCircle, delay: 0, position: 'top-[15%] left-[10%]', size: 'large' },
-    { icon: Share2, delay: 0.5, position: 'top-[20%] right-[15%]', size: 'default' },
-    { icon: TrendingUp, delay: 1, position: 'bottom-[25%] left-[8%]', size: 'default' },
-    { icon: Heart, delay: 1.5, position: 'bottom-[30%] right-[10%]', size: 'small' },
-    { icon: Users, delay: 2, position: 'top-[35%] left-[5%]', size: 'small' },
-    { icon: Zap, delay: 2.5, position: 'top-[40%] right-[8%]', size: 'large' },
-    { icon: Target, delay: 3, position: 'bottom-[45%] left-[15%]', size: 'default' },
-    { icon: BarChart3, delay: 3.5, position: 'bottom-[15%] right-[20%]', size: 'default' },
-  ];
 
   return (
     <>
       <style jsx global>{`
-        @keyframes float {
+        @keyframes drift-0 {
           0%, 100% {
-            transform: translateY(0) translateX(0) rotate(0deg);
+            transform: translate(0, 0) rotate(0deg);
+          }
+          20% {
+            transform: translate(30px, -40px) rotate(90deg);
+          }
+          40% {
+            transform: translate(-20px, -60px) rotate(180deg);
+          }
+          60% {
+            transform: translate(-40px, 20px) rotate(270deg);
+          }
+          80% {
+            transform: translate(20px, 40px) rotate(360deg);
+          }
+        }
+
+        @keyframes drift-1 {
+          0%, 100% {
+            transform: translate(0, 0) rotate(0deg);
           }
           25% {
-            transform: translateY(-20px) translateX(10px) rotate(5deg);
+            transform: translate(-40px, 30px) rotate(-90deg);
           }
           50% {
-            transform: translateY(10px) translateX(-5px) rotate(-5deg);
+            transform: translate(40px, -20px) rotate(-180deg);
           }
           75% {
-            transform: translateY(-10px) translateX(-10px) rotate(3deg);
+            transform: translate(30px, 50px) rotate(-270deg);
+          }
+        }
+
+        @keyframes drift-2 {
+          0%, 100% {
+            transform: translate(0, 0) rotate(0deg);
+          }
+          33% {
+            transform: translate(50px, 30px) rotate(120deg);
+          }
+          66% {
+            transform: translate(-30px, 40px) rotate(240deg);
           }
         }
 
         @keyframes fadeIn {
           from {
             opacity: 0;
-            transform: scale(0.8);
+            transform: scale(0.9);
           }
           to {
             opacity: 1;
@@ -89,19 +116,9 @@ const Hero = () => {
             opacity: 0;
           }
         }
-
-        .animate-float {
-          animation: float 20s ease-in-out infinite;
-        }
       `}</style>
 
       <section className="relative min-h-screen overflow-hidden bg-gradient-to-br dark:from-[#0a0a0a] dark:via-[#131313] dark:to-black from-gray-50 via-white to-gray-100">
-        {/* Floating Icons Container */}
-        <div className="absolute inset-0 z-[5] pointer-events-none">
-          {floatingIcons.map((item, index) => (
-            <FloatingIcon key={index} {...item} />
-          ))}
-        </div>
 
         {/* Subtle glow background */}
         <div className="absolute inset-0 z-0">
