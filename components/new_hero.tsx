@@ -335,7 +335,7 @@ Automate engagement, join conversations, and convert communities.
               <div className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors">
                 <AnimatedCounter value={10} suffix="x" />
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Faster Response</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">More Traffic</div>
             </div>
             <div className="w-px h-8 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-700 to-transparent"></div>
             <div className="text-center group cursor-default">
