@@ -33,7 +33,7 @@ export default function Home() {
        
 
         {/* use cases */}
-        <div id="use-cases" className="m-12 bg-white dark:bg-black">
+        <div id="use-cases">
           <GlowingEffectDemo />
         </div>
 
@@ -48,7 +48,7 @@ export default function Home() {
 
         
         {/* last cta section */}
-        <div id="waitlist" className="h-[50rem] w-full dark:bg-black bg-white  dark:bg-dot-white/[0.2] bg-dot-black/[0.2] relative flex items-center justify-center">
+        <div id="waitlist" className="h-[50rem] w-full relative flex items-center justify-center">
             <WaitlistComponent />
         </div>
             <Footer />  

@@ -335,11 +335,12 @@ const Hero = () => {
         </div>
 
         {/* Main Content Container */}
-        <div className="relative z-10 container mx-auto px-4 py-20 min-h-screen flex items-center">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center w-full max-w-7xl mx-auto">
+        <div className="relative z-10 container mx-auto  min-h-screen flex items-center">
+          <div className="w-full max-w-7xl mx-auto p-8 lg:p-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             
             {/* Left Content */}
-            <div className="text-left">
+            <div className="text-center lg:text-left">
               
               {/* Animated Badge */}
               <div className="mb-6 opacity-0" style={{ animation: 'wordFadeUp 0.8s ease-out 0.2s forwards' }}>
@@ -470,6 +471,7 @@ const Hero = () => {
             {/* Right Content - Orbital Animation */}
             <div className="hidden lg:flex items-center justify-center opacity-0" style={{ animation: 'wordFadeUp 1s ease-out 0.5s forwards' }}>
               <OrbitalIcons />
+            </div>
             </div>
           </div>
         </div>

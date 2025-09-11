@@ -48,27 +48,45 @@ const FAQ: React.FC = () => {
   };
 
   return (
-    <section className="max-w-4xl mx-auto px-4 py-12">
-      <h2 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">
-        Frequently Asked Questions
-      </h2>
-      <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-            <button
-              onClick={() => toggleFAQ(index)}
-              className="w-full flex justify-between items-center p-4 text-left text-lg font-medium bg-gray-100 dark:bg-[#1f1f1f] hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition"
-            >
-              <span className="text-gray-800 dark:text-gray-100">{faq.question}</span>
-              <span className="text-gray-600 dark:text-gray-300">{openIndex === index ? '−' : '+'}</span>
-            </button>
-            {openIndex === index && (
-              <div className="p-4 bg-white dark:bg-[#121212] text-gray-700 dark:text-gray-300">
-                {faq.answer}
-              </div>
-            )}
-          </div>
-        ))}
+    <section className="relative min-h-screen overflow-hidden bg-gradient-to-br dark:from-[#0a0a0a] dark:via-[#131313] dark:to-black from-gray-50 via-white to-gray-100 py-20 px-6 sm:px-12">
+      {/* Background gradient orbs */}
+      <div className="absolute inset-0 z-0">
+        {/* Dark mode glow */}
+        <div className="dark:block hidden">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-orange-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        </div>
+
+        {/* Light mode glow */}
+        <div className="dark:hidden block">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-pink-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        </div>
+      </div>
+
+      {/* Main Content Container */}
+      <div className="relative z-10 max-w-4xl mx-auto p-8 lg:p-12">
+        <h2 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">
+          Frequently Asked Questions
+        </h2>
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleFAQ(index)}
+                className="w-full flex justify-between items-center p-4 text-left text-lg font-medium bg-gray-100 dark:bg-[#1f1f1f] hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition"
+              >
+                <span className="text-gray-800 dark:text-gray-100">{faq.question}</span>
+                <span className="text-gray-600 dark:text-gray-300">{openIndex === index ? '−' : '+'}</span>
+              </button>
+              {openIndex === index && (
+                <div className="p-4 bg-white dark:bg-[#121212] text-gray-700 dark:text-gray-300">
+                  {faq.answer}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
