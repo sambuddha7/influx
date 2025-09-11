@@ -40,21 +40,6 @@ export default function WaitlistForm() {
 
   return (
     <div className="relative w-full">
-      {/* Background gradient orbs */}
-      <div className="absolute inset-0 z-0">
-        {/* Dark mode glow */}
-        <div className="dark:block hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-orange-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
-        </div>
-
-        {/* Light mode glow */}
-        <div className="dark:hidden block">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-pink-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        </div>
-      </div>
-
       {/* Main Content Container */}
       <div className="relative z-10 max-w-2xl mx-auto p-8 lg:p-12 text-center">
         <h2 className="text-4xl font-bold mb-4">Join the Waitlist</h2>

@@ -317,22 +317,7 @@ const Hero = () => {
           }
       `}</style>
 
-      <section className="relative min-h-screen overflow-hidden bg-gradient-to-br dark:from-[#0a0a0a] dark:via-[#131313] dark:to-black from-gray-50 via-white to-gray-100">
-        
-        {/* Background gradient orbs */}
-        <div className="absolute inset-0 z-0">
-          {/* Dark mode glow */}
-          <div className="dark:block hidden">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-orange-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
-          </div>
-
-          {/* Light mode glow */}
-          <div className="dark:hidden block">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-pink-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
-          </div>
-        </div>
+      <section className="relative min-h-screen overflow-hidden">
 
         {/* Main Content Container */}
         <div className="relative z-10 container mx-auto  min-h-screen flex items-center">
@@ -406,9 +391,9 @@ const Hero = () => {
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-700 to-transparent"></div>
                 <div className="text-center group cursor-default">
                   <div className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors">
-                    <AnimatedCounter value={100} suffix="+" />
+                    <AnimatedCounter value={8} suffix="+" />
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Subreddits</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">hours a week, saved</div>
                 </div>
               </div>
 
