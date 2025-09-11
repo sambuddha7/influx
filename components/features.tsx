@@ -104,10 +104,13 @@ const FeatureItem = ({ feature, index }: { feature: Feature; index: number }) =>
 
 export default function Features() {
   return (
-    <section className="bg-white dark:bg-black text-gray-900 dark:text-white py-20 px-6 sm:px-12 space-y-24">
-      {features.map((feature, index) => (
-        <FeatureItem key={index} feature={feature} index={index} />
-      ))}
+    <section className="relative text-gray-900 dark:text-white py-20 px-6 sm:px-12">
+      {/* Main Content Container */}
+      <div className="relative z-10 max-w-7xl mx-auto p-8 lg:p-12 space-y-24">
+        {features.map((feature, index) => (
+          <FeatureItem key={index} feature={feature} index={index} />
+        ))}
+      </div>
     </section>
   );
 }

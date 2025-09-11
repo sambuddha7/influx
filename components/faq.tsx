@@ -48,27 +48,30 @@ const FAQ: React.FC = () => {
   };
 
   return (
-    <section className="max-w-4xl mx-auto px-4 py-12">
-      <h2 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">
-        Frequently Asked Questions
-      </h2>
-      <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-            <button
-              onClick={() => toggleFAQ(index)}
-              className="w-full flex justify-between items-center p-4 text-left text-lg font-medium bg-gray-100 dark:bg-[#1f1f1f] hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition"
-            >
-              <span className="text-gray-800 dark:text-gray-100">{faq.question}</span>
-              <span className="text-gray-600 dark:text-gray-300">{openIndex === index ? '−' : '+'}</span>
-            </button>
-            {openIndex === index && (
-              <div className="p-4 bg-white dark:bg-[#121212] text-gray-700 dark:text-gray-300">
-                {faq.answer}
-              </div>
-            )}
-          </div>
-        ))}
+    <section className="relative py-20 px-6 sm:px-12">
+      {/* Main Content Container */}
+      <div className="relative z-10 max-w-4xl mx-auto p-8 lg:p-12">
+        <h2 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">
+          Frequently Asked Questions
+        </h2>
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleFAQ(index)}
+                className="w-full flex justify-between items-center p-4 text-left text-lg font-medium bg-gray-100 dark:bg-[#1f1f1f] hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition"
+              >
+                <span className="text-gray-800 dark:text-gray-100">{faq.question}</span>
+                <span className="text-gray-600 dark:text-gray-300">{openIndex === index ? '−' : '+'}</span>
+              </button>
+              {openIndex === index && (
+                <div className="p-4 bg-white dark:bg-[#121212] text-gray-700 dark:text-gray-300">
+                  {faq.answer}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
