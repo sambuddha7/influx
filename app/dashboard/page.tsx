@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
-import { ArrowUpRight , Pencil, Save, Check, Sparkles, Lightbulb, X} from "lucide-react";
+import { ArrowUpRight , Pencil, Save, Check, Sparkles, Lightbulb, X, Clock} from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import PostCard from '@/components/PostCard';
 import PostSorter from '@/components/PostSorter';
@@ -75,8 +75,43 @@ export default function Dashboard() {
   const [isArchiving, setIsArchiving] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
   const [isCheckingClassifications, setIsCheckingClassifications] = useState(false);
+  const [nextAutoSearchTime, setNextAutoSearchTime] = useState<Date | null>(null);
+  const [timeUntilNextSearch, setTimeUntilNextSearch] = useState<string>('');
 
+  // Function to calculate next auto-search time
+  const calculateNextAutoSearchTime = async (userId: string) => {
+    try {
+      const metricsRef = doc(db, 'post-metrics', userId);
+      const metricsSnap = await getDoc(metricsRef);
+      
+      if (metricsSnap.exists()) {
+        const data = metricsSnap.data();
+        if (data.lastPostSearched) {
+          const lastSearchTime = new Date(data.lastPostSearched);
+          const nextSearchTime = new Date(lastSearchTime.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
+          setNextAutoSearchTime(nextSearchTime);
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating next auto-search time:', error);
+    }
+  };
 
+  // Function to format time remaining
+  const formatTimeRemaining = (nextTime: Date): string => {
+    const now = new Date();
+    const diff = nextTime.getTime() - now.getTime();
+    
+    if (diff <= 0) {
+      return 'Search in progress...';
+    }
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
 
   // Function to check and ensure user has subreddit classifications
   const checkAndEnsureSubredditClassifications = async (userId: string) => {
@@ -343,8 +378,24 @@ const checkAndRefreshPosts = async (userId: string) => {
       if (savedPreference === 'true') {
         setHideInstructionPopup(true);
       }
+      // Calculate next auto-search time when user loads
+      calculateNextAutoSearchTime(user.uid);
     }
   }, [user]);
+
+  // Update countdown every second
+  useEffect(() => {
+    if (!nextAutoSearchTime) return;
+
+    const interval = setInterval(() => {
+      setTimeUntilNextSearch(formatTimeRemaining(nextAutoSearchTime));
+    }, 1000);
+
+    // Set initial value
+    setTimeUntilNextSearch(formatTimeRemaining(nextAutoSearchTime));
+
+    return () => clearInterval(interval);
+  }, [nextAutoSearchTime]);
 
   
   useEffect(() => {
@@ -462,6 +513,11 @@ const checkAndRefreshPosts = async (userId: string) => {
         setDisplayedPosts(sortedPosts.slice(0, POSTS_PER_PAGE));
         setIsLoading2(false);
         setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
+        
+        // Update next auto-search time if posts were refreshed
+        if (postsRefreshed) {
+          calculateNextAutoSearchTime(user.uid);
+        }
       } else {
         const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
         const data = await response.json();
@@ -959,6 +1015,15 @@ const checkAndRefreshPosts = async (userId: string) => {
           currentSort={sortConfig}
         />
       <div className="flex gap-3">
+        {/* Auto-search countdown */}
+        {nextAutoSearchTime && timeUntilNextSearch && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
+            <Clock size={16} className="text-gray-500" />
+            <span className="text-gray-700 dark:text-gray-300">
+              Next search runs: <span className="font-mono text-orange-600 dark:text-orange-400">{timeUntilNextSearch}</span>
+            </span>
+          </div>
+        )}
         <button 
           onClick={handleTipsClick}
           className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-yellow-100 rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
@@ -968,7 +1033,6 @@ const checkAndRefreshPosts = async (userId: string) => {
         </button>
       </div>
     </div>
-
 
         {displayedPosts.map((post) => (
           <PostCard
