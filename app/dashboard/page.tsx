@@ -1196,37 +1196,47 @@ const checkAndRefreshPosts = async (userId: string) => {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 p-6 space-y-6">
-      <div className="flex justify-between mb-4">
-        <PostSorter 
-          onSort={handleSort}
-          currentSort={sortConfig}
-        />
-      <div className="flex gap-3">
-        {/* Auto-search countdown */}
-        {nextAutoSearchTime && timeUntilNextSearch && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
-            <Clock size={16} className="text-gray-500" />
-            <span className="text-gray-700 dark:text-gray-300">
-              Next auto search runs: <span className="font-mono text-orange-600 dark:text-orange-400">{timeUntilNextSearch}</span>
-            </span>
+      {/* Header Section */}
+      <div className="mb-6 space-y-4">
+        {/* First Row - Title and Next Search Info */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Discussions</h1>
+          {/* Auto-search countdown */}
+          {nextAutoSearchTime && timeUntilNextSearch && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
+              <Clock size={16} className="text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">
+                Next search: <span className="font-mono text-orange-600 dark:text-orange-400">{timeUntilNextSearch}</span>
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Second Row - Filter, Search, and Tips */}
+        <div className="flex justify-between items-center">
+          <PostSorter 
+            onSort={handleSort}
+            currentSort={sortConfig}
+          />
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowSearchModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 font-medium"
+            >
+              <Search size={16} />
+              <span>Search</span>
+            </button>
+            
+            <button 
+              onClick={handleTipsClick}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200"
+            >
+              <Lightbulb size={16} className="text-orange-500" />
+              <span>Tips</span>
+            </button>
           </div>
-        )}
-        <button 
-          onClick={() => setShowSearchModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20"
-        >
-          <Search size={16} />
-          <span>Search</span>
-        </button>
-        <button 
-          onClick={handleTipsClick}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-yellow-100 rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
-        >
-          <Lightbulb size={16} className="text-yellow-300" />
-          <span>Tips</span>
-        </button>
+        </div>
       </div>
-    </div>
 
         {displayedPosts.map((post) => (
           <PostCard
