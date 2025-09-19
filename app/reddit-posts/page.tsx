@@ -232,7 +232,7 @@ const CreateRedditPostPage = () => {
         regenerateInstructions ? `REGENERATION CHANGES: ${regenerateInstructions}` : ''
       ].filter(Boolean).join('\n\n');
       
-      const response = await fetch(`${api_url}/reddit-posts/generate-post`, {
+      const response = await fetch(`${api_url}/enhanced-reddit-posts/generate-enhanced-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -433,7 +433,7 @@ const CreateRedditPostPage = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${api_url}/reddit-posts/generate-post`, {
+      const response = await fetch(`${api_url}/enhanced-reddit-posts/generate-enhanced-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
