@@ -11,10 +11,11 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { where,collection, addDoc, deleteDoc,updateDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
-import { ArrowUpRight , Pencil, Save, Check, Sparkles, Lightbulb, X} from "lucide-react";
+import { ArrowUpRight , Pencil, Save, Check, Sparkles, Lightbulb, X, Clock, Search, Tag, Plus} from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import PostCard from '@/components/PostCard';
 import PostSorter from '@/components/PostSorter';
+import { motion } from 'framer-motion';
 
 
 
@@ -75,8 +76,206 @@ export default function Dashboard() {
   const [isArchiving, setIsArchiving] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
   const [isCheckingClassifications, setIsCheckingClassifications] = useState(false);
+  const [nextAutoSearchTime, setNextAutoSearchTime] = useState<Date | null>(null);
+  const [timeUntilNextSearch, setTimeUntilNextSearch] = useState<string>('');
+  
+  // Search modal state
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchKeywords, setSearchKeywords] = useState<string[]>([]);
+  const [searchPhrases, setSearchPhrases] = useState<string[]>([]);
+  const [searchSubreddits, setSearchSubreddits] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState('');
+  const [phraseInput, setPhraseInput] = useState('');
+  const [subredditInput, setSubredditInput] = useState('');
+  const [subredditError, setSubredditError] = useState('');
 
+  // Function to calculate next auto-search time
+  const calculateNextAutoSearchTime = async (userId: string) => {
+    try {
+      const metricsRef = doc(db, 'post-metrics', userId);
+      const metricsSnap = await getDoc(metricsRef);
+      
+      if (metricsSnap.exists()) {
+        const data = metricsSnap.data();
+        if (data.lastPostSearched) {
+          const lastSearchTime = new Date(data.lastPostSearched);
+          const nextSearchTime = new Date(lastSearchTime.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
+          setNextAutoSearchTime(nextSearchTime);
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating next auto-search time:', error);
+    }
+  };
 
+  // Function to format time remaining
+  const formatTimeRemaining = (nextTime: Date): string => {
+    const now = new Date();
+    const diff = nextTime.getTime() - now.getTime();
+    
+    if (diff <= 0) {
+      return 'Search in progress...';
+    }
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  // Search modal functions
+  const addSearchKeyword = () => {
+    if (!keywordInput.trim() || searchKeywords.length >= 8) return;
+    const newKeywords = [...searchKeywords, keywordInput.trim()];
+    setSearchKeywords(newKeywords);
+    setKeywordInput('');
+  };
+
+  const removeSearchKeyword = (keyword: string) => {
+    const newKeywords = searchKeywords.filter(k => k !== keyword);
+    setSearchKeywords(newKeywords);
+  };
+
+  const addSearchPhrase = () => {
+    if (!phraseInput.trim()) return;
+    const newPhrases = [...searchPhrases, phraseInput.trim()];
+    setSearchPhrases(newPhrases);
+    setPhraseInput('');
+  };
+
+  const removeSearchPhrase = (phrase: string) => {
+    const newPhrases = searchPhrases.filter(p => p !== phrase);
+    setSearchPhrases(newPhrases);
+  };
+
+  const validateSubreddit = async (subreddit: string): Promise<boolean> => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/validate_subreddit?subreddit=${encodeURIComponent(subreddit)}`);
+      const data = await response.json();
+      return data.valid;
+    } catch {
+      return false;
+    }
+  };
+
+  const addSearchSubreddit = async () => {
+    setSubredditError('');
+    if (!subredditInput.trim() || searchSubreddits.length >= 20) return;
+    
+    const isValid = await validateSubreddit(subredditInput.trim());
+    if (!isValid) {
+      setSubredditError('Invalid subreddit. Please enter a valid subreddit name.');
+      return;
+    }
+    
+    const newSubreddits = [...searchSubreddits, subredditInput.trim()];
+    setSearchSubreddits(newSubreddits);
+    setSubredditInput('');
+  };
+
+  const removeSearchSubreddit = (subreddit: string) => {
+    const newSubreddits = searchSubreddits.filter(s => s !== subreddit);
+    setSearchSubreddits(newSubreddits);
+  };
+
+  const triggerSearch = async () => {
+    if (!user) return;
+    
+    // Show the loading page and hide current content
+    setIsLoading2(true);
+    setShowSearchModal(false);
+    
+    try {
+      // Clear existing posts
+      const postsCollectionRef = collection(db, "reddit-posts", user.uid, "posts");
+      const postsSnapshot = await getDocs(postsCollectionRef);
+      const deletePromises = postsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
+      // Update user's search parameters in Firestore
+      const userRef = doc(db, 'onboarding', user.uid);
+      await updateDoc(userRef, {
+        keywords: searchKeywords.join(','),
+        phrases: searchPhrases.join(','),
+        subreddits: searchSubreddits.join(',')
+      });
+
+      // Update subreddit classifications
+      if (searchSubreddits.length > 0) {
+        const response = await fetch(`${apiUrl}/update_subreddit_classifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: user.uid,
+            subreddits: searchSubreddits
+          })
+        });
+        
+        if (response.ok) {
+          console.log('Subreddit classification update started successfully');
+        }
+      }
+
+      // Trigger new search
+      const searchResponse = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
+      if (searchResponse.ok) {
+        const data = await searchResponse.json();
+        const formattedPosts = data.map((post: string[]) => {
+          const promoScore = 0;
+          return {
+            id: post[0],
+            subreddit: post[1],
+            title: post[2],
+            content: post[3],
+            suggestedReply: post[4],
+            url: post[5],
+            date_created: post[6],
+            score: post[7],
+            comments: post[8],
+            relevanceScore: post[9] ? parseFloat(post[9]) : undefined,
+            promotional: promoScore > 0.70,
+            promo_score: promoScore,
+          };
+        });
+        
+        // Save new posts to Firestore
+        for (const post of formattedPosts) {
+          const postWithTimestamp = {
+            ...post,
+            createdAt: new Date().toISOString(),
+            promotional: post.promotional ?? false,
+            score: post.score ?? 0,
+            comments: post.comments ?? 0,
+            relevanceScore: post.relevanceScore,
+          };
+          await addDoc(postsCollectionRef, postWithTimestamp);
+        }
+        
+        // Update state
+        const sortedPosts = formattedPosts.sort((a: RedditPost, b: RedditPost) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        setAllPosts(sortedPosts);
+        setDisplayedPosts(sortedPosts.slice(0, POSTS_PER_PAGE));
+        setHasMorePosts(formattedPosts.length > POSTS_PER_PAGE);
+        
+        setgreenAlert({ message: "Search completed successfully!", visible: true });
+        setTimeout(() => {
+          setgreenAlert({ message: "", visible: false });
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error during search:', error);
+      setAlert({ message: "Error occurred during search", visible: true });
+      setTimeout(() => {
+        setAlert({ message: "", visible: false });
+      }, 3000);
+    } finally {
+      setIsLoading2(false);
+    }
+  };
 
   // Function to check and ensure user has subreddit classifications
   const checkAndEnsureSubredditClassifications = async (userId: string) => {
@@ -343,8 +542,47 @@ const checkAndRefreshPosts = async (userId: string) => {
       if (savedPreference === 'true') {
         setHideInstructionPopup(true);
       }
+      // Calculate next auto-search time when user loads
+      calculateNextAutoSearchTime(user.uid);
     }
   }, [user]);
+
+  // Update countdown every second
+  useEffect(() => {
+    if (!nextAutoSearchTime) return;
+
+    const interval = setInterval(() => {
+      setTimeUntilNextSearch(formatTimeRemaining(nextAutoSearchTime));
+    }, 1000);
+
+    // Set initial value
+    setTimeUntilNextSearch(formatTimeRemaining(nextAutoSearchTime));
+
+    return () => clearInterval(interval);
+  }, [nextAutoSearchTime]);
+
+  // Load current search parameters when modal opens
+  useEffect(() => {
+    const loadSearchParameters = async () => {
+      if (!user || !showSearchModal) return;
+      
+      try {
+        const userRef = doc(db, 'onboarding', user.uid);
+        const docSnap = await getDoc(userRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setSearchKeywords(data.keywords ? data.keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k) : []);
+          setSearchPhrases(data.phrases ? data.phrases.split(',').map((p: string) => p.trim()).filter((p: string) => p) : []);
+          setSearchSubreddits(data.subreddits ? data.subreddits.split(',').map((s: string) => s.trim()).filter((s: string) => s) : []);
+        }
+      } catch (error) {
+        console.error('Error loading search parameters:', error);
+      }
+    };
+    
+    loadSearchParameters();
+  }, [user, showSearchModal]);
 
   
   useEffect(() => {
@@ -462,6 +700,11 @@ const checkAndRefreshPosts = async (userId: string) => {
         setDisplayedPosts(sortedPosts.slice(0, POSTS_PER_PAGE));
         setIsLoading2(false);
         setHasMorePosts(firestorePosts.length > POSTS_PER_PAGE);
+        
+        // Update next auto-search time if posts were refreshed
+        if (postsRefreshed) {
+          calculateNextAutoSearchTime(user.uid);
+        }
       } else {
         const response = await fetch(`${apiUrl}/relevant_posts?userid=${user.uid}`);
         const data = await response.json();
@@ -953,22 +1196,47 @@ const checkAndRefreshPosts = async (userId: string) => {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 p-6 space-y-6">
-      <div className="flex justify-between mb-4">
-        <PostSorter 
-          onSort={handleSort}
-          currentSort={sortConfig}
-        />
-      <div className="flex gap-3">
-        <button 
-          onClick={handleTipsClick}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-yellow-100 rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 group"
-        >
-          <Lightbulb size={16} className="text-yellow-300" />
-          <span>Tips</span>
-        </button>
-      </div>
-    </div>
+      {/* Header Section */}
+      <div className="mb-6 space-y-4">
+        {/* First Row - Title and Next Search Info */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Discussions</h1>
+          {/* Auto-search countdown */}
+          {nextAutoSearchTime && timeUntilNextSearch && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
+              <Clock size={16} className="text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">
+                Next search: <span className="font-mono text-orange-600 dark:text-orange-400">{timeUntilNextSearch}</span>
+              </span>
+            </div>
+          )}
+        </div>
 
+        {/* Second Row - Filter, Search, and Tips */}
+        <div className="flex justify-between items-center">
+          <PostSorter 
+            onSort={handleSort}
+            currentSort={sortConfig}
+          />
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowSearchModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 font-medium"
+            >
+              <Search size={16} />
+              <span>Search</span>
+            </button>
+            
+            <button 
+              onClick={handleTipsClick}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200"
+            >
+              <Lightbulb size={16} className="text-orange-500" />
+              <span>Tips</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
         {displayedPosts.map((post) => (
           <PostCard
@@ -1009,6 +1277,223 @@ const checkAndRefreshPosts = async (userId: string) => {
           ) : null}
         </div>
       </div>
+      
+      {/* Search Modal */}
+      {showSearchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Search Parameters</h3>
+              <button 
+                onClick={() => setShowSearchModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Keywords Section */}
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Tag className="w-4 h-4 mr-2 text-gray-500" />
+                    Keywords
+                  </label>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {searchKeywords.length}/8
+                  </span>
+                </div>
+                <div className="flex space-x-2 mb-3">
+                  <input
+                    type="text"
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && searchKeywords.length < 8 && addSearchKeyword()}
+                    placeholder={searchKeywords.length >= 8 ? "Maximum keywords reached" : "Enter a keyword"}
+                    disabled={searchKeywords.length >= 8}
+                    className="flex-grow p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                  />
+                  <button
+                    onClick={addSearchKeyword}
+                    disabled={searchKeywords.length >= 8 || !keywordInput.trim()}
+                    className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                      searchKeywords.length >= 8 || !keywordInput.trim()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-orange-500 hover:bg-orange-600 text-white'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {searchKeywords.length >= 8 && (
+                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-3">
+                    Maximum of 8 keywords reached. Remove some to add new ones.
+                  </p>
+                )}
+                {searchKeywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {searchKeywords.map(keyword => (
+                      <motion.div
+                        key={keyword}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center bg-orange-100 dark:bg-orange-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {keyword}
+                        <button
+                          onClick={() => removeSearchKeyword(keyword)}
+                          className="ml-2 text-orange-500 hover:text-orange-700"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Phrases Section */}
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                  <Tag className="w-4 h-4 mr-2 text-gray-500" />
+                  Phrases
+                </label>
+                <div className="flex space-x-2 mb-3">
+                  <input
+                    type="text"
+                    value={phraseInput}
+                    onChange={(e) => setPhraseInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addSearchPhrase()}
+                    placeholder="Enter a phrase"
+                    className="flex-grow p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                  />
+                  <button
+                    onClick={addSearchPhrase}
+                    disabled={!phraseInput.trim()}
+                    className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                      !phraseInput.trim()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-orange-500 hover:bg-orange-600 text-white'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {searchPhrases.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {searchPhrases.map(phrase => (
+                      <motion.div
+                        key={phrase}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center bg-orange-100 dark:bg-orange-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {phrase}
+                        <button
+                          onClick={() => removeSearchPhrase(phrase)}
+                          className="ml-2 text-orange-500 hover:text-orange-700"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Subreddits Section */}
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Tag className="w-4 h-4 mr-2 text-gray-500" />
+                    Subreddits
+                  </label>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {searchSubreddits.length}/20
+                  </span>
+                </div>
+                <div className="flex space-x-2 mb-3">
+                  <div className="relative flex-grow">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">r/</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={subredditInput}
+                      onChange={(e) => setSubredditInput(e.target.value)}
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter' && searchSubreddits.length < 20) {
+                          await addSearchSubreddit();
+                        }
+                      }}
+                      placeholder={searchSubreddits.length >= 20 ? "Maximum subreddits reached" : "Enter subreddit name"}
+                      disabled={searchSubreddits.length >= 20}
+                      className="w-full pl-8 pr-4 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                    />
+                  </div>
+                  <button
+                    onClick={addSearchSubreddit}
+                    disabled={searchSubreddits.length >= 20 || !subredditInput.trim()}
+                    className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                      searchSubreddits.length >= 20 || !subredditInput.trim()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-orange-500 hover:bg-orange-600 text-white'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {searchSubreddits.length >= 20 && (
+                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-3">
+                    Maximum of 20 subreddits reached. Remove some to add new ones.
+                  </p>
+                )}
+                {subredditError && (
+                  <p className="text-red-500 text-sm mb-3">{subredditError}</p>
+                )}
+                {searchSubreddits.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {searchSubreddits.map(subreddit => (
+                      <motion.div
+                        key={subreddit}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center bg-orange-100 dark:bg-orange-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        r/{subreddit}
+                        <button
+                          onClick={() => removeSearchSubreddit(subreddit)}
+                          className="ml-2 text-orange-500 hover:text-orange-700"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowSearchModal(false)}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={triggerSearch}
+                className="flex items-center px-6 py-2 rounded-lg font-medium transition-all duration-200 bg-orange-500 hover:bg-orange-600 hover:shadow-lg text-white"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Search Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Instruction Popup after Approve */}
       {showInstructionPopup && currentApprovedPost && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">

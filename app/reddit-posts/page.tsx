@@ -638,7 +638,7 @@ const CreateRedditPostPage = () => {
             {/* Left side - title */}
             <div className="flex items-center">
               <div>
-                <h1 className="text-4xl font-bold text-white mb-2" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}}>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Create Reddit Post
                 </h1>
               </div>
@@ -649,9 +649,9 @@ const CreateRedditPostPage = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowAddSubreddit(true)}
-                  className="flex items-center px-5 py-3 text-sm bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all duration-200 font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg border border-orange-400 hover:border-orange-500 transition-all duration-200 shadow-md hover:shadow-orange-900/20 font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4" />
                   Add Subreddit
                 </button>
                 
@@ -659,16 +659,16 @@ const CreateRedditPostPage = () => {
                   <button
                     onClick={findMoreSubreddits}
                     disabled={isLoadingMore}
-                    className="flex items-center px-5 py-3 text-sm bg-gray-700 text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-medium"
                   >
                     {isLoadingMore ? (
                       <>
-                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                        <div className="animate-spin w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full"></div>
                         Finding More...
                       </>
                     ) : (
                       <>
-                        <Search className="w-4 h-4 mr-2" />
+                        <Search className="w-4 h-4" />
                         Find More
                       </>
                     )}
@@ -678,9 +678,9 @@ const CreateRedditPostPage = () => {
                 <button
                   onClick={() => fetchSubredditRecommendations(true)}
                   disabled={isLoadingSubreddits}
-                  className="flex items-center px-5 py-3 text-sm border border-gray-600 rounded-xl hover:bg-gray-800 transition-all duration-200 text-gray-300 font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200 font-medium"
                 >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingSubreddits ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isLoadingSubreddits ? 'animate-spin' : ''}`} />
                   Find New Subreddits
                 </button>
               </div>
