@@ -96,8 +96,7 @@ export default function ArchivePage() {
     analytics.redditUsername, 
     activeTab, 
     isPostsAnalyticsMode,
-    analytics.userRedditPosts.length,
-    analytics.loadPostsAnalytics
+    analytics.userRedditPosts.length
   ]);
 
   // Auto-refresh when user returns to the page (browser focus)
@@ -138,9 +137,7 @@ export default function ArchivePage() {
     analytics.redditUsername,
     activeTab,
     isAnalyticsMode,
-    isPostsAnalyticsMode,
-    analytics.loadROIData,
-    analytics.loadPostsAnalytics
+    isPostsAnalyticsMode
   ]);
 
   // Handle matching comments with profile data - runs immediately when both datasets are available
@@ -175,17 +172,16 @@ export default function ArchivePage() {
     analytics.roiComments.length, 
     archiveData.archivedPosts.length,
     analytics.roiComments,
-    archiveData.archivedPosts,
-    analytics.matchArchivedWithProfile,
-    analytics.calculateROIMetrics,
-    archiveData.setMatchedComments,
-    archiveData.setDisplayedMatchedComments,
-    archiveData.setHasMoreMatchedComments
+    archiveData.archivedPosts
   ]);
 
   // Handle matching posts with profile data - runs immediately when both datasets are available
   useEffect(() => {
     if (analytics.userRedditPosts.length > 0 && archiveData.generatedPosts.length > 0) {
+      console.log('🚀 Starting post matching process...');
+      console.log('Archive generated posts:', archiveData.generatedPosts.length);
+      console.log('User Reddit posts:', analytics.userRedditPosts.length);
+      
       const matched = analytics.matchGeneratedWithProfile(archiveData.generatedPosts, analytics.userRedditPosts);
       archiveData.setMatchedPosts(matched);
       archiveData.setDisplayedMatchedPosts(matched.slice(0, 5));
@@ -195,7 +191,7 @@ export default function ArchivePage() {
       const matchedRedditPosts = analytics.userRedditPosts.filter((redditPost) => 
         matched.some(generatedItem => {
           return (
-            generatedItem.subreddit === (redditPost.subreddit || '') &&
+            generatedItem.subreddit?.toLowerCase() === (redditPost.subreddit || '')?.toLowerCase() &&
             ((generatedItem.title || '').toLowerCase().includes((redditPost.title || '').toLowerCase()) ||
             (redditPost.title || '').toLowerCase().includes((generatedItem.title || '').toLowerCase()) ||
             (generatedItem.body || generatedItem.content || '').toLowerCase().includes((redditPost.selftext || '').toLowerCase().substring(0, 100)))
@@ -209,12 +205,7 @@ export default function ArchivePage() {
     analytics.userRedditPosts.length, 
     archiveData.generatedPosts.length,
     analytics.userRedditPosts,
-    archiveData.generatedPosts,
-    analytics.matchGeneratedWithProfile,
-    analytics.calculatePostsMetrics,
-    archiveData.setMatchedPosts,
-    archiveData.setDisplayedMatchedPosts,
-    archiveData.setHasMoreMatchedPosts
+    archiveData.generatedPosts
   ]);
 
   const copyToClipboard = (post: GeneratedPost) => {
