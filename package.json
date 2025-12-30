@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^3.5.0",
     "@firebase/firestore": "^4.7.5",
     "@heroicons/react": "^2.2.0",
     "@nivo/line": "^0.88.0",
