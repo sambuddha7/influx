@@ -403,15 +403,14 @@ const Hero = () => {
                 style={{ animation: 'wordFadeUp 0.8s ease-out 1.3s forwards' }}
               >
                 <Link
-                  href="#waitlist"
-                  onClick={scrollToSection}
+                  href="/dashboard"
                   className="group relative px-8 py-4 rounded-xl text-white font-semibold transition-all duration-300 transform hover:scale-105 overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-300 group-hover:scale-110"></div>
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-pink-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                   <span className="relative flex items-center justify-center gap-2">
                     <Bot className="w-5 h-5" />
-                    <span>Get Early Access</span>
+                    <span>Get Started</span>
                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>

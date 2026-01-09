@@ -15,6 +15,16 @@ const Navbar = () => {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    const targetId = href.replace(/.*\#/, "");
+    const elem = document.getElementById(targetId);
+    elem?.scrollIntoView({
+      behavior: "smooth"
+    });
+  };
+
   return (
     <div className="navbar shadow-sm sticky top-0 z-50 bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(0,0,0,0.7)] backdrop-blur-md px-4 ">
 
@@ -29,9 +39,10 @@ const Navbar = () => {
 
       {/* Desktop Links */}
       <div className="hidden md:flex gap-4 items-center mr-10">
-        <Link href="/#features" className="text-xs md:text-base font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">Features</Link>
-        <Link href="/#use-cases" className="text-xs md:text-base font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">Use cases</Link>
-        <Link href="/#faq" className="text-xs md:text-base font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">FAQ</Link>
+        <Link href="/#pricing" onClick={scrollToSection} className="text-xs md:text-base font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">Pricing</Link>
+        <Link href="/#features" onClick={scrollToSection} className="text-xs md:text-base font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">Features</Link>
+        <Link href="/#use-cases" onClick={scrollToSection} className="text-xs md:text-base font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">Use cases</Link>
+        <Link href="/#faq" onClick={scrollToSection} className="text-xs md:text-base font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">FAQ</Link>
         {/* <Link href="/tips" className="text-base font-normal hover:text-orange-500" onClick={toggleMenu}>Tips</Link> */}
         {/* <Link
           href="https://calendly.com/adityavjindal/30min?month=2025-05&date=2025-05-30"
@@ -52,10 +63,10 @@ const Navbar = () => {
       {/* Mobile Menu Dropdown */}
       {menuOpen && (
         <div className="absolute top-full left-0 w-full bg-white dark:bg-black px-4 py-3 flex flex-col gap-2 md:hidden shadow-md z-40">
-          <Link href="#features" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={toggleMenu}>Features</Link>
-          <Link href="#why" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={toggleMenu}>Why Reddit</Link>
-          <Link href="#faq" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={toggleMenu}>FAQ</Link>
-          <Link href="#waitlist" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={toggleMenu}>Join Waitlist</Link>
+          <Link href="#pricing" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={(e) => { scrollToSection(e); toggleMenu(); }}>Pricing</Link>
+          <Link href="#features" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={(e) => { scrollToSection(e); toggleMenu(); }}>Features</Link>
+          <Link href="#use-cases" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={(e) => { scrollToSection(e); toggleMenu(); }}>Use cases</Link>
+          <Link href="#faq" className="text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" onClick={(e) => { scrollToSection(e); toggleMenu(); }}>FAQ</Link>
           {/* <Link
             href="https://calendly.com/adityavjindal/30min?month=2025-05&date=2025-05-30"
             className="px-4 py-2 rounded-xl text-white font-normal text-base shadow-md bg-gradient-to-r from-orange-500 to-pink-500 hover:from-pink-500 hover:to-orange-500 transition-all duration-300"
